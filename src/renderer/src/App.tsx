@@ -4,24 +4,18 @@ import type { DockviewApi, DockviewReadyEvent } from 'dockview'
 import 'dockview/dist/styles/dockview.css'
 import type { Commit, FileChange, RepoEntry, StashEntry } from '../../shared/types'
 import ChangesPanel from './ChangesPanel'
-import DiffModal from './DiffModal'
+import DiffPanel from './DiffPanel'
 import RepoSwitcher from './RepoSwitcher'
 import GraphView from './GraphView'
 import ContextMenu from './ContextMenu'
 import type { ContextMenuItem } from './ContextMenu'
 import { LoomContext, useLoom } from './loom-context'
-import type { LoomContextValue } from './loom-context'
+import type { LoomContextValue, DiffView } from './loom-context'
 
 interface MergeRequest {
   source: string
   target: string
   targetLabel: string
-}
-
-interface DiffView {
-  path: string
-  staged: boolean
-  text: string
 }
 
 interface ContextMenuState {
@@ -63,9 +57,14 @@ function GraphDockPanel() {
   return <GraphView />
 }
 
+function DiffDockPanel() {
+  return <DiffPanel />
+}
+
 const DOCK_COMPONENTS = {
   changes: ChangesDockPanel,
-  graph: GraphDockPanel
+  graph: GraphDockPanel,
+  diff: DiffDockPanel
 }
 
 function buildDefaultLayout(api: DockviewApi): void {
@@ -150,7 +149,7 @@ function App() {
     buildDefaultLayout(api)
   }
 
-  function showPanel(id: 'graph' | 'changes', title: string): void {
+  function showPanel(id: 'graph' | 'changes' | 'diff', title: string): void {
     const api = dockApi.current
     if (!api) {
       return
@@ -420,6 +419,7 @@ function App() {
     const result = await window.api.diff(repoPath, file, staged)
     if (result.ok) {
       setDiffView({ path: file, staged, text: result.text })
+      showPanel('diff', 'Diff')
     } else {
       setError(result.error)
     }
@@ -600,6 +600,7 @@ function App() {
     onPopStash: handlePopStash,
     onDropStash: handleDropStash,
     onDiscard: requestDiscard,
+    diffView,
     openFileMenu
   }
 
@@ -644,7 +645,8 @@ function App() {
               y: rect.bottom + 4,
               items: [
                 { label: 'History', onClick: () => showPanel('graph', 'History') },
-                { label: 'Changes', onClick: () => showPanel('changes', 'Changes') }
+                { label: 'Changes', onClick: () => showPanel('changes', 'Changes') },
+                { label: 'Diff', onClick: () => showPanel('diff', 'Diff') }
               ]
             })
           }}
@@ -710,8 +712,6 @@ function App() {
           </div>
         </div>
       )}
-
-      {diffView && <DiffModal diff={diffView} onClose={() => setDiffView(null)} />}
 
       {groupModalRepo && (
         <div className="modal-backdrop" onClick={() => setGroupModalRepo(null)}>

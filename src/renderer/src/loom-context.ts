@@ -2,6 +2,12 @@ import { createContext, useContext } from 'react'
 import type { Commit, FileChange, StashEntry } from '../../shared/types'
 import type { ContextMenuItem } from './ContextMenu'
 
+export interface DiffView {
+  path: string
+  staged: boolean
+  text: string
+}
+
 /**
  * Everything the dockable panels need. App owns the state and handlers; panels
  * read them from here so dockview can manage layout independently of data flow.
@@ -39,6 +45,7 @@ export interface LoomContextValue {
   onPopStash: (ref: string) => void
   onDropStash: (ref: string) => void
   onDiscard: (file: string, untracked: boolean) => void
+  diffView: DiffView | null
   openFileMenu: (
     x: number,
     y: number,

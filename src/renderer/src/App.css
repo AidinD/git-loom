@@ -363,16 +363,12 @@ body {
   cursor: default;
 }
 
-.diff-modal {
-  background: var(--bg-alt);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  width: 80vw;
-  max-width: 900px;
-  height: 80vh;
+.diff-pane {
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+  background: var(--bg);
 }
 
 .diff-header {
