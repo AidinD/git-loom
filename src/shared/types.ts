@@ -53,3 +53,16 @@ export interface StashEntry {
 export type StashListResult =
   | { ok: true; stashes: StashEntry[] }
   | { ok: false; error: string }
+
+export interface GithubRepo {
+  fullName: string
+  name: string
+  owner: string
+  description: string | null
+  cloneUrl: string
+  private: boolean
+}
+
+export type GithubReposResult =
+  | { ok: true; repos: GithubRepo[] }
+  | { ok: false; error: string }

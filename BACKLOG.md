@@ -17,9 +17,10 @@ A GitHub-Desktop-style repository switcher, but better:
   switcher to the same session-grouping UX used in Halyard (`nw-studio-app`) —
   drag repos between groups, reorder, collapsible groups. Mirror/reuse that component
   (shared Electron stack payoff).
-- **Clone browser**: list all repos the user has access to (like GitHub Desktop's
-  clone tab) — needs GitHub auth (PAT/OAuth) + API to enumerate user + org
-  (northwindsweden) repos, with search, instead of pasting a URL.
+- [done] **Clone browser**: the Clone dialog lists repos the user can access
+  (owner + collaborator + org) via the `gh` CLI — searchable, click to clone. Uses
+  the user's existing `gh auth` (no token stored in Loom). Follow-ups: paginate
+  beyond 100; show the left-rail persistent version.
 
 ## Graph rendering
 

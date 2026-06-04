@@ -7,7 +7,8 @@ import type {
   DiffResult,
   RepoEntry,
   CloneResult,
-  StashListResult
+  StashListResult,
+  GithubReposResult
 } from '../shared/types'
 
 const api = {
@@ -44,6 +45,8 @@ const api = {
     ipcRenderer.invoke('git:commit', repoPath, message),
   clone: (url: string, parentDir: string): Promise<CloneResult> =>
     ipcRenderer.invoke('git:clone', url, parentDir),
+  listGithubRepos: (): Promise<GithubReposResult> =>
+    ipcRenderer.invoke('github:listRepos'),
   listRepos: (): Promise<RepoEntry[]> => ipcRenderer.invoke('repos:list'),
   addRepo: (repoPath: string): Promise<RepoEntry[]> =>
     ipcRenderer.invoke('repos:add', repoPath),

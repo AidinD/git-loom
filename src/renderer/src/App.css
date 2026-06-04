@@ -776,6 +776,55 @@ body {
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
 }
 
+.clone-modal {
+  width: 540px;
+  max-width: 90vw;
+}
+
+.clone-list {
+  max-height: 320px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin: 8px 0;
+}
+
+.clone-item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.clone-item:hover {
+  background: var(--bg);
+}
+
+.clone-name {
+  font-weight: 600;
+  flex: none;
+}
+
+.clone-private {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0 4px;
+  flex: none;
+}
+
+.clone-desc {
+  color: var(--text-dim);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .modal-text {
   margin: 0 0 6px;
   font-size: 14px;

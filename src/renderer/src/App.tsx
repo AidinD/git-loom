@@ -2,7 +2,13 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { DockviewReact, themeDark } from 'dockview'
 import type { DockviewApi, DockviewReadyEvent } from 'dockview'
 import 'dockview/dist/styles/dockview.css'
-import type { Commit, FileChange, RepoEntry, StashEntry } from '../../shared/types'
+import type {
+  Commit,
+  FileChange,
+  RepoEntry,
+  StashEntry,
+  GithubRepo
+} from '../../shared/types'
 import ChangesPanel from './ChangesPanel'
 import DiffPanel from './DiffPanel'
 import RepoSwitcher from './RepoSwitcher'
@@ -95,6 +101,10 @@ function App() {
   const [groupInput, setGroupInput] = useState('')
   const [cloneOpen, setCloneOpen] = useState(false)
   const [cloneUrl, setCloneUrl] = useState('')
+  const [cloneFilter, setCloneFilter] = useState('')
+  const [githubRepos, setGithubRepos] = useState<GithubRepo[]>([])
+  const [githubLoading, setGithubLoading] = useState(false)
+  const [githubError, setGithubError] = useState<string | null>(null)
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null)
   const [newBranchOpen, setNewBranchOpen] = useState(false)
   const [newBranchName, setNewBranchName] = useState('')
@@ -485,9 +495,26 @@ function App() {
     setGroupModalRepo(null)
   }
 
-  async function handleClone(): Promise<void> {
-    const url = cloneUrl.trim()
-    if (url.length === 0) {
+  function openCloneModal(): void {
+    setCloneOpen(true)
+    setCloneUrl('')
+    setCloneFilter('')
+    setGithubError(null)
+    setGithubLoading(true)
+    window.api.listGithubRepos().then((result) => {
+      if (result.ok) {
+        setGithubRepos(result.repos)
+      } else {
+        setGithubRepos([])
+        setGithubError(result.error)
+      }
+      setGithubLoading(false)
+    })
+  }
+
+  async function cloneFrom(url: string): Promise<void> {
+    const trimmed = url.trim()
+    if (trimmed.length === 0) {
       return
     }
     const parentDir = await window.api.openRepo()
@@ -498,7 +525,7 @@ function App() {
     setCloneUrl('')
     setError(null)
     setInfo(null)
-    const result = await window.api.clone(url, parentDir)
+    const result = await window.api.clone(trimmed, parentDir)
     if (!result.ok) {
       setError(result.error)
       return
@@ -657,7 +684,7 @@ function App() {
           currentPath={repoPath}
           onSwitch={(path) => loadLog(path)}
           onAddExisting={handleOpen}
-          onClone={() => setCloneOpen(true)}
+          onClone={openCloneModal}
           onRemove={handleRemoveRepo}
           onSetGroup={openGroupModal}
         />
@@ -763,21 +790,61 @@ function App() {
 
       {cloneOpen && (
         <div className="modal-backdrop" onClick={() => setCloneOpen(false)}>
-          <div className="modal" onClick={(event) => event.stopPropagation()}>
+          <div className="modal clone-modal" onClick={(event) => event.stopPropagation()}>
             <p className="modal-text">Clone a repository</p>
-            <p className="modal-hint">
-              Enter a URL, then choose the folder to clone into.
-            </p>
+
+            <input
+              className="commit-message"
+              style={{ height: 'auto' }}
+              placeholder="Filter your GitHub repositories"
+              value={cloneFilter}
+              autoFocus
+              onChange={(event) => setCloneFilter(event.target.value)}
+            />
+
+            <div className="clone-list">
+              {githubLoading && <div className="empty">Loading from GitHub…</div>}
+              {githubError && <div className="error">{githubError}</div>}
+              {!githubLoading &&
+                !githubError &&
+                githubRepos
+                  .filter((repo) => {
+                    const needle = cloneFilter.trim().toLowerCase()
+                    return (
+                      needle.length === 0 ||
+                      repo.fullName.toLowerCase().includes(needle)
+                    )
+                  })
+                  .slice(0, 200)
+                  .map((repo) => (
+                    <div
+                      key={repo.fullName}
+                      className="clone-item"
+                      title={`Clone ${repo.fullName}`}
+                      onClick={() => cloneFrom(repo.cloneUrl)}
+                    >
+                      <span className="clone-name">{repo.fullName}</span>
+                      {repo.private && <span className="clone-private">private</span>}
+                      {repo.description && (
+                        <span className="clone-desc">{repo.description}</span>
+                      )}
+                    </div>
+                  ))}
+              {!githubLoading && !githubError && githubRepos.length === 0 && (
+                <div className="empty">No repositories found.</div>
+              )}
+            </div>
+
+            <p className="modal-hint">…or paste a URL:</p>
             <input
               className="commit-message"
               style={{ height: 'auto' }}
               placeholder="https://github.com/org/repo.git"
               value={cloneUrl}
-              autoFocus
               onChange={(event) => setCloneUrl(event.target.value)}
             />
             <div className="modal-actions">
-              <button onClick={handleClone}>Choose folder & clone</button>
+              <button onClick={() => cloneFrom(cloneUrl)}>Choose folder & clone</button>
               <button className="secondary" onClick={() => setCloneOpen(false)}>
                 Cancel
               </button>

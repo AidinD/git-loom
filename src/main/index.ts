@@ -37,6 +37,7 @@ import {
   getCurrentRepo,
   setCurrentRepo
 } from './repos'
+import { listGithubRepos } from './github'
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -156,6 +157,10 @@ app.whenReady().then(() => {
 
   ipcMain.handle('git:clone', async (_event, url: string, parentDir: string) => {
     return clone(url, parentDir)
+  })
+
+  ipcMain.handle('github:listRepos', async () => {
+    return listGithubRepos()
   })
 
   ipcMain.handle('git:stashList', async (_event, repoPath: string) => {
