@@ -55,6 +55,10 @@ A GitHub-Desktop-style repository switcher, but better:
   Follow-ups: [done] dockview theme matched to dark + amber; [done] "View" menu to
   re-open closed panels; [done] Diff is now a dockable panel (updates live on file
   click) instead of a modal.
+- **Save / load named layouts** — let the user save the current dockview arrangement
+  under a name and switch between saved layouts (e.g. "Review", "Commit", "Wide diff").
+  dockview `toJSON`/`fromJSON` already power the single persisted layout, so this is
+  mostly a small UI (name + list/menu) over a `Record<name, layout>` in localStorage.
 - [backlog] **Left-most panel listing all repos we have access to** — overlaps the
   GitHub clone-browser item (needs GitHub auth + API). A persistent left rail of
   accessible repos, not just the ones opened locally.
