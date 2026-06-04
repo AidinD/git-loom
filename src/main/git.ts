@@ -327,6 +327,16 @@ export async function unstage(dir: string, file: string): Promise<CheckoutResult
   return runSimple(dir, ['restore', '--staged', '--', file], `Unstaged ${file}`)
 }
 
+/** Stages every change (`git add -A`). */
+export async function stageAll(dir: string): Promise<CheckoutResult> {
+  return runSimple(dir, ['add', '-A'], 'Staged all changes')
+}
+
+/** Unstages everything (`git restore --staged .`). */
+export async function unstageAll(dir: string): Promise<CheckoutResult> {
+  return runSimple(dir, ['restore', '--staged', '.'], 'Unstaged all changes')
+}
+
 /** Commits the staged changes with the given message. */
 export async function commit(dir: string, message: string): Promise<CheckoutResult> {
   return runSimple(dir, ['commit', '-m', message], 'Committed')

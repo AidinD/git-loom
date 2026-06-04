@@ -46,12 +46,15 @@ function ChangesDockPanel() {
       onCommitMessageChange={l.setCommitMessage}
       onStage={l.onStage}
       onUnstage={l.onUnstage}
+      onStageAll={l.onStageAll}
+      onUnstageAll={l.onUnstageAll}
       onCommit={l.onCommit}
       onShowDiff={l.onShowDiff}
       onStash={l.onStash}
       onPopStash={l.onPopStash}
       onDropStash={l.onDropStash}
       onDiscard={l.onDiscard}
+      openFileMenu={l.openFileMenu}
     />
   )
 }
@@ -333,6 +336,53 @@ function App() {
     await loadStatus(repoPath)
   }
 
+  async function handleStageAll(): Promise<void> {
+    if (!repoPath) {
+      return
+    }
+    const result = await window.api.stageAll(repoPath)
+    if (!result.ok) {
+      setError(result.error)
+      return
+    }
+    await loadStatus(repoPath)
+  }
+
+  async function handleUnstageAll(): Promise<void> {
+    if (!repoPath) {
+      return
+    }
+    const result = await window.api.unstageAll(repoPath)
+    if (!result.ok) {
+      setError(result.error)
+      return
+    }
+    await loadStatus(repoPath)
+  }
+
+  function openFileMenu(
+    x: number,
+    y: number,
+    file: string,
+    staged: boolean,
+    untracked: boolean
+  ): void {
+    const items: ContextMenuItem[] = [
+      { label: 'Show diff', onClick: () => void handleShowDiff(file, staged) }
+    ]
+    if (staged) {
+      items.push({ label: 'Unstage', onClick: () => void handleUnstage(file) })
+    } else {
+      items.push({ label: 'Stage', onClick: () => void handleStage(file) })
+    }
+    items.push({
+      label: 'Discard',
+      danger: true,
+      onClick: () => requestDiscard(file, untracked)
+    })
+    setContextMenu({ x, y, items })
+  }
+
   async function handleCommit(): Promise<void> {
     if (!repoPath || commitMessage.trim().length === 0) {
       return
@@ -509,12 +559,15 @@ function App() {
     setCommitMessage,
     onStage: handleStage,
     onUnstage: handleUnstage,
+    onStageAll: handleStageAll,
+    onUnstageAll: handleUnstageAll,
     onCommit: handleCommit,
     onShowDiff: handleShowDiff,
     onStash: handleStash,
     onPopStash: handlePopStash,
     onDropStash: handleDropStash,
-    onDiscard: requestDiscard
+    onDiscard: requestDiscard,
+    openFileMenu
   }
 
   return (

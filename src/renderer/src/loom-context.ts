@@ -30,12 +30,21 @@ export interface LoomContextValue {
   setCommitMessage: (value: string) => void
   onStage: (file: string) => void
   onUnstage: (file: string) => void
+  onStageAll: () => void
+  onUnstageAll: () => void
   onCommit: () => void
   onShowDiff: (file: string, staged: boolean) => void
   onStash: () => void
   onPopStash: (ref: string) => void
   onDropStash: (ref: string) => void
   onDiscard: (file: string, untracked: boolean) => void
+  openFileMenu: (
+    x: number,
+    y: number,
+    file: string,
+    staged: boolean,
+    untracked: boolean
+  ) => void
 }
 
 export const LoomContext = createContext<LoomContextValue | null>(null)

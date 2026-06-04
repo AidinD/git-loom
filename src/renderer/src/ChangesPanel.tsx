@@ -9,12 +9,21 @@ interface Props {
   onCommitMessageChange: (value: string) => void
   onStage: (file: string) => void
   onUnstage: (file: string) => void
+  onStageAll: () => void
+  onUnstageAll: () => void
   onCommit: () => void
   onShowDiff: (file: string, staged: boolean) => void
   onStash: () => void
   onPopStash: (ref: string) => void
   onDropStash: (ref: string) => void
   onDiscard: (file: string, untracked: boolean) => void
+  openFileMenu: (
+    x: number,
+    y: number,
+    file: string,
+    staged: boolean,
+    untracked: boolean
+  ) => void
 }
 
 interface Badge {
@@ -67,12 +76,15 @@ function ChangesPanel({
   onCommitMessageChange,
   onStage,
   onUnstage,
+  onStageAll,
+  onUnstageAll,
   onCommit,
   onShowDiff,
   onStash,
   onPopStash,
   onDropStash,
-  onDiscard
+  onDiscard,
+  openFileMenu
 }: Props) {
   const [stagedHeight, setStagedHeight] = useState(() =>
     stored('loom.stagedHeight', 150)
@@ -125,7 +137,14 @@ function ChangesPanel({
         style={{ height: stagedHeight }}
       >
         <h2 className="sidebar-title">
-          Staged <span className="count">{staged.length}</span>
+          <span>
+            Staged <span className="count">{staged.length}</span>
+          </span>
+          {staged.length > 0 && (
+            <button className="stash-create" onClick={onUnstageAll}>
+              Unstage all
+            </button>
+          )}
         </h2>
         <ul className="file-list">
           {staged.map((file) => {
@@ -135,6 +154,10 @@ function ChangesPanel({
                 key={`s-${file.path}`}
                 className="file"
                 onClick={() => onShowDiff(file.path, true)}
+                onContextMenu={(event) => {
+                  event.preventDefault()
+                  openFileMenu(event.clientX, event.clientY, file.path, true, false)
+                }}
                 title={file.path}
               >
                 <span className={`badge ${badge.cls}`}>{badge.text}</span>
@@ -165,7 +188,14 @@ function ChangesPanel({
         style={{ height: changesHeight }}
       >
         <h2 className="sidebar-title">
-          Changes <span className="count">{unstaged.length}</span>
+          <span>
+            Changes <span className="count">{unstaged.length}</span>
+          </span>
+          {unstaged.length > 0 && (
+            <button className="stash-create" onClick={onStageAll}>
+              Stage all
+            </button>
+          )}
         </h2>
         <ul className="file-list">
           {unstaged.map((file) => {
@@ -175,6 +205,16 @@ function ChangesPanel({
                 key={`u-${file.path}`}
                 className="file"
                 onClick={() => onShowDiff(file.path, false)}
+                onContextMenu={(event) => {
+                  event.preventDefault()
+                  openFileMenu(
+                    event.clientX,
+                    event.clientY,
+                    file.path,
+                    false,
+                    file.worktree === '?'
+                  )
+                }}
                 title={file.path}
               >
                 <span className={`badge ${badge.cls}`}>{badge.text}</span>

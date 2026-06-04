@@ -18,6 +18,8 @@ export interface LoomApi {
   status: (repoPath: string) => Promise<StatusResult>
   diff: (repoPath: string, file: string, staged: boolean) => Promise<DiffResult>
   stage: (repoPath: string, file: string) => Promise<CheckoutResult>
+  stageAll: (repoPath: string) => Promise<CheckoutResult>
+  unstageAll: (repoPath: string) => Promise<CheckoutResult>
   unstage: (repoPath: string, file: string) => Promise<CheckoutResult>
   commit: (repoPath: string, message: string) => Promise<CheckoutResult>
   clone: (url: string, parentDir: string) => Promise<CloneResult>
