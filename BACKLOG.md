@@ -39,18 +39,18 @@ A GitHub-Desktop-style repository switcher, but better:
 
 ## Phase 7 / polish — user feedback (2026-06-04)
 
-- [doing] Replace the error/info bar with a less intrusive presentation (bottom status bar / toast).
-- [doing] Pull / fetch / push buttons in the toolbar.
-- [doing] Accent color away from blue (dark theme stays).
-- [doing] On startup, auto-select the last-used repo.
-- [doing] Declutter the repo list (long paths look noisy).
-- [doing] Fix Clone modal alignment.
-- [doing] Stash section barely visible — give it room.
+- [done] Replace the error/info bar with a less intrusive bottom status bar.
+- [done] Pull / fetch / push buttons in the toolbar.
+- [done] Accent color away from blue → amber (dark theme stays).
+- [done] On startup, auto-select the last-used repo.
+- [done] Declutter the repo list (shows containing folder, full path on hover).
+- [done] Fix Clone modal alignment.
+- [done] Stash section visible (three equal, resizable sidebar sections).
 - [done] **Resizable / dockable panels** — integrated dockview: History + Changes
   panels are draggable, dockable, resizable, with persisted layout + "Reset layout"
   button. Changes panel keeps internal vertical resizers for its sections.
-  Follow-ups: [done] dockview theme matched to dark + amber; make Diff a dockable
-  panel instead of a modal; add a "View" menu to re-open closed panels.
+  Follow-ups: [done] dockview theme matched to dark + amber; [done] "View" menu to
+  re-open closed panels; make Diff a dockable panel instead of a modal.
 - [backlog] **Left-most panel listing all repos we have access to** — overlaps the
   GitHub clone-browser item (needs GitHub auth + API). A persistent left rail of
   accessible repos, not just the ones opened locally.

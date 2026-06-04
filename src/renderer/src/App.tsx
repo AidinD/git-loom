@@ -149,6 +149,19 @@ function App() {
     buildDefaultLayout(api)
   }
 
+  function showPanel(id: 'graph' | 'changes', title: string): void {
+    const api = dockApi.current
+    if (!api) {
+      return
+    }
+    const existing = api.getPanel(id)
+    if (existing) {
+      existing.api.setActive()
+    } else {
+      api.addPanel({ id, component: id, title })
+    }
+  }
+
   async function loadStatus(path: string): Promise<void> {
     const result = await window.api.status(path)
     setChanges(result.ok ? result.files : [])
@@ -601,6 +614,23 @@ function App() {
             </button>
           </>
         )}
+        <button
+          className="secondary"
+          title="Re-open panels"
+          onClick={(event) => {
+            const rect = event.currentTarget.getBoundingClientRect()
+            setContextMenu({
+              x: rect.left,
+              y: rect.bottom + 4,
+              items: [
+                { label: 'History', onClick: () => showPanel('graph', 'History') },
+                { label: 'Changes', onClick: () => showPanel('changes', 'Changes') }
+              ]
+            })
+          }}
+        >
+          View
+        </button>
         <button className="secondary" onClick={resetLayout} title="Reset panel layout">
           Reset layout
         </button>
