@@ -366,6 +366,52 @@ export async function push(dir: string): Promise<CheckoutResult> {
   return runSimple(dir, ['push'], 'Pushed')
 }
 
+/** Creates a new branch (optionally from a start point) and checks it out. */
+export async function createBranch(
+  dir: string,
+  name: string,
+  startPoint?: string
+): Promise<CheckoutResult> {
+  const args = ['checkout', '-b', name]
+  if (startPoint) {
+    args.push(startPoint)
+  }
+  return runSimple(dir, args, `Created ${name}`)
+}
+
+/** Deletes a local branch (safe: refuses if not fully merged). */
+export async function deleteBranch(
+  dir: string,
+  name: string
+): Promise<CheckoutResult> {
+  return runSimple(dir, ['branch', '-d', name], `Deleted ${name}`)
+}
+
+/** Renames a local branch. */
+export async function renameBranch(
+  dir: string,
+  oldName: string,
+  newName: string
+): Promise<CheckoutResult> {
+  return runSimple(dir, ['branch', '-m', oldName, newName], `Renamed to ${newName}`)
+}
+
+/** Discards changes to a file: untracked files are removed, tracked files reset to HEAD. */
+export async function discardFile(
+  dir: string,
+  file: string,
+  untracked: boolean
+): Promise<CheckoutResult> {
+  if (untracked) {
+    return runSimple(dir, ['clean', '-f', '--', file], `Discarded ${file}`)
+  }
+  return runSimple(
+    dir,
+    ['restore', '--staged', '--worktree', '--source=HEAD', '--', file],
+    `Discarded changes in ${file}`
+  )
+}
+
 const STASH_FIELD = '\x1f'
 
 /** Lists the stash stack, newest first. */

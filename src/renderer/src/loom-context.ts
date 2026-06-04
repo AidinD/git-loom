@@ -1,5 +1,6 @@
 import { createContext, useContext } from 'react'
 import type { Commit, FileChange, StashEntry } from '../../shared/types'
+import type { ContextMenuItem } from './ContextMenu'
 
 /**
  * Everything the dockable panels need. App owns the state and handlers; panels
@@ -18,6 +19,9 @@ export interface LoomContextValue {
   dragOver: string | null
   setDragOver: (value: string | null) => void
   requestMerge: (source: string, target: string, targetLabel: string) => void
+  openContextMenu: (x: number, y: number, items: ContextMenuItem[]) => void
+  onRenameBranch: (name: string) => void
+  onDeleteBranch: (name: string) => void
 
   // Changes panel
   changes: FileChange[]
@@ -31,6 +35,7 @@ export interface LoomContextValue {
   onStash: () => void
   onPopStash: (ref: string) => void
   onDropStash: (ref: string) => void
+  onDiscard: (file: string, untracked: boolean) => void
 }
 
 export const LoomContext = createContext<LoomContextValue | null>(null)

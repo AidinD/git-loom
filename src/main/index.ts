@@ -17,7 +17,11 @@ import {
   stashDrop,
   fetch,
   pull,
-  push
+  push,
+  createBranch,
+  deleteBranch,
+  renameBranch,
+  discardFile
 } from './git'
 import {
   listRepos,
@@ -145,6 +149,31 @@ app.whenReady().then(() => {
   ipcMain.handle('git:push', async (_event, repoPath: string) => {
     return push(repoPath)
   })
+
+  ipcMain.handle(
+    'git:createBranch',
+    async (_event, repoPath: string, name: string, startPoint?: string) => {
+      return createBranch(repoPath, name, startPoint)
+    }
+  )
+
+  ipcMain.handle('git:deleteBranch', async (_event, repoPath: string, name: string) => {
+    return deleteBranch(repoPath, name)
+  })
+
+  ipcMain.handle(
+    'git:renameBranch',
+    async (_event, repoPath: string, oldName: string, newName: string) => {
+      return renameBranch(repoPath, oldName, newName)
+    }
+  )
+
+  ipcMain.handle(
+    'git:discardFile',
+    async (_event, repoPath: string, file: string, untracked: boolean) => {
+      return discardFile(repoPath, file, untracked)
+    }
+  )
 
   ipcMain.handle('repos:list', async () => {
     return listRepos()

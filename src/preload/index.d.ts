@@ -34,6 +34,22 @@ export interface LoomApi {
   push: (repoPath: string) => Promise<CheckoutResult>
   getCurrentRepo: () => Promise<string | null>
   setCurrentRepo: (repoPath: string) => Promise<void>
+  createBranch: (
+    repoPath: string,
+    name: string,
+    startPoint?: string
+  ) => Promise<CheckoutResult>
+  deleteBranch: (repoPath: string, name: string) => Promise<CheckoutResult>
+  renameBranch: (
+    repoPath: string,
+    oldName: string,
+    newName: string
+  ) => Promise<CheckoutResult>
+  discardFile: (
+    repoPath: string,
+    file: string,
+    untracked: boolean
+  ) => Promise<CheckoutResult>
 }
 
 declare global {

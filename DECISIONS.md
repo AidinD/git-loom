@@ -83,7 +83,20 @@ Newest entries can go on top. Format: decision · alternatives · why.
 - **Why:** User preference — likes dark, dislikes blue. Amber chosen first, with violet
   as the fallback if it doesn't sit well.
 
+### Branch operations & discard (follow-up)
+- **Decision:** Create branch (toolbar → modal, `checkout -b` from HEAD), and
+  rename/delete via a **right-click context menu** on local branch chips. Discard via a
+  ⟲ button on Changes rows, behind a confirm.
+- **Why context menu:** branch rename/delete don't warrant permanent buttons, and the
+  user wanted right-click menus anyway — so this also introduces a reusable `ContextMenu`
+  primitive for later (file actions, etc.).
+- **Discard semantics:** untracked → `git clean -f`; tracked → `git restore
+  --staged --worktree --source=HEAD`. Always behind a confirm (loses uncommitted work).
+  Edge case (discarding a staged brand-new file leaves it on disk untracked) deferred.
+- **Delete:** `branch -d` (safe; refuses unmerged/current). Force-delete deferred.
+
 ### Process
 - **Build order:** risk-first "walking skeleton" — attack the existential risk (does the
   graph + drag interaction feel good?) before breadth (stash, diff, switcher). Low-risk,
   well-understood features come later, depth-first.
+- **Version control:** commit after each major change (user preference, this project).

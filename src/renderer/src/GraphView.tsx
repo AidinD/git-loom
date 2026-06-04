@@ -1,5 +1,6 @@
 import GitGraph from './graph/GitGraph'
 import { useLoom } from './loom-context'
+import type { ContextMenuItem } from './ContextMenu'
 
 const ROW_HEIGHT = 28
 
@@ -53,7 +54,10 @@ function GraphView() {
     setDragSource,
     dragOver,
     setDragOver,
-    requestMerge
+    requestMerge,
+    openContextMenu,
+    onRenameBranch,
+    onDeleteBranch
   } = useLoom()
 
   if (commits.length === 0) {
@@ -104,6 +108,35 @@ function GraphView() {
                           : undefined
                       }
                       draggable={canDrag}
+                      onContextMenu={(event) => {
+                        event.preventDefault()
+                        event.stopPropagation()
+                        const items: ContextMenuItem[] = []
+                        if (parsed.target) {
+                          items.push({
+                            label: `Check out ${parsed.target}`,
+                            onClick: () => onCheckout(parsed.target)
+                          })
+                        }
+                        if (
+                          (parsed.kind === 'branch' || parsed.kind === 'head') &&
+                          parsed.name
+                        ) {
+                          const branchName = parsed.name
+                          items.push({
+                            label: 'Rename…',
+                            onClick: () => onRenameBranch(branchName)
+                          })
+                          items.push({
+                            label: 'Delete',
+                            danger: true,
+                            onClick: () => onDeleteBranch(branchName)
+                          })
+                        }
+                        if (items.length > 0) {
+                          openContextMenu(event.clientX, event.clientY, items)
+                        }
+                      }}
                       onDoubleClick={(event) => {
                         if (!parsed.target) {
                           return

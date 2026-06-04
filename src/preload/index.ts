@@ -56,7 +56,27 @@ const api = {
   getCurrentRepo: (): Promise<string | null> =>
     ipcRenderer.invoke('repos:getCurrent'),
   setCurrentRepo: (repoPath: string): Promise<void> =>
-    ipcRenderer.invoke('repos:setCurrent', repoPath)
+    ipcRenderer.invoke('repos:setCurrent', repoPath),
+  createBranch: (
+    repoPath: string,
+    name: string,
+    startPoint?: string
+  ): Promise<CheckoutResult> =>
+    ipcRenderer.invoke('git:createBranch', repoPath, name, startPoint),
+  deleteBranch: (repoPath: string, name: string): Promise<CheckoutResult> =>
+    ipcRenderer.invoke('git:deleteBranch', repoPath, name),
+  renameBranch: (
+    repoPath: string,
+    oldName: string,
+    newName: string
+  ): Promise<CheckoutResult> =>
+    ipcRenderer.invoke('git:renameBranch', repoPath, oldName, newName),
+  discardFile: (
+    repoPath: string,
+    file: string,
+    untracked: boolean
+  ): Promise<CheckoutResult> =>
+    ipcRenderer.invoke('git:discardFile', repoPath, file, untracked)
 }
 
 if (process.contextIsolated) {

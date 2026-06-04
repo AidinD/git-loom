@@ -14,6 +14,7 @@ interface Props {
   onStash: () => void
   onPopStash: (ref: string) => void
   onDropStash: (ref: string) => void
+  onDiscard: (file: string, untracked: boolean) => void
 }
 
 interface Badge {
@@ -70,7 +71,8 @@ function ChangesPanel({
   onShowDiff,
   onStash,
   onPopStash,
-  onDropStash
+  onDropStash,
+  onDiscard
 }: Props) {
   const [stagedHeight, setStagedHeight] = useState(() =>
     stored('loom.stagedHeight', 150)
@@ -179,6 +181,17 @@ function ChangesPanel({
                 <span className="file-path">{file.path}</span>
                 <button
                   className="file-action"
+                  title="Discard changes"
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    onDiscard(file.path, file.worktree === '?')
+                  }}
+                >
+                  ⟲
+                </button>
+                <button
+                  className="file-action"
+                  title="Stage"
                   onClick={(event) => {
                     event.stopPropagation()
                     onStage(file.path)

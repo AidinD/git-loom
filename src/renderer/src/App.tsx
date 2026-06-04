@@ -7,6 +7,8 @@ import ChangesPanel from './ChangesPanel'
 import DiffModal from './DiffModal'
 import RepoSwitcher from './RepoSwitcher'
 import GraphView from './GraphView'
+import ContextMenu from './ContextMenu'
+import type { ContextMenuItem } from './ContextMenu'
 import { LoomContext, useLoom } from './loom-context'
 import type { LoomContextValue } from './loom-context'
 
@@ -20,6 +22,17 @@ interface DiffView {
   path: string
   staged: boolean
   text: string
+}
+
+interface ContextMenuState {
+  x: number
+  y: number
+  items: ContextMenuItem[]
+}
+
+interface ConfirmState {
+  message: string
+  action: () => void
 }
 
 // Stable dockview panel components — they read live data from LoomContext.
@@ -38,6 +51,7 @@ function ChangesDockPanel() {
       onStash={l.onStash}
       onPopStash={l.onPopStash}
       onDropStash={l.onDropStash}
+      onDiscard={l.onDiscard}
     />
   )
 }
@@ -82,6 +96,12 @@ function App() {
   const [groupInput, setGroupInput] = useState('')
   const [cloneOpen, setCloneOpen] = useState(false)
   const [cloneUrl, setCloneUrl] = useState('')
+  const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null)
+  const [newBranchOpen, setNewBranchOpen] = useState(false)
+  const [newBranchName, setNewBranchName] = useState('')
+  const [renameTarget, setRenameTarget] = useState<string | null>(null)
+  const [renameInput, setRenameInput] = useState('')
+  const [confirm, setConfirm] = useState<ConfirmState | null>(null)
 
   useEffect(() => {
     window.api.listRepos().then(setRepos)
@@ -380,6 +400,93 @@ function App() {
     await loadLog(result.path)
   }
 
+  async function handleCreateBranch(): Promise<void> {
+    const name = newBranchName.trim()
+    if (!repoPath || name.length === 0) {
+      return
+    }
+    setNewBranchOpen(false)
+    setNewBranchName('')
+    setError(null)
+    setInfo(null)
+    const result = await window.api.createBranch(repoPath, name)
+    if (!result.ok) {
+      setError(result.error)
+      return
+    }
+    setInfo(result.message)
+    await loadLog(repoPath)
+  }
+
+  function openRenameModal(name: string): void {
+    setRenameTarget(name)
+    setRenameInput(name)
+  }
+
+  async function saveRename(): Promise<void> {
+    const newName = renameInput.trim()
+    if (!repoPath || !renameTarget || newName.length === 0) {
+      return
+    }
+    const oldName = renameTarget
+    setRenameTarget(null)
+    setError(null)
+    setInfo(null)
+    const result = await window.api.renameBranch(repoPath, oldName, newName)
+    if (!result.ok) {
+      setError(result.error)
+      return
+    }
+    setInfo(result.message)
+    await loadLog(repoPath)
+  }
+
+  function requestDeleteBranch(name: string): void {
+    setConfirm({
+      message: `Delete branch "${name}"?`,
+      action: () => {
+        void doDeleteBranch(name)
+      }
+    })
+  }
+
+  async function doDeleteBranch(name: string): Promise<void> {
+    if (!repoPath) {
+      return
+    }
+    setError(null)
+    setInfo(null)
+    const result = await window.api.deleteBranch(repoPath, name)
+    if (!result.ok) {
+      setError(result.error)
+      return
+    }
+    setInfo(result.message)
+    await loadLog(repoPath)
+  }
+
+  function requestDiscard(file: string, untracked: boolean): void {
+    setConfirm({
+      message: `Discard changes in "${file}"? This cannot be undone.`,
+      action: () => {
+        void doDiscard(file, untracked)
+      }
+    })
+  }
+
+  async function doDiscard(file: string, untracked: boolean): Promise<void> {
+    if (!repoPath) {
+      return
+    }
+    setError(null)
+    const result = await window.api.discardFile(repoPath, file, untracked)
+    if (!result.ok) {
+      setError(result.error)
+      return
+    }
+    await loadStatus(repoPath)
+  }
+
   const loomValue: LoomContextValue = {
     commits,
     remotes,
@@ -393,6 +500,9 @@ function App() {
     setDragOver,
     requestMerge: (source, target, targetLabel) =>
       setMergeRequest({ source, target, targetLabel }),
+    openContextMenu: (x, y, items) => setContextMenu({ x, y, items }),
+    onRenameBranch: openRenameModal,
+    onDeleteBranch: requestDeleteBranch,
     changes,
     stashes,
     commitMessage,
@@ -403,7 +513,8 @@ function App() {
     onShowDiff: handleShowDiff,
     onStash: handleStash,
     onPopStash: handlePopStash,
-    onDropStash: handleDropStash
+    onDropStash: handleDropStash,
+    onDiscard: requestDiscard
   }
 
   return (
@@ -431,6 +542,9 @@ function App() {
             </button>
             <button className="secondary" onClick={handlePush}>
               Push
+            </button>
+            <button className="secondary" onClick={() => setNewBranchOpen(true)}>
+              New branch
             </button>
           </>
         )}
@@ -543,6 +657,83 @@ function App() {
             </div>
           </div>
         </div>
+      )}
+
+      {newBranchOpen && (
+        <div className="modal-backdrop" onClick={() => setNewBranchOpen(false)}>
+          <div className="modal" onClick={(event) => event.stopPropagation()}>
+            <p className="modal-text">New branch</p>
+            <p className="modal-hint">Created from the current HEAD and checked out.</p>
+            <input
+              className="commit-message"
+              style={{ height: 'auto' }}
+              placeholder="branch-name"
+              value={newBranchName}
+              autoFocus
+              onChange={(event) => setNewBranchName(event.target.value)}
+            />
+            <div className="modal-actions">
+              <button onClick={handleCreateBranch}>Create</button>
+              <button className="secondary" onClick={() => setNewBranchOpen(false)}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {renameTarget && (
+        <div className="modal-backdrop" onClick={() => setRenameTarget(null)}>
+          <div className="modal" onClick={(event) => event.stopPropagation()}>
+            <p className="modal-text">
+              Rename branch <strong>{renameTarget}</strong>
+            </p>
+            <input
+              className="commit-message"
+              style={{ height: 'auto' }}
+              placeholder="new-name"
+              value={renameInput}
+              autoFocus
+              onChange={(event) => setRenameInput(event.target.value)}
+            />
+            <div className="modal-actions">
+              <button onClick={saveRename}>Rename</button>
+              <button className="secondary" onClick={() => setRenameTarget(null)}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {confirm && (
+        <div className="modal-backdrop" onClick={() => setConfirm(null)}>
+          <div className="modal" onClick={(event) => event.stopPropagation()}>
+            <p className="modal-text">{confirm.message}</p>
+            <div className="modal-actions">
+              <button
+                onClick={() => {
+                  confirm.action()
+                  setConfirm(null)
+                }}
+              >
+                Confirm
+              </button>
+              <button className="secondary" onClick={() => setConfirm(null)}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {contextMenu && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          items={contextMenu.items}
+          onClose={() => setContextMenu(null)}
+        />
       )}
     </div>
   )

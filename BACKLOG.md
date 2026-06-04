@@ -32,8 +32,11 @@ A GitHub-Desktop-style repository switcher, but better:
 
 - **Stage all / unstage all** button per section (and/or checkboxes per file).
 - **Multi-select** files with Ctrl/Shift, then bulk stage/unstage.
-- **Right-click context menu** on files (stage, unstage, discard, ignore, etc.).
-- Discard changes / restore file.
+- **Right-click context menu** on files (stage, unstage, ignore, etc.) — a reusable
+  `ContextMenu` exists (used on branch chips); extend it to file rows.
+- [done] Discard changes / restore file (⟲ button + confirm).
+- [done] Branch ops: create (toolbar), rename/delete (right-click branch chip).
+  Follow-ups: force-delete unmerged branch; create branch from a specific commit.
 
 ## Phase 7 / polish — user feedback (2026-06-04)
 
