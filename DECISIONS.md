@@ -100,3 +100,21 @@ Newest entries can go on top. Format: decision · alternatives · why.
   graph + drag interaction feel good?) before breadth (stash, diff, switcher). Low-risk,
   well-understood features come later, depth-first.
 - **Version control:** commit after each major change (user preference, this project).
+  Now has GitHub remote AidinD/git-loom — push after each commit too.
+
+## 2026-06-04 — Autonomous backlog pass (user away)
+
+Shipped self-contained items: force-delete + create-branch-from-commit, Diff as a
+dockable panel (replaced the modal), multi-select in the Changes panel (Ctrl/Shift +
+bulk stage/unstage/discard). Also moved the whole project out of Northwind/Internal to
+`D:\Repo\Tools\` (personal project).
+
+**Deliberately NOT done unattended (need the user / verification):**
+- GitHub clone-browser — needs the user to authenticate (PAT/OAuth).
+- Rebase-drag — destructive; mirror of merge but a bug could strand the repo mid-rebase.
+  Build it *with* the user to verify on the sandbox.
+- Graph virtualization — needs pixel-exact scroll-alignment that must be eyeballed;
+  low value while capped at 1000 commits.
+- In-UI conflict resolver — a full 3-way editor, too large for an unattended pass.
+- Halyard-style drag-n-drop grouping — user wants parity with Halyard's actual
+  component; confirm against `nw-studio-app` rather than guess.
