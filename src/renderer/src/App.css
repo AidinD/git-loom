@@ -90,7 +90,36 @@ body {
 .dockview {
   width: 100%;
   height: 100%;
+
+  /* Match dockview chrome to Loom's dark + amber palette. */
+  --dv-group-view-background-color: var(--bg);
+  --dv-tabs-and-actions-container-background-color: var(--bg-alt);
+  --dv-tabs-and-actions-container-height: 32px;
+
+  --dv-activegroup-visiblepanel-tab-background-color: var(--bg);
+  --dv-activegroup-visiblepanel-tab-color: var(--text);
+  --dv-activegroup-hiddenpanel-tab-background-color: var(--bg-alt);
+  --dv-activegroup-hiddenpanel-tab-color: var(--text-dim);
+  --dv-inactivegroup-visiblepanel-tab-background-color: var(--bg-alt);
+  --dv-inactivegroup-visiblepanel-tab-color: var(--text-dim);
+  --dv-inactivegroup-hiddenpanel-tab-background-color: var(--bg-alt);
+  --dv-inactivegroup-hiddenpanel-tab-color: var(--text-dim);
+
+  --dv-separator-border: var(--border);
+  --dv-tab-divider-color: var(--border);
+  --dv-paneview-header-border-color: var(--border);
+  --dv-tab-border-radius: 4px;
+
   --dv-active-sash-color: var(--accent);
+  --dv-sash-color: transparent;
+  --dv-paneview-active-outline-color: var(--accent);
+
+  --dv-drag-over-background-color: rgba(240, 168, 104, 0.16);
+  --dv-drag-over-border-color: var(--accent);
+
+  --dv-icon-hover-background-color: var(--bg);
+  --dv-context-menu-background-color: var(--bg-alt);
+  --dv-context-menu-color: var(--text);
 }
 
 .main {

@@ -50,8 +50,8 @@ A GitHub-Desktop-style repository switcher, but better:
 - [done] **Resizable / dockable panels** — integrated dockview: History + Changes
   panels are draggable, dockable, resizable, with persisted layout + "Reset layout"
   button. Changes panel keeps internal vertical resizers for its sections.
-  Follow-ups: refine dockview theme to match amber; make Diff a dockable panel
-  instead of a modal; add a "View" menu to re-open closed panels.
+  Follow-ups: [done] dockview theme matched to dark + amber; make Diff a dockable
+  panel instead of a modal; add a "View" menu to re-open closed panels.
 - [backlog] **Left-most panel listing all repos we have access to** — overlaps the
   GitHub clone-browser item (needs GitHub auth + API). A persistent left rail of
   accessible repos, not just the ones opened locally.
