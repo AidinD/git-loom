@@ -1,29 +1,14 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { DockviewReact, themeDark } from 'dockview'
+import type { DockviewApi, DockviewReadyEvent } from 'dockview'
+import 'dockview/dist/styles/dockview.css'
 import type { Commit, FileChange, RepoEntry, StashEntry } from '../../shared/types'
-import GitGraph from './graph/GitGraph'
 import ChangesPanel from './ChangesPanel'
 import DiffModal from './DiffModal'
 import RepoSwitcher from './RepoSwitcher'
-
-interface DiffView {
-  path: string
-  staged: boolean
-  text: string
-}
-
-const ROW_HEIGHT = 28
-
-type RefKind = 'head' | 'branch' | 'remote' | 'tag'
-
-interface ParsedRef {
-  kind: RefKind
-  /** Display text on the chip. */
-  label: string
-  /** The git ref name (merge source + drag/drop identity), or null. */
-  name: string | null
-  /** The name to pass to `git checkout`, or null when not checkout-able. */
-  target: string | null
-}
+import GraphView from './GraphView'
+import { LoomContext, useLoom } from './loom-context'
+import type { LoomContextValue } from './loom-context'
 
 interface MergeRequest {
   source: string
@@ -31,42 +16,49 @@ interface MergeRequest {
   targetLabel: string
 }
 
-function parseRef(ref: string, remotes: string[]): ParsedRef {
-  if (ref.startsWith('tag: ')) {
-    const name = ref.slice(5)
-    return { kind: 'tag', label: name, name, target: name }
-  }
-  if (ref.startsWith('HEAD ->')) {
-    // The current branch. Shown as "you are here" but still a real branch you
-    // can merge into / from — it is the most common merge target.
-    const branch = ref.replace('HEAD ->', '').trim()
-    return { kind: 'head', label: `HEAD → ${branch}`, name: branch, target: branch }
-  }
-  if (ref === 'HEAD') {
-    // Detached HEAD — a pure indicator, no branch behind it.
-    return { kind: 'head', label: 'HEAD', name: null, target: null }
-  }
-  const slash = ref.indexOf('/')
-  if (slash !== -1 && remotes.includes(ref.slice(0, slash))) {
-    // Remote-tracking ref like "origin/feature". Checking out its short name
-    // lets git create/switch to a local branch tracking it, instead of
-    // landing in a detached HEAD.
-    const shortName = ref.slice(slash + 1)
-    const target = shortName && shortName !== 'HEAD' ? shortName : null
-    return { kind: 'remote', label: ref, name: ref, target }
-  }
-  // Local branch — may itself contain slashes, e.g. "feature/x".
-  return { kind: 'branch', label: ref, name: ref, target: ref }
+interface DiffView {
+  path: string
+  staged: boolean
+  text: string
 }
 
-/** A ref that can be the source of a merge / dragged. */
-function canDragRef(parsed: ParsedRef): boolean {
-  return parsed.name !== null && parsed.kind !== 'tag'
+// Stable dockview panel components — they read live data from LoomContext.
+function ChangesDockPanel() {
+  const l = useLoom()
+  return (
+    <ChangesPanel
+      files={l.changes}
+      stashes={l.stashes}
+      commitMessage={l.commitMessage}
+      onCommitMessageChange={l.setCommitMessage}
+      onStage={l.onStage}
+      onUnstage={l.onUnstage}
+      onCommit={l.onCommit}
+      onShowDiff={l.onShowDiff}
+      onStash={l.onStash}
+      onPopStash={l.onPopStash}
+      onDropStash={l.onDropStash}
+    />
+  )
 }
 
-/** A ref that can be a merge target / drop zone (a checkout-able branch). */
-function canDropRef(parsed: ParsedRef): boolean {
-  return parsed.target !== null && parsed.kind !== 'tag'
+function GraphDockPanel() {
+  return <GraphView />
+}
+
+const DOCK_COMPONENTS = {
+  changes: ChangesDockPanel,
+  graph: GraphDockPanel
+}
+
+function buildDefaultLayout(api: DockviewApi): void {
+  api.addPanel({ id: 'graph', component: 'graph', title: 'History' })
+  api.addPanel({
+    id: 'changes',
+    component: 'changes',
+    title: 'Changes',
+    position: { referencePanel: 'graph', direction: 'left' }
+  })
 }
 
 function App() {
@@ -101,13 +93,42 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  const dockApi = useRef<DockviewApi | null>(null)
+
+  const handleReady = useCallback((event: DockviewReadyEvent) => {
+    const api = event.api
+    dockApi.current = api
+    const saved = localStorage.getItem('loom.layout')
+    let restored = false
+    if (saved) {
+      try {
+        api.fromJSON(JSON.parse(saved))
+        restored = true
+      } catch {
+        restored = false
+      }
+    }
+    if (!restored) {
+      buildDefaultLayout(api)
+    }
+    api.onDidLayoutChange(() => {
+      localStorage.setItem('loom.layout', JSON.stringify(api.toJSON()))
+    })
+  }, [])
+
+  function resetLayout(): void {
+    const api = dockApi.current
+    if (!api) {
+      return
+    }
+    localStorage.removeItem('loom.layout')
+    api.clear()
+    buildDefaultLayout(api)
+  }
+
   async function loadStatus(path: string): Promise<void> {
     const result = await window.api.status(path)
-    if (result.ok) {
-      setChanges(result.files)
-    } else {
-      setChanges([])
-    }
+    setChanges(result.ok ? result.files : [])
     const stashResult = await window.api.stashList(path)
     setStashes(stashResult.ok ? stashResult.stashes : [])
   }
@@ -194,60 +215,10 @@ function App() {
     await loadLog(repoPath)
   }
 
-  async function handleStage(file: string): Promise<void> {
-    if (!repoPath) {
-      return
-    }
-    const result = await window.api.stage(repoPath, file)
-    if (!result.ok) {
-      setError(result.error)
-      return
-    }
-    await loadStatus(repoPath)
-  }
-
-  async function handleUnstage(file: string): Promise<void> {
-    if (!repoPath) {
-      return
-    }
-    const result = await window.api.unstage(repoPath, file)
-    if (!result.ok) {
-      setError(result.error)
-      return
-    }
-    await loadStatus(repoPath)
-  }
-
-  async function handleCommit(): Promise<void> {
-    if (!repoPath || commitMessage.trim().length === 0) {
-      return
-    }
-    setError(null)
-    setInfo(null)
-    const result = await window.api.commit(repoPath, commitMessage.trim())
-    if (!result.ok) {
-      setError(result.error)
-      return
-    }
-    setInfo(result.message)
-    setCommitMessage('')
-    await loadLog(repoPath)
-  }
-
-  async function handleShowDiff(file: string, staged: boolean): Promise<void> {
-    if (!repoPath) {
-      return
-    }
-    const result = await window.api.diff(repoPath, file, staged)
-    if (result.ok) {
-      setDiffView({ path: file, staged, text: result.text })
-    } else {
-      setError(result.error)
-    }
-  }
-
   async function runRemoteOp(
-    op: (path: string) => Promise<{ ok: boolean } & ({ message: string } | { error: string })>
+    op: (
+      path: string
+    ) => Promise<{ ok: boolean } & ({ message: string } | { error: string })>
   ): Promise<void> {
     if (!repoPath) {
       return
@@ -255,7 +226,6 @@ function App() {
     setError(null)
     setInfo(null)
     const result = await op(repoPath)
-    // Refresh first: loadLog clears the error bar, so set the result after it.
     await loadLog(repoPath)
     if (result.ok && 'message' in result) {
       setInfo(result.message)
@@ -319,6 +289,58 @@ function App() {
     }
   }
 
+  async function handleStage(file: string): Promise<void> {
+    if (!repoPath) {
+      return
+    }
+    const result = await window.api.stage(repoPath, file)
+    if (!result.ok) {
+      setError(result.error)
+      return
+    }
+    await loadStatus(repoPath)
+  }
+
+  async function handleUnstage(file: string): Promise<void> {
+    if (!repoPath) {
+      return
+    }
+    const result = await window.api.unstage(repoPath, file)
+    if (!result.ok) {
+      setError(result.error)
+      return
+    }
+    await loadStatus(repoPath)
+  }
+
+  async function handleCommit(): Promise<void> {
+    if (!repoPath || commitMessage.trim().length === 0) {
+      return
+    }
+    setError(null)
+    setInfo(null)
+    const result = await window.api.commit(repoPath, commitMessage.trim())
+    if (!result.ok) {
+      setError(result.error)
+      return
+    }
+    setInfo(result.message)
+    setCommitMessage('')
+    await loadLog(repoPath)
+  }
+
+  async function handleShowDiff(file: string, staged: boolean): Promise<void> {
+    if (!repoPath) {
+      return
+    }
+    const result = await window.api.diff(repoPath, file, staged)
+    if (result.ok) {
+      setDiffView({ path: file, staged, text: result.text })
+    } else {
+      setError(result.error)
+    }
+  }
+
   async function handleRemoveRepo(path: string): Promise<void> {
     setRepos(await window.api.removeRepo(path))
   }
@@ -358,6 +380,32 @@ function App() {
     await loadLog(result.path)
   }
 
+  const loomValue: LoomContextValue = {
+    commits,
+    remotes,
+    repoPath,
+    selected,
+    setSelected,
+    onCheckout: handleCheckout,
+    dragSource,
+    setDragSource,
+    dragOver,
+    setDragOver,
+    requestMerge: (source, target, targetLabel) =>
+      setMergeRequest({ source, target, targetLabel }),
+    changes,
+    stashes,
+    commitMessage,
+    setCommitMessage,
+    onStage: handleStage,
+    onUnstage: handleUnstage,
+    onCommit: handleCommit,
+    onShowDiff: handleShowDiff,
+    onStash: handleStash,
+    onPopStash: handlePopStash,
+    onDropStash: handleDropStash
+  }
+
   return (
     <div className="app">
       <header className="toolbar">
@@ -386,6 +434,9 @@ function App() {
             </button>
           </>
         )}
+        <button className="secondary" onClick={resetLayout} title="Reset panel layout">
+          Reset layout
+        </button>
         {inConflict && (
           <button className="danger" onClick={handleAbortMerge}>
             Abort merge
@@ -394,125 +445,16 @@ function App() {
         {repoPath && <span className="repo-path">{repoPath}</span>}
       </header>
 
-      <div className="workspace">
-        {repoPath && (
-          <ChangesPanel
-            files={changes}
-            stashes={stashes}
-            commitMessage={commitMessage}
-            onCommitMessageChange={setCommitMessage}
-            onStage={handleStage}
-            onUnstage={handleUnstage}
-            onCommit={handleCommit}
-            onShowDiff={handleShowDiff}
-            onStash={handleStash}
-            onPopStash={handlePopStash}
-            onDropStash={handleDropStash}
+      <LoomContext.Provider value={loomValue}>
+        <div className="workspace">
+          <DockviewReact
+            className="dockview"
+            theme={themeDark}
+            components={DOCK_COMPONENTS}
+            onReady={handleReady}
           />
-        )}
-
-        <div className="main">
-          {commits.length > 0 && <GitGraph commits={commits} rowHeight={ROW_HEIGHT} />}
-
-          <ul className="commit-list">
-          {commits.map((commit) => (
-            <li
-              key={commit.hash}
-              className={`commit${selected === commit.hash ? ' selected' : ''}`}
-              style={{ height: ROW_HEIGHT }}
-              onClick={() => setSelected(commit.hash)}
-              onDoubleClick={() => handleCheckout(commit.hash)}
-              title="Double-click to check out this commit (detached)"
-            >
-              <code className="hash">{commit.hash.slice(0, 7)}</code>
-              {commit.refs.length > 0 && (
-                <span className="refs">
-                  {commit.refs.map((ref) => {
-                    const parsed = parseRef(ref, remotes)
-                    const canDrag = canDragRef(parsed)
-                    const canDrop = canDropRef(parsed)
-                    const classes = [
-                      'ref',
-                      `ref-${parsed.kind}`,
-                      parsed.target ? 'checkoutable' : '',
-                      canDrag ? 'draggable' : '',
-                      dragOver === parsed.name ? 'drag-over' : ''
-                    ]
-                      .filter(Boolean)
-                      .join(' ')
-                    return (
-                      <span
-                        key={ref}
-                        className={classes}
-                        title={
-                          parsed.target
-                            ? `Double-click to check out ${parsed.target} · drag onto another branch to merge`
-                            : undefined
-                        }
-                        draggable={canDrag}
-                        onDoubleClick={(event) => {
-                          if (!parsed.target) {
-                            return
-                          }
-                          event.stopPropagation()
-                          handleCheckout(parsed.target)
-                        }}
-                        onDragStart={(event) => {
-                          event.stopPropagation()
-                          event.dataTransfer.effectAllowed = 'move'
-                          setDragSource(parsed.name)
-                        }}
-                        onDragEnd={() => {
-                          setDragSource(null)
-                          setDragOver(null)
-                        }}
-                        onDragOver={(event) => {
-                          if (canDrop && dragSource && dragSource !== parsed.name) {
-                            event.preventDefault()
-                            setDragOver(parsed.name)
-                          }
-                        }}
-                        onDragLeave={() => {
-                          if (dragOver === parsed.name) {
-                            setDragOver(null)
-                          }
-                        }}
-                        onDrop={(event) => {
-                          event.preventDefault()
-                          event.stopPropagation()
-                          if (
-                            canDrop &&
-                            parsed.target &&
-                            dragSource &&
-                            dragSource !== parsed.name
-                          ) {
-                            setMergeRequest({
-                              source: dragSource,
-                              target: parsed.target,
-                              targetLabel: parsed.label
-                            })
-                          }
-                          setDragOver(null)
-                          setDragSource(null)
-                        }}
-                      >
-                        {parsed.label}
-                      </span>
-                    )
-                  })}
-                </span>
-              )}
-              <span className="subject">{commit.subject}</span>
-              <span className="author">{commit.authorName}</span>
-            </li>
-          ))}
-          </ul>
         </div>
-      </div>
-
-      {!loading && repoPath && commits.length === 0 && !error && (
-        <div className="status">No commits found.</div>
-      )}
+      </LoomContext.Provider>
 
       {(error || info) && (
         <footer className={`statusbar ${error ? 'statusbar-error' : 'statusbar-info'}`}>
@@ -528,6 +470,8 @@ function App() {
           </button>
         </footer>
       )}
+
+      {loading && <div className="loading-tag">Loading…</div>}
 
       {mergeRequest && (
         <div className="modal-backdrop" onClick={() => setMergeRequest(null)}>

@@ -44,9 +44,11 @@ A GitHub-Desktop-style repository switcher, but better:
 - [doing] Declutter the repo list (long paths look noisy).
 - [doing] Fix Clone modal alignment.
 - [doing] Stash section barely visible — give it room.
-- [backlog] **Resizable panels** — draggable splitters for sidebar width + between
-  Staged / Changes / Stashes sections (user wants to adjust sizes; interim = better
-  default proportions).
+- [done] **Resizable / dockable panels** — integrated dockview: History + Changes
+  panels are draggable, dockable, resizable, with persisted layout + "Reset layout"
+  button. Changes panel keeps internal vertical resizers for its sections.
+  Follow-ups: refine dockview theme to match amber; make Diff a dockable panel
+  instead of a modal; add a "View" menu to re-open closed panels.
 - [backlog] **Left-most panel listing all repos we have access to** — overlaps the
   GitHub clone-browser item (needs GitHub auth + API). A persistent left rail of
   accessible repos, not just the ones opened locally.
