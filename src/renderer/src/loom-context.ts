@@ -22,6 +22,7 @@ export interface LoomContextValue {
   openContextMenu: (x: number, y: number, items: ContextMenuItem[]) => void
   onRenameBranch: (name: string) => void
   onDeleteBranch: (name: string) => void
+  onNewBranchFrom: (startPoint: string) => void
 
   // Changes panel
   changes: FileChange[]

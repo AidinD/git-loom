@@ -67,8 +67,12 @@ const api = {
     startPoint?: string
   ): Promise<CheckoutResult> =>
     ipcRenderer.invoke('git:createBranch', repoPath, name, startPoint),
-  deleteBranch: (repoPath: string, name: string): Promise<CheckoutResult> =>
-    ipcRenderer.invoke('git:deleteBranch', repoPath, name),
+  deleteBranch: (
+    repoPath: string,
+    name: string,
+    force: boolean
+  ): Promise<CheckoutResult> =>
+    ipcRenderer.invoke('git:deleteBranch', repoPath, name, force),
   renameBranch: (
     repoPath: string,
     oldName: string,

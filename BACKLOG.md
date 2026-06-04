@@ -34,8 +34,9 @@ A GitHub-Desktop-style repository switcher, but better:
 - **Multi-select** files with Ctrl/Shift, then bulk stage/unstage.
 - [done] **Right-click context menu** on files (Show diff / Stage|Unstage / Discard).
 - [done] Discard changes / restore file (⟲ button + confirm).
-- [done] Branch ops: create (toolbar), rename/delete (right-click branch chip).
-  Follow-ups: force-delete unmerged branch; create branch from a specific commit.
+- [done] Branch ops: create (toolbar), rename/delete (right-click branch chip),
+  [done] force-delete unmerged (offered on failure), [done] create branch from a
+  specific commit (right-click commit row).
 
 ## Phase 7 / polish — user feedback (2026-06-04)
 

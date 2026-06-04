@@ -57,7 +57,8 @@ function GraphView() {
     requestMerge,
     openContextMenu,
     onRenameBranch,
-    onDeleteBranch
+    onDeleteBranch,
+    onNewBranchFrom
   } = useLoom()
 
   if (commits.length === 0) {
@@ -80,6 +81,19 @@ function GraphView() {
             style={{ height: ROW_HEIGHT }}
             onClick={() => setSelected(commit.hash)}
             onDoubleClick={() => onCheckout(commit.hash)}
+            onContextMenu={(event) => {
+              event.preventDefault()
+              openContextMenu(event.clientX, event.clientY, [
+                {
+                  label: 'New branch here…',
+                  onClick: () => onNewBranchFrom(commit.hash)
+                },
+                {
+                  label: 'Check out (detached)',
+                  onClick: () => onCheckout(commit.hash)
+                }
+              ])
+            }}
             title="Double-click to check out this commit (detached)"
           >
             <code className="hash">{commit.hash.slice(0, 7)}</code>

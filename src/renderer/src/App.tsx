@@ -102,6 +102,7 @@ function App() {
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null)
   const [newBranchOpen, setNewBranchOpen] = useState(false)
   const [newBranchName, setNewBranchName] = useState('')
+  const [newBranchStart, setNewBranchStart] = useState<string | null>(null)
   const [renameTarget, setRenameTarget] = useState<string | null>(null)
   const [renameInput, setRenameInput] = useState('')
   const [confirm, setConfirm] = useState<ConfirmState | null>(null)
@@ -463,16 +464,24 @@ function App() {
     await loadLog(result.path)
   }
 
+  function openNewBranchModal(startPoint: string | null): void {
+    setNewBranchStart(startPoint)
+    setNewBranchName('')
+    setNewBranchOpen(true)
+  }
+
   async function handleCreateBranch(): Promise<void> {
     const name = newBranchName.trim()
     if (!repoPath || name.length === 0) {
       return
     }
+    const startPoint = newBranchStart
     setNewBranchOpen(false)
     setNewBranchName('')
+    setNewBranchStart(null)
     setError(null)
     setInfo(null)
-    const result = await window.api.createBranch(repoPath, name)
+    const result = await window.api.createBranch(repoPath, name, startPoint ?? undefined)
     if (!result.ok) {
       setError(result.error)
       return
@@ -513,14 +522,24 @@ function App() {
     })
   }
 
-  async function doDeleteBranch(name: string): Promise<void> {
+  async function doDeleteBranch(name: string, force = false): Promise<void> {
     if (!repoPath) {
       return
     }
     setError(null)
     setInfo(null)
-    const result = await window.api.deleteBranch(repoPath, name)
+    const result = await window.api.deleteBranch(repoPath, name, force)
     if (!result.ok) {
+      // Offer a force delete when the branch is not fully merged.
+      if (!force && /not fully merged/i.test(result.error)) {
+        setConfirm({
+          message: `Branch "${name}" is not fully merged. Force delete? Unmerged commits will be lost.`,
+          action: () => {
+            void doDeleteBranch(name, true)
+          }
+        })
+        return
+      }
       setError(result.error)
       return
     }
@@ -566,6 +585,7 @@ function App() {
     openContextMenu: (x, y, items) => setContextMenu({ x, y, items }),
     onRenameBranch: openRenameModal,
     onDeleteBranch: requestDeleteBranch,
+    onNewBranchFrom: openNewBranchModal,
     changes,
     stashes,
     commitMessage,
@@ -609,7 +629,7 @@ function App() {
             <button className="secondary" onClick={handlePush}>
               Push
             </button>
-            <button className="secondary" onClick={() => setNewBranchOpen(true)}>
+            <button className="secondary" onClick={() => openNewBranchModal(null)}>
               New branch
             </button>
           </>
@@ -746,7 +766,11 @@ function App() {
         <div className="modal-backdrop" onClick={() => setNewBranchOpen(false)}>
           <div className="modal" onClick={(event) => event.stopPropagation()}>
             <p className="modal-text">New branch</p>
-            <p className="modal-hint">Created from the current HEAD and checked out.</p>
+            <p className="modal-hint">
+              {newBranchStart
+                ? `Created from ${newBranchStart.slice(0, 7)} and checked out.`
+                : 'Created from the current HEAD and checked out.'}
+            </p>
             <input
               className="commit-message"
               style={{ height: 'auto' }}

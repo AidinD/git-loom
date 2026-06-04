@@ -167,9 +167,12 @@ app.whenReady().then(() => {
     }
   )
 
-  ipcMain.handle('git:deleteBranch', async (_event, repoPath: string, name: string) => {
-    return deleteBranch(repoPath, name)
-  })
+  ipcMain.handle(
+    'git:deleteBranch',
+    async (_event, repoPath: string, name: string, force: boolean) => {
+      return deleteBranch(repoPath, name, force)
+    }
+  )
 
   ipcMain.handle(
     'git:renameBranch',

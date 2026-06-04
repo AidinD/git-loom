@@ -392,9 +392,10 @@ export async function createBranch(
 /** Deletes a local branch (safe: refuses if not fully merged). */
 export async function deleteBranch(
   dir: string,
-  name: string
+  name: string,
+  force = false
 ): Promise<CheckoutResult> {
-  return runSimple(dir, ['branch', '-d', name], `Deleted ${name}`)
+  return runSimple(dir, ['branch', force ? '-D' : '-d', name], `Deleted ${name}`)
 }
 
 /** Renames a local branch. */

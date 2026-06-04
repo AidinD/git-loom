@@ -41,7 +41,11 @@ export interface LoomApi {
     name: string,
     startPoint?: string
   ) => Promise<CheckoutResult>
-  deleteBranch: (repoPath: string, name: string) => Promise<CheckoutResult>
+  deleteBranch: (
+    repoPath: string,
+    name: string,
+    force: boolean
+  ) => Promise<CheckoutResult>
   renameBranch: (
     repoPath: string,
     oldName: string,
