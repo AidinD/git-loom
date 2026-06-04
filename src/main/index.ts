@@ -5,6 +5,8 @@ import {
   checkout,
   merge,
   mergeAbort,
+  rebase,
+  rebaseAbort,
   status,
   diff,
   stage,
@@ -97,6 +99,17 @@ app.whenReady().then(() => {
 
   ipcMain.handle('git:mergeAbort', async (_event, repoPath: string) => {
     return mergeAbort(repoPath)
+  })
+
+  ipcMain.handle(
+    'git:rebase',
+    async (_event, repoPath: string, source: string, target: string) => {
+      return rebase(repoPath, source, target)
+    }
+  )
+
+  ipcMain.handle('git:rebaseAbort', async (_event, repoPath: string) => {
+    return rebaseAbort(repoPath)
   })
 
   ipcMain.handle('git:status', async (_event, repoPath: string) => {

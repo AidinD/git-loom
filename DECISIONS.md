@@ -111,10 +111,15 @@ bulk stage/unstage/discard). Also moved the whole project out of Northwind/Inter
 
 **Deliberately NOT done unattended (need the user / verification):**
 - GitHub clone-browser — needs the user to authenticate (PAT/OAuth).
-- Rebase-drag — destructive; mirror of merge but a bug could strand the repo mid-rebase.
-  Build it *with* the user to verify on the sandbox.
 - Graph virtualization — needs pixel-exact scroll-alignment that must be eyeballed;
   low value while capped at 1000 commits.
 - In-UI conflict resolver — a full 3-way editor, too large for an unattended pass.
 - Halyard-style drag-n-drop grouping — user wants parity with Halyard's actual
   component; confirm against `nw-studio-app` rather than guess.
+
+### Rebase-drag (with user, 2026-06-04)
+- Dropping a branch chip on another opens a menu: **Merge X into Y** (checkout Y, merge
+  X) or **Rebase X onto Y** (checkout X, rebase Y). The labeled menu choice *is* the
+  confirmation — chosen over a hidden modifier key (more discoverable) and over the old
+  separate confirm modal. Conflicts surface with a kind-aware "Abort merge/rebase"
+  button (`mergeAbort` / `rebaseAbort`). Verify on the sandbox before relying on it.

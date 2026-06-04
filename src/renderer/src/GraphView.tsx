@@ -54,7 +54,8 @@ function GraphView() {
     setDragSource,
     dragOver,
     setDragOver,
-    requestMerge,
+    onMerge,
+    onRebase,
     openContextMenu,
     onRenameBranch,
     onDeleteBranch,
@@ -187,7 +188,19 @@ function GraphView() {
                           dragSource &&
                           dragSource !== parsed.name
                         ) {
-                          requestMerge(dragSource, parsed.target, parsed.label)
+                          const source = dragSource
+                          const target = parsed.target
+                          const label = parsed.label
+                          openContextMenu(event.clientX, event.clientY, [
+                            {
+                              label: `Merge ${source} into ${label}`,
+                              onClick: () => onMerge(source, target, label)
+                            },
+                            {
+                              label: `Rebase ${source} onto ${label}`,
+                              onClick: () => onRebase(source, target, label)
+                            }
+                          ])
                         }
                         setDragOver(null)
                         setDragSource(null)

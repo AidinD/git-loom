@@ -241,6 +241,81 @@ export async function mergeAbort(dir: string): Promise<CheckoutResult> {
   return { ok: true, message: 'Merge aborted' }
 }
 
+/**
+ * Rebases `source` onto `target` (GitKraken-style drag): checks out the source
+ * branch, then replays it on top of target. Conflicts are reported, not resolved.
+ */
+export async function rebase(
+  dir: string,
+  source: string,
+  target: string
+): Promise<MergeResult> {
+  let root: string | null
+  try {
+    root = await resolveRepoRoot(dir)
+  } catch (err) {
+    return {
+      ok: false,
+      conflict: false,
+      error: err instanceof Error ? err.message : String(err)
+    }
+  }
+
+  if (!root) {
+    return { ok: false, conflict: false, error: `Not a Git repository: ${dir}` }
+  }
+
+  const checkoutResult = await runGit(['checkout', source], root)
+  if (checkoutResult.code !== 0) {
+    return {
+      ok: false,
+      conflict: false,
+      error: tidy(checkoutResult.stderr) || `Could not check out ${source}`
+    }
+  }
+
+  const rebaseResult = await runGit(['rebase', target], root)
+  if (rebaseResult.code !== 0) {
+    const output = `${rebaseResult.stdout}\n${rebaseResult.stderr}`
+    const conflict = /CONFLICT|could not apply|Resolve all conflicts/i.test(output)
+    return {
+      ok: false,
+      conflict,
+      error: tidy(rebaseResult.stdout) || tidy(rebaseResult.stderr) || 'Rebase failed'
+    }
+  }
+
+  const message =
+    tidy(rebaseResult.stdout) ||
+    tidy(rebaseResult.stderr) ||
+    `Rebased ${source} onto ${target}`
+  return { ok: true, message }
+}
+
+/** Aborts an in-progress rebase. */
+export async function rebaseAbort(dir: string): Promise<CheckoutResult> {
+  let root: string | null
+  try {
+    root = await resolveRepoRoot(dir)
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) }
+  }
+
+  if (!root) {
+    return { ok: false, error: `Not a Git repository: ${dir}` }
+  }
+
+  const result = await runGit(['rebase', '--abort'], root)
+  if (result.code !== 0) {
+    return {
+      ok: false,
+      error: result.stderr.trim() || `git exited with code ${result.code}`
+    }
+  }
+
+  return { ok: true, message: 'Rebase aborted' }
+}
+
 /** Returns the working-tree changes (staged + unstaged + untracked). */
 export async function status(dir: string): Promise<StatusResult> {
   let root: string | null

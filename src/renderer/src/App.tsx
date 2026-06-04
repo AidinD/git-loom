@@ -12,11 +12,6 @@ import type { ContextMenuItem } from './ContextMenu'
 import { LoomContext, useLoom } from './loom-context'
 import type { LoomContextValue, DiffView } from './loom-context'
 
-interface MergeRequest {
-  source: string
-  target: string
-  targetLabel: string
-}
 
 interface ContextMenuState {
   x: number
@@ -90,8 +85,7 @@ function App() {
   const [loading, setLoading] = useState(false)
   const [dragSource, setDragSource] = useState<string | null>(null)
   const [dragOver, setDragOver] = useState<string | null>(null)
-  const [mergeRequest, setMergeRequest] = useState<MergeRequest | null>(null)
-  const [inConflict, setInConflict] = useState(false)
+  const [conflictKind, setConflictKind] = useState<'merge' | 'rebase' | null>(null)
   const [changes, setChanges] = useState<FileChange[]>([])
   const [stashes, setStashes] = useState<StashEntry[]>([])
   const [commitMessage, setCommitMessage] = useState('')
@@ -220,34 +214,56 @@ function App() {
     await loadLog(repoPath)
   }
 
-  async function confirmMerge(): Promise<void> {
-    if (!repoPath || !mergeRequest) {
-      return
-    }
-    const request = mergeRequest
-    setMergeRequest(null)
-    setError(null)
-    setInfo(null)
-    const result = await window.api.merge(repoPath, request.source, request.target)
-    await loadLog(repoPath)
-    if (result.ok) {
-      setInfo(result.message)
-      setInConflict(false)
-    } else {
-      setError(result.error)
-      setInConflict(result.conflict)
-    }
-  }
-
-  async function handleAbortMerge(): Promise<void> {
+  async function doMerge(source: string, target: string): Promise<void> {
     if (!repoPath) {
       return
     }
-    const result = await window.api.mergeAbort(repoPath)
+    setError(null)
+    setInfo(null)
+    const result = await window.api.merge(repoPath, source, target)
+    await loadLog(repoPath)
+    if (result.ok) {
+      setInfo(result.message)
+      setConflictKind(null)
+    } else {
+      setError(result.error)
+      if (result.conflict) {
+        setConflictKind('merge')
+      }
+    }
+  }
+
+  async function doRebase(source: string, target: string): Promise<void> {
+    if (!repoPath) {
+      return
+    }
+    setError(null)
+    setInfo(null)
+    const result = await window.api.rebase(repoPath, source, target)
+    await loadLog(repoPath)
+    if (result.ok) {
+      setInfo(result.message)
+      setConflictKind(null)
+    } else {
+      setError(result.error)
+      if (result.conflict) {
+        setConflictKind('rebase')
+      }
+    }
+  }
+
+  async function handleAbort(): Promise<void> {
+    if (!repoPath) {
+      return
+    }
+    const result =
+      conflictKind === 'rebase'
+        ? await window.api.rebaseAbort(repoPath)
+        : await window.api.mergeAbort(repoPath)
     if (result.ok) {
       setInfo(result.message)
       setError(null)
-      setInConflict(false)
+      setConflictKind(null)
     } else {
       setError(result.error)
     }
@@ -607,8 +623,8 @@ function App() {
     setDragSource,
     dragOver,
     setDragOver,
-    requestMerge: (source, target, targetLabel) =>
-      setMergeRequest({ source, target, targetLabel }),
+    onMerge: doMerge,
+    onRebase: doRebase,
     openContextMenu: (x, y, items) => setContextMenu({ x, y, items }),
     onRenameBranch: openRenameModal,
     onDeleteBranch: requestDeleteBranch,
@@ -685,9 +701,9 @@ function App() {
         <button className="secondary" onClick={resetLayout} title="Reset panel layout">
           Reset layout
         </button>
-        {inConflict && (
-          <button className="danger" onClick={handleAbortMerge}>
-            Abort merge
+        {conflictKind && (
+          <button className="danger" onClick={handleAbort}>
+            Abort {conflictKind}
           </button>
         )}
         {repoPath && <span className="repo-path">{repoPath}</span>}
@@ -720,27 +736,6 @@ function App() {
       )}
 
       {loading && <div className="loading-tag">Loading…</div>}
-
-      {mergeRequest && (
-        <div className="modal-backdrop" onClick={() => setMergeRequest(null)}>
-          <div className="modal" onClick={(event) => event.stopPropagation()}>
-            <p className="modal-text">
-              Merge <strong>{mergeRequest.source}</strong> into{' '}
-              <strong>{mergeRequest.targetLabel}</strong>?
-            </p>
-            <p className="modal-hint">
-              Checks out {mergeRequest.targetLabel}, then merges {mergeRequest.source}
-              into it.
-            </p>
-            <div className="modal-actions">
-              <button onClick={confirmMerge}>Merge</button>
-              <button className="secondary" onClick={() => setMergeRequest(null)}>
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {groupModalRepo && (
         <div className="modal-backdrop" onClick={() => setGroupModalRepo(null)}>

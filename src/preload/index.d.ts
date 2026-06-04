@@ -15,6 +15,8 @@ export interface LoomApi {
   checkout: (repoPath: string, target: string) => Promise<CheckoutResult>
   merge: (repoPath: string, source: string, target: string) => Promise<MergeResult>
   mergeAbort: (repoPath: string) => Promise<CheckoutResult>
+  rebase: (repoPath: string, source: string, target: string) => Promise<MergeResult>
+  rebaseAbort: (repoPath: string) => Promise<CheckoutResult>
   status: (repoPath: string) => Promise<StatusResult>
   diff: (repoPath: string, file: string, staged: boolean) => Promise<DiffResult>
   stage: (repoPath: string, file: string) => Promise<CheckoutResult>

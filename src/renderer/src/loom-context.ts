@@ -24,7 +24,8 @@ export interface LoomContextValue {
   setDragSource: (value: string | null) => void
   dragOver: string | null
   setDragOver: (value: string | null) => void
-  requestMerge: (source: string, target: string, targetLabel: string) => void
+  onMerge: (source: string, target: string, targetLabel: string) => void
+  onRebase: (source: string, target: string, targetLabel: string) => void
   openContextMenu: (x: number, y: number, items: ContextMenuItem[]) => void
   onRenameBranch: (name: string) => void
   onDeleteBranch: (name: string) => void
