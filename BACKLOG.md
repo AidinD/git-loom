@@ -62,6 +62,42 @@ A GitHub-Desktop-style repository switcher, but better:
   GitHub clone-browser item (needs GitHub auth + API). A persistent left rail of
   accessible repos, not just the ones opened locally.
 
+## Ideas from GitHub Desktop (reference, 2026-06-04)
+
+Captured from GitHub Desktop screenshots — not yet scoped, just ideas.
+
+**Repo list / switcher**
+- Auto-group repos by owner (Recent / personal / org), alongside our custom groups.
+- Graceful missing-repo handling: when a repo's folder is gone, show "Can't find X —
+  last seen at <path>" with Locate… / Clone again / Remove.
+- Per-repo state indicators in the list (behind ↓ / unread dot) — overlaps the
+  sync/fetch indicators item above.
+- Private-repo lock icon.
+
+**Repo actions**
+- Open in external editor (configurable), Show in file explorer, View on GitHub.
+- "Last fetched <time> ago" timestamp next to Fetch.
+
+**Commit UX**
+- Split commit message into Summary + Description (we have a single box).
+- Co-authors on a commit (add co-author UI).
+
+**Branches**
+- Dedicated branch dropdown: filter, New branch, list with last-commit time,
+  "Choose a branch to merge into <current>".
+
+**Pull requests**
+- Pull Requests tab: list open PRs for the repo (via gh/GitHub API), filter/refresh,
+  check out a PR branch.
+
+**History / commit detail**
+- Selecting a commit in History shows its detail: message, author/avatar, hash,
+  changed-files list, and the **commit diff** (we currently only diff the working tree).
+- Author avatars in the graph/history rows.
+
+**Empty states**
+- "No local changes" suggestions panel (open editor / explorer / GitHub), like GH Desktop.
+
 ## Later phases (from the plan)
 
 - Phase 3: double-click checkout, branch labels, hover/selection.
