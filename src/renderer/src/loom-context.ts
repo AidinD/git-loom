@@ -39,6 +39,9 @@ export interface LoomContextValue {
   onUnstage: (file: string) => void
   onStageAll: () => void
   onUnstageAll: () => void
+  onStageMany: (files: string[]) => void
+  onUnstageMany: (files: string[]) => void
+  onDiscardMany: (files: string[]) => void
   onCommit: () => void
   onShowDiff: (file: string, staged: boolean) => void
   onStash: () => void
@@ -46,13 +49,6 @@ export interface LoomContextValue {
   onDropStash: (ref: string) => void
   onDiscard: (file: string, untracked: boolean) => void
   diffView: DiffView | null
-  openFileMenu: (
-    x: number,
-    y: number,
-    file: string,
-    staged: boolean,
-    untracked: boolean
-  ) => void
 }
 
 export const LoomContext = createContext<LoomContextValue | null>(null)

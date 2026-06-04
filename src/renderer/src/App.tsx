@@ -42,13 +42,16 @@ function ChangesDockPanel() {
       onUnstage={l.onUnstage}
       onStageAll={l.onStageAll}
       onUnstageAll={l.onUnstageAll}
+      onStageMany={l.onStageMany}
+      onUnstageMany={l.onUnstageMany}
+      onDiscardMany={l.onDiscardMany}
       onCommit={l.onCommit}
       onShowDiff={l.onShowDiff}
       onStash={l.onStash}
       onPopStash={l.onPopStash}
       onDropStash={l.onDropStash}
       onDiscard={l.onDiscard}
-      openFileMenu={l.openFileMenu}
+      openContextMenu={l.openContextMenu}
     />
   )
 }
@@ -373,27 +376,51 @@ function App() {
     await loadStatus(repoPath)
   }
 
-  function openFileMenu(
-    x: number,
-    y: number,
-    file: string,
-    staged: boolean,
-    untracked: boolean
-  ): void {
-    const items: ContextMenuItem[] = [
-      { label: 'Show diff', onClick: () => void handleShowDiff(file, staged) }
-    ]
-    if (staged) {
-      items.push({ label: 'Unstage', onClick: () => void handleUnstage(file) })
-    } else {
-      items.push({ label: 'Stage', onClick: () => void handleStage(file) })
+  async function handleStageMany(files: string[]): Promise<void> {
+    if (!repoPath || files.length === 0) {
+      return
     }
-    items.push({
-      label: 'Discard',
-      danger: true,
-      onClick: () => requestDiscard(file, untracked)
+    const result = await window.api.stageFiles(repoPath, files)
+    if (!result.ok) {
+      setError(result.error)
+      return
+    }
+    await loadStatus(repoPath)
+  }
+
+  async function handleUnstageMany(files: string[]): Promise<void> {
+    if (!repoPath || files.length === 0) {
+      return
+    }
+    const result = await window.api.unstageFiles(repoPath, files)
+    if (!result.ok) {
+      setError(result.error)
+      return
+    }
+    await loadStatus(repoPath)
+  }
+
+  function handleDiscardMany(files: string[]): void {
+    if (!repoPath || files.length === 0) {
+      return
+    }
+    setConfirm({
+      message: `Discard changes in ${files.length} files? This cannot be undone.`,
+      action: () => {
+        void (async () => {
+          for (const file of files) {
+            const change = changes.find((entry) => entry.path === file)
+            const untracked = change ? change.worktree === '?' : false
+            const result = await window.api.discardFile(repoPath, file, untracked)
+            if (!result.ok) {
+              setError(result.error)
+              break
+            }
+          }
+          await loadStatus(repoPath)
+        })()
+      }
     })
-    setContextMenu({ x, y, items })
   }
 
   async function handleCommit(): Promise<void> {
@@ -600,8 +627,10 @@ function App() {
     onPopStash: handlePopStash,
     onDropStash: handleDropStash,
     onDiscard: requestDiscard,
-    diffView,
-    openFileMenu
+    onStageMany: handleStageMany,
+    onUnstageMany: handleUnstageMany,
+    onDiscardMany: handleDiscardMany,
+    diffView
   }
 
   return (

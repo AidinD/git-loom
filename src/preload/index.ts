@@ -30,6 +30,10 @@ const api = {
     ipcRenderer.invoke('git:stageAll', repoPath),
   unstageAll: (repoPath: string): Promise<CheckoutResult> =>
     ipcRenderer.invoke('git:unstageAll', repoPath),
+  stageFiles: (repoPath: string, files: string[]): Promise<CheckoutResult> =>
+    ipcRenderer.invoke('git:stageFiles', repoPath, files),
+  unstageFiles: (repoPath: string, files: string[]): Promise<CheckoutResult> =>
+    ipcRenderer.invoke('git:unstageFiles', repoPath, files),
   unstage: (repoPath: string, file: string): Promise<CheckoutResult> =>
     ipcRenderer.invoke('git:unstage', repoPath, file),
   commit: (repoPath: string, message: string): Promise<CheckoutResult> =>

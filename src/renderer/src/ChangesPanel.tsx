@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
 import type { MouseEvent as ReactMouseEvent } from 'react'
 import type { FileChange, StashEntry } from '../../shared/types'
+import type { ContextMenuItem } from './ContextMenu'
+
+type Section = 'staged' | 'unstaged'
 
 interface Props {
   files: FileChange[]
@@ -11,19 +14,16 @@ interface Props {
   onUnstage: (file: string) => void
   onStageAll: () => void
   onUnstageAll: () => void
+  onStageMany: (files: string[]) => void
+  onUnstageMany: (files: string[]) => void
+  onDiscardMany: (files: string[]) => void
   onCommit: () => void
   onShowDiff: (file: string, staged: boolean) => void
   onStash: () => void
   onPopStash: (ref: string) => void
   onDropStash: (ref: string) => void
   onDiscard: (file: string, untracked: boolean) => void
-  openFileMenu: (
-    x: number,
-    y: number,
-    file: string,
-    staged: boolean,
-    untracked: boolean
-  ) => void
+  openContextMenu: (x: number, y: number, items: ContextMenuItem[]) => void
 }
 
 interface Badge {
@@ -78,13 +78,16 @@ function ChangesPanel({
   onUnstage,
   onStageAll,
   onUnstageAll,
+  onStageMany,
+  onUnstageMany,
+  onDiscardMany,
   onCommit,
   onShowDiff,
   onStash,
   onPopStash,
   onDropStash,
   onDiscard,
-  openFileMenu
+  openContextMenu
 }: Props) {
   const [stagedHeight, setStagedHeight] = useState(() =>
     stored('loom.stagedHeight', 150)
@@ -92,6 +95,9 @@ function ChangesPanel({
   const [changesHeight, setChangesHeight] = useState(() =>
     stored('loom.changesHeight', 190)
   )
+  const [selected, setSelected] = useState<string[]>([])
+  const [section, setSection] = useState<Section | null>(null)
+  const [anchor, setAnchor] = useState<number | null>(null)
 
   useEffect(() => {
     localStorage.setItem('loom.stagedHeight', String(stagedHeight))
@@ -105,21 +111,135 @@ function ChangesPanel({
   const canCommit = staged.length > 0 && commitMessage.trim().length > 0
   const hasChanges = files.length > 0
 
+  function isSelected(sectionName: Section, path: string): boolean {
+    return section === sectionName && selected.includes(path)
+  }
+
+  function handleRowClick(
+    event: ReactMouseEvent,
+    sectionName: Section,
+    index: number,
+    list: FileChange[]
+  ): void {
+    const path = list[index].path
+    if (event.shiftKey && anchor !== null && section === sectionName) {
+      const lo = Math.min(anchor, index)
+      const hi = Math.max(anchor, index)
+      setSelected(list.slice(lo, hi + 1).map((file) => file.path))
+      return
+    }
+    if (event.ctrlKey || event.metaKey) {
+      if (section !== sectionName) {
+        setSelected([path])
+        setSection(sectionName)
+        setAnchor(index)
+        return
+      }
+      setSelected((prev) =>
+        prev.includes(path) ? prev.filter((p) => p !== path) : [...prev, path]
+      )
+      setAnchor(index)
+      return
+    }
+    setSelected([path])
+    setSection(sectionName)
+    setAnchor(index)
+    onShowDiff(path, sectionName === 'staged')
+  }
+
+  function handleRowMenu(
+    event: ReactMouseEvent,
+    sectionName: Section,
+    path: string
+  ): void {
+    event.preventDefault()
+    const inSelection =
+      section === sectionName && selected.includes(path) && selected.length > 1
+    const targets = inSelection ? selected : [path]
+    const count = targets.length
+    const staged = sectionName === 'staged'
+    const items: ContextMenuItem[] = []
+    if (count === 1) {
+      items.push({ label: 'Show diff', onClick: () => onShowDiff(path, staged) })
+    }
+    if (staged) {
+      items.push({
+        label: count > 1 ? `Unstage ${count} files` : 'Unstage',
+        onClick: () => onUnstageMany(targets)
+      })
+    } else {
+      items.push({
+        label: count > 1 ? `Stage ${count} files` : 'Stage',
+        onClick: () => onStageMany(targets)
+      })
+    }
+    items.push({
+      label: count > 1 ? `Discard ${count} files` : 'Discard',
+      danger: true,
+      onClick: () => onDiscardMany(targets)
+    })
+    openContextMenu(event.clientX, event.clientY, items)
+  }
+
+  function renderRow(
+    file: FileChange,
+    sectionName: Section,
+    index: number,
+    list: FileChange[]
+  ): JSX.Element {
+    const staged = sectionName === 'staged'
+    const badge = badgeFor(staged ? file.index : file.worktree)
+    return (
+      <li
+        key={`${sectionName}-${file.path}`}
+        className={`file${isSelected(sectionName, file.path) ? ' selected' : ''}`}
+        onClick={(event) => handleRowClick(event, sectionName, index, list)}
+        onContextMenu={(event) => handleRowMenu(event, sectionName, file.path)}
+        title={file.path}
+      >
+        <span className={`badge ${badge.cls}`}>{badge.text}</span>
+        <span className="file-path">{file.path}</span>
+        {!staged && (
+          <button
+            className="file-action"
+            title="Discard changes"
+            onClick={(event) => {
+              event.stopPropagation()
+              onDiscard(file.path, file.worktree === '?')
+            }}
+          >
+            ⟲
+          </button>
+        )}
+        <button
+          className="file-action"
+          title={staged ? 'Unstage' : 'Stage'}
+          onClick={(event) => {
+            event.stopPropagation()
+            if (staged) {
+              onUnstage(file.path)
+            } else {
+              onStage(file.path)
+            }
+          }}
+        >
+          {staged ? '−' : '+'}
+        </button>
+      </li>
+    )
+  }
+
   function startDrag(
-    axis: 'x' | 'y',
     current: number,
     setter: (value: number) => void,
     min: number,
-    max: number,
-    invert = false
+    max: number
   ) {
     return (event: ReactMouseEvent) => {
       event.preventDefault()
-      const start = axis === 'x' ? event.clientX : event.clientY
+      const start = event.clientY
       function onMove(moveEvent: MouseEvent): void {
-        const now = axis === 'x' ? moveEvent.clientX : moveEvent.clientY
-        const delta = (now - start) * (invert ? -1 : 1)
-        setter(clamp(current + delta, min, max))
+        setter(clamp(current + moveEvent.clientY - start, min, max))
       }
       function onUp(): void {
         window.removeEventListener('mousemove', onMove)
@@ -132,10 +252,7 @@ function ChangesPanel({
 
   return (
     <aside className="sidebar">
-      <div
-        className="sidebar-section sized"
-        style={{ height: stagedHeight }}
-      >
+      <div className="sidebar-section sized" style={{ height: stagedHeight }}>
         <h2 className="sidebar-title">
           <span>
             Staged <span className="count">{staged.length}</span>
@@ -147,46 +264,17 @@ function ChangesPanel({
           )}
         </h2>
         <ul className="file-list">
-          {staged.map((file) => {
-            const badge = badgeFor(file.index)
-            return (
-              <li
-                key={`s-${file.path}`}
-                className="file"
-                onClick={() => onShowDiff(file.path, true)}
-                onContextMenu={(event) => {
-                  event.preventDefault()
-                  openFileMenu(event.clientX, event.clientY, file.path, true, false)
-                }}
-                title={file.path}
-              >
-                <span className={`badge ${badge.cls}`}>{badge.text}</span>
-                <span className="file-path">{file.path}</span>
-                <button
-                  className="file-action"
-                  onClick={(event) => {
-                    event.stopPropagation()
-                    onUnstage(file.path)
-                  }}
-                >
-                  −
-                </button>
-              </li>
-            )
-          })}
+          {staged.map((file, index) => renderRow(file, 'staged', index, staged))}
           {staged.length === 0 && <li className="empty">Nothing staged</li>}
         </ul>
       </div>
 
       <div
         className="resize-y"
-        onMouseDown={startDrag('y', stagedHeight, setStagedHeight, 60, 600)}
+        onMouseDown={startDrag(stagedHeight, setStagedHeight, 60, 600)}
       />
 
-      <div
-        className="sidebar-section sized"
-        style={{ height: changesHeight }}
-      >
+      <div className="sidebar-section sized" style={{ height: changesHeight }}>
         <h2 className="sidebar-title">
           <span>
             Changes <span className="count">{unstaged.length}</span>
@@ -198,57 +286,14 @@ function ChangesPanel({
           )}
         </h2>
         <ul className="file-list">
-          {unstaged.map((file) => {
-            const badge = badgeFor(file.worktree)
-            return (
-              <li
-                key={`u-${file.path}`}
-                className="file"
-                onClick={() => onShowDiff(file.path, false)}
-                onContextMenu={(event) => {
-                  event.preventDefault()
-                  openFileMenu(
-                    event.clientX,
-                    event.clientY,
-                    file.path,
-                    false,
-                    file.worktree === '?'
-                  )
-                }}
-                title={file.path}
-              >
-                <span className={`badge ${badge.cls}`}>{badge.text}</span>
-                <span className="file-path">{file.path}</span>
-                <button
-                  className="file-action"
-                  title="Discard changes"
-                  onClick={(event) => {
-                    event.stopPropagation()
-                    onDiscard(file.path, file.worktree === '?')
-                  }}
-                >
-                  ⟲
-                </button>
-                <button
-                  className="file-action"
-                  title="Stage"
-                  onClick={(event) => {
-                    event.stopPropagation()
-                    onStage(file.path)
-                  }}
-                >
-                  +
-                </button>
-              </li>
-            )
-          })}
+          {unstaged.map((file, index) => renderRow(file, 'unstaged', index, unstaged))}
           {unstaged.length === 0 && <li className="empty">No changes</li>}
         </ul>
       </div>
 
       <div
         className="resize-y"
-        onMouseDown={startDrag('y', changesHeight, setChangesHeight, 60, 600)}
+        onMouseDown={startDrag(changesHeight, setChangesHeight, 60, 600)}
       />
 
       <div className="sidebar-section stash-section">

@@ -332,6 +332,26 @@ export async function stageAll(dir: string): Promise<CheckoutResult> {
   return runSimple(dir, ['add', '-A'], 'Staged all changes')
 }
 
+/** Stages a specific set of files. */
+export async function stageFiles(
+  dir: string,
+  files: string[]
+): Promise<CheckoutResult> {
+  return runSimple(dir, ['add', '--', ...files], `Staged ${files.length} files`)
+}
+
+/** Unstages a specific set of files. */
+export async function unstageFiles(
+  dir: string,
+  files: string[]
+): Promise<CheckoutResult> {
+  return runSimple(
+    dir,
+    ['restore', '--staged', '--', ...files],
+    `Unstaged ${files.length} files`
+  )
+}
+
 /** Unstages everything (`git restore --staged .`). */
 export async function unstageAll(dir: string): Promise<CheckoutResult> {
   return runSimple(dir, ['restore', '--staged', '.'], 'Unstaged all changes')

@@ -23,7 +23,9 @@ import {
   renameBranch,
   discardFile,
   stageAll,
-  unstageAll
+  unstageAll,
+  stageFiles,
+  unstageFiles
 } from './git'
 import {
   listRepos,
@@ -119,6 +121,17 @@ app.whenReady().then(() => {
   ipcMain.handle('git:unstageAll', async (_event, repoPath: string) => {
     return unstageAll(repoPath)
   })
+
+  ipcMain.handle('git:stageFiles', async (_event, repoPath: string, files: string[]) => {
+    return stageFiles(repoPath, files)
+  })
+
+  ipcMain.handle(
+    'git:unstageFiles',
+    async (_event, repoPath: string, files: string[]) => {
+      return unstageFiles(repoPath, files)
+    }
+  )
 
   ipcMain.handle('git:unstage', async (_event, repoPath: string, file: string) => {
     return unstage(repoPath, file)

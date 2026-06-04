@@ -31,7 +31,8 @@ A GitHub-Desktop-style repository switcher, but better:
 ## Changes panel polish (phase 6 follow-ups, requested)
 
 - [done] **Stage all / unstage all** buttons per section.
-- **Multi-select** files with Ctrl/Shift, then bulk stage/unstage.
+- [done] **Multi-select** files with Ctrl/Shift, then bulk stage/unstage/discard
+  via the right-click menu.
 - [done] **Right-click context menu** on files (Show diff / Stage|Unstage / Discard).
 - [done] Discard changes / restore file (⟲ button + confirm).
 - [done] Branch ops: create (toolbar), rename/delete (right-click branch chip),
