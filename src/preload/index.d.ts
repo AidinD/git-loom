@@ -1,0 +1,43 @@
+import type {
+  LogResult,
+  CheckoutResult,
+  MergeResult,
+  StatusResult,
+  DiffResult,
+  RepoEntry,
+  CloneResult,
+  StashListResult
+} from '../shared/types'
+
+export interface LoomApi {
+  openRepo: () => Promise<string | null>
+  getLog: (repoPath: string) => Promise<LogResult>
+  checkout: (repoPath: string, target: string) => Promise<CheckoutResult>
+  merge: (repoPath: string, source: string, target: string) => Promise<MergeResult>
+  mergeAbort: (repoPath: string) => Promise<CheckoutResult>
+  status: (repoPath: string) => Promise<StatusResult>
+  diff: (repoPath: string, file: string, staged: boolean) => Promise<DiffResult>
+  stage: (repoPath: string, file: string) => Promise<CheckoutResult>
+  unstage: (repoPath: string, file: string) => Promise<CheckoutResult>
+  commit: (repoPath: string, message: string) => Promise<CheckoutResult>
+  clone: (url: string, parentDir: string) => Promise<CloneResult>
+  listRepos: () => Promise<RepoEntry[]>
+  addRepo: (repoPath: string) => Promise<RepoEntry[]>
+  removeRepo: (repoPath: string) => Promise<RepoEntry[]>
+  setRepoGroup: (repoPath: string, group: string) => Promise<RepoEntry[]>
+  stashList: (repoPath: string) => Promise<StashListResult>
+  stashPush: (repoPath: string, message: string) => Promise<CheckoutResult>
+  stashPop: (repoPath: string, ref: string) => Promise<CheckoutResult>
+  stashDrop: (repoPath: string, ref: string) => Promise<CheckoutResult>
+  fetch: (repoPath: string) => Promise<CheckoutResult>
+  pull: (repoPath: string) => Promise<CheckoutResult>
+  push: (repoPath: string) => Promise<CheckoutResult>
+  getCurrentRepo: () => Promise<string | null>
+  setCurrentRepo: (repoPath: string) => Promise<void>
+}
+
+declare global {
+  interface Window {
+    api: LoomApi
+  }
+}
