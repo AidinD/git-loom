@@ -823,10 +823,15 @@ function App() {
                       title={`Clone ${repo.fullName}`}
                       onClick={() => cloneFrom(repo.cloneUrl)}
                     >
-                      <span className="clone-name">{repo.fullName}</span>
-                      {repo.private && <span className="clone-private">private</span>}
+                      <div className="clone-row1">
+                        <span className="clone-name">
+                          <span className="clone-owner">{repo.owner}/</span>
+                          {repo.name}
+                        </span>
+                        {repo.private && <span className="clone-private">Private</span>}
+                      </div>
                       {repo.description && (
-                        <span className="clone-desc">{repo.description}</span>
+                        <div className="clone-desc">{repo.description}</div>
                       )}
                     </div>
                   ))}

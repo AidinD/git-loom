@@ -505,6 +505,12 @@ body {
   font-size: 13px;
 }
 
+.commit-message:focus,
+.repo-filter:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
 .repo-popover-actions {
   display: flex;
   gap: 8px;
@@ -782,39 +788,64 @@ body {
 }
 
 .clone-list {
-  max-height: 320px;
+  max-height: 340px;
   overflow-y: auto;
   border: 1px solid var(--border);
-  border-radius: 6px;
-  margin: 8px 0;
+  border-radius: 8px;
+  margin: 10px 0 4px;
+  background: var(--bg);
 }
 
 .clone-item {
   display: flex;
-  align-items: baseline;
-  gap: 8px;
-  padding: 6px 10px;
+  flex-direction: column;
+  gap: 3px;
+  padding: 9px 12px;
   cursor: pointer;
-  font-size: 13px;
+  border-bottom: 1px solid var(--border);
+}
+
+.clone-item:last-child {
+  border-bottom: none;
 }
 
 .clone-item:hover {
-  background: var(--bg);
+  background: var(--bg-alt);
+}
+
+.clone-row1 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .clone-name {
+  font-size: 13px;
   font-weight: 600;
-  flex: none;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.clone-owner {
+  color: var(--text-dim);
+  font-weight: 400;
 }
 
 .clone-private {
   font-size: 10px;
-  text-transform: uppercase;
   color: var(--text-dim);
+  background: var(--bg-alt);
   border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 0 4px;
+  border-radius: 10px;
+  padding: 1px 7px;
   flex: none;
+}
+
+.clone-item:hover .clone-private {
+  background: var(--bg);
 }
 
 .clone-desc {
