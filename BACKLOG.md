@@ -19,8 +19,8 @@ A GitHub-Desktop-style repository switcher, but better:
   (shared Electron stack payoff).
 - [done] **Clone browser**: the Clone dialog lists repos the user can access
   (owner + collaborator + org) via the `gh` CLI — searchable, click to clone. Uses
-  the user's existing `gh auth` (no token stored in Loom). Follow-ups: paginate
-  beyond 100; show the left-rail persistent version.
+  the user's existing `gh auth` (no token stored in Loom). [done] paginates across
+  all pages (JSONL). Follow-up: show the left-rail persistent version.
 
 ## Graph rendering
 
@@ -55,10 +55,9 @@ A GitHub-Desktop-style repository switcher, but better:
   Follow-ups: [done] dockview theme matched to dark + amber; [done] "View" menu to
   re-open closed panels; [done] Diff is now a dockable panel (updates live on file
   click) instead of a modal.
-- **Save / load named layouts** — let the user save the current dockview arrangement
-  under a name and switch between saved layouts (e.g. "Review", "Commit", "Wide diff").
-  dockview `toJSON`/`fromJSON` already power the single persisted layout, so this is
-  mostly a small UI (name + list/menu) over a `Record<name, layout>` in localStorage.
+- [done] **Save / load named layouts** — "Layouts" toolbar button opens a dialog to
+  save the current arrangement under a name, load, or delete saved layouts
+  (`Record<name, layout>` in localStorage, dockview toJSON/fromJSON).
 - [backlog] **Left-most panel listing all repos we have access to** — overlaps the
   GitHub clone-browser item (needs GitHub auth + API). A persistent left rail of
   accessible repos, not just the ones opened locally.

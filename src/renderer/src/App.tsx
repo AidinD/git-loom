@@ -30,6 +30,16 @@ interface ConfirmState {
   action: () => void
 }
 
+type SavedLayout = ReturnType<DockviewApi['toJSON']>
+
+function readSavedLayouts(): Record<string, SavedLayout> {
+  try {
+    return JSON.parse(localStorage.getItem('loom.layouts') || '{}')
+  } catch {
+    return {}
+  }
+}
+
 // Stable dockview panel components — they read live data from LoomContext.
 function ChangesDockPanel() {
   const l = useLoom()
@@ -105,6 +115,11 @@ function App() {
   const [githubRepos, setGithubRepos] = useState<GithubRepo[]>([])
   const [githubLoading, setGithubLoading] = useState(false)
   const [githubError, setGithubError] = useState<string | null>(null)
+  const [layoutsOpen, setLayoutsOpen] = useState(false)
+  const [layoutName, setLayoutName] = useState('')
+  const [savedLayouts, setSavedLayouts] = useState<Record<string, SavedLayout>>(
+    readSavedLayouts
+  )
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null)
   const [newBranchOpen, setNewBranchOpen] = useState(false)
   const [newBranchName, setNewBranchName] = useState('')
@@ -167,6 +182,36 @@ function App() {
     } else {
       api.addPanel({ id, component: id, title })
     }
+  }
+
+  function persistLayouts(next: Record<string, SavedLayout>): void {
+    setSavedLayouts(next)
+    localStorage.setItem('loom.layouts', JSON.stringify(next))
+  }
+
+  function saveCurrentLayout(): void {
+    const api = dockApi.current
+    const name = layoutName.trim()
+    if (!api || name.length === 0) {
+      return
+    }
+    persistLayouts({ ...savedLayouts, [name]: api.toJSON() })
+    setLayoutName('')
+  }
+
+  function loadLayout(name: string): void {
+    const api = dockApi.current
+    const layout = savedLayouts[name]
+    if (api && layout) {
+      api.fromJSON(layout)
+    }
+    setLayoutsOpen(false)
+  }
+
+  function deleteLayout(name: string): void {
+    const next = { ...savedLayouts }
+    delete next[name]
+    persistLayouts(next)
   }
 
   async function loadStatus(path: string): Promise<void> {
@@ -725,6 +770,13 @@ function App() {
         >
           View
         </button>
+        <button
+          className="secondary"
+          onClick={() => setLayoutsOpen(true)}
+          title="Save / load named layouts"
+        >
+          Layouts
+        </button>
         <button className="secondary" onClick={resetLayout} title="Reset panel layout">
           Reset layout
         </button>
@@ -924,6 +976,55 @@ function App() {
               </button>
               <button className="secondary" onClick={() => setConfirm(null)}>
                 Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {layoutsOpen && (
+        <div className="modal-backdrop" onClick={() => setLayoutsOpen(false)}>
+          <div className="modal" onClick={(event) => event.stopPropagation()}>
+            <p className="modal-text">Layouts</p>
+            <p className="modal-hint">Save the current panel arrangement, or load a saved one.</p>
+
+            <ul className="layout-list">
+              {Object.keys(savedLayouts).map((name) => (
+                <li key={name} className="layout-item">
+                  <span className="layout-name">{name}</span>
+                  <button className="secondary" onClick={() => loadLayout(name)}>
+                    Load
+                  </button>
+                  <button
+                    className="file-action"
+                    title="Delete layout"
+                    onClick={() => deleteLayout(name)}
+                  >
+                    ×
+                  </button>
+                </li>
+              ))}
+              {Object.keys(savedLayouts).length === 0 && (
+                <li className="empty">No saved layouts yet</li>
+              )}
+            </ul>
+
+            <div className="layout-save">
+              <input
+                className="commit-message"
+                style={{ height: 'auto' }}
+                placeholder="Layout name"
+                value={layoutName}
+                onChange={(event) => setLayoutName(event.target.value)}
+              />
+              <button onClick={saveCurrentLayout} disabled={layoutName.trim().length === 0}>
+                Save current
+              </button>
+            </div>
+
+            <div className="modal-actions">
+              <button className="secondary" onClick={() => setLayoutsOpen(false)}>
+                Close
               </button>
             </div>
           </div>

@@ -31,19 +31,21 @@ function runGh(args: string[]): Promise<GhOutput> {
 
 /**
  * Lists the repositories the authenticated gh user can access (owner +
- * collaborator + organisation member), most-recently-updated first. Capped at
- * one page (100) for now — paginate later.
+ * collaborator + organisation member), most-recently-updated first. Paginates
+ * across all pages; `--jq '.[] | …'` emits one compact JSON object per line so
+ * the concatenated pages stay parseable (unlike concatenated JSON arrays).
  */
 export async function listGithubRepos(): Promise<GithubReposResult> {
   let result: GhOutput
   try {
     result = await runGh([
       'api',
+      '--paginate',
       '-X',
       'GET',
       'user/repos?per_page=100&sort=updated&affiliation=owner,collaborator,organization_member',
       '--jq',
-      '[.[] | {fullName: .full_name, name: .name, owner: .owner.login, description: .description, cloneUrl: .clone_url, private: .private}]'
+      '.[] | {fullName: .full_name, name: .name, owner: .owner.login, description: .description, cloneUrl: .clone_url, private: .private}'
     ])
   } catch {
     return {
@@ -62,7 +64,11 @@ export async function listGithubRepos(): Promise<GithubReposResult> {
   }
 
   try {
-    const repos = JSON.parse(result.stdout) as GithubRepo[]
+    const repos = result.stdout
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0)
+      .map((line) => JSON.parse(line) as GithubRepo)
     return { ok: true, repos }
   } catch {
     return { ok: false, error: 'Could not parse the repository list from gh.' }
