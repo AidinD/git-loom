@@ -1545,6 +1545,21 @@ body {
   padding: 3px 8px;
 }
 
+.conflict-counter {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-right: 4px;
+}
+
+.conflict-help {
+  padding: 6px 10px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--text-dim);
+  background: var(--bg-alt);
+  border-bottom: 1px solid var(--border);
+}
+
 .conflict-blocks {
   flex: 1;
   min-height: 80px;
@@ -1557,6 +1572,14 @@ body {
   border-radius: 6px;
   margin-bottom: 10px;
   overflow: hidden;
+}
+
+.cblock.active {
+  border-color: var(--accent);
+}
+
+.cblock.done .cblock-label {
+  color: #57ab5a;
 }
 
 .cblock-choices {

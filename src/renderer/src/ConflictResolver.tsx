@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ConflictFile } from '../../shared/types'
 import {
   parseConflicts,
@@ -30,6 +30,8 @@ function ConflictResolver({ repoPath, kind, onResolved, onAbort }: Props) {
   const [merged, setMerged] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [activeBlock, setActiveBlock] = useState(0)
+  const blockRefs = useRef<Record<number, HTMLDivElement | null>>({})
 
   const refresh = useCallback(async (): Promise<void> => {
     const result = await window.api.listConflicts(repoPath)
@@ -65,6 +67,8 @@ function ConflictResolver({ repoPath, kind, onResolved, onAbort }: Props) {
       }
       const parsed = parseConflicts(result.content)
       const initial: Record<number, Choice> = {}
+      blockRefs.current = {}
+      setActiveBlock(0)
       setSegments(parsed)
       setChoices(initial)
       setMerged(buildMerged(parsed, initial))
@@ -87,6 +91,34 @@ function ConflictResolver({ repoPath, kind, onResolved, onAbort }: Props) {
     }
     setChoices(next)
     setMerged(buildMerged(segments, next))
+  }
+
+  function gotoBlock(index: number): void {
+    setActiveBlock(index)
+    const el = blockRefs.current[index]
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    }
+  }
+
+  function gotoNext(): void {
+    if (conflictBlocks.length === 0) {
+      return
+    }
+    const order = conflictBlocks.map((block) => block.index)
+    const pos = order.indexOf(activeBlock)
+    const next = order[(pos + 1) % order.length]
+    gotoBlock(next)
+  }
+
+  function gotoPrev(): void {
+    if (conflictBlocks.length === 0) {
+      return
+    }
+    const order = conflictBlocks.map((block) => block.index)
+    const pos = order.indexOf(activeBlock)
+    const prev = order[(pos - 1 + order.length) % order.length]
+    gotoBlock(prev)
   }
 
   async function saveFile(): Promise<void> {
@@ -122,9 +154,23 @@ function ConflictResolver({ repoPath, kind, onResolved, onAbort }: Props) {
   const conflictBlocks = segments.filter(
     (segment): segment is ConflictSegment => segment.kind === 'conflict'
   )
+  const resolvedBlocks = conflictBlocks.filter(
+    (block) => (choices[block.index] ?? 'none') !== 'none'
+  ).length
   const remaining = unresolved.length
   const canContinue = allFiles.length > 0 && remaining === 0
   const canSave = selected !== null && merged.length >= 0 && isFullyResolved(merged)
+
+  const oursLabel = conflictBlocks[0]?.oursLabel ?? 'HEAD'
+  const theirsLabel = conflictBlocks[0]?.theirsLabel ?? 'incoming'
+  let helpText: string
+  if (kind === 'rebase') {
+    helpText = `⚠ During a rebase the sides are inverted: Current (${oursLabel}) is the branch you're rebasing onto; Incoming (${theirsLabel}) is your own commits being replayed.`
+  } else if (kind === 'revert') {
+    helpText = `Current (${oursLabel}) is your working state; Incoming (${theirsLabel}) is the change introduced by the revert.`
+  } else {
+    helpText = `Current (${oursLabel}) is the branch you're on; Incoming (${theirsLabel}) is the branch being merged in.`
+  }
 
   return (
     <div className="modal-backdrop">
@@ -172,6 +218,25 @@ function ConflictResolver({ repoPath, kind, onResolved, onAbort }: Props) {
                 <div className="conflict-detail-bar">
                   <span className="conflict-detail-file">{selected}</span>
                   <span className="conflict-detail-actions">
+                    <span className="conflict-counter">
+                      {resolvedBlocks}/{conflictBlocks.length} resolved
+                    </span>
+                    <button
+                      className="secondary"
+                      disabled={conflictBlocks.length < 2}
+                      title="Previous conflict"
+                      onClick={gotoPrev}
+                    >
+                      ↑
+                    </button>
+                    <button
+                      className="secondary"
+                      disabled={conflictBlocks.length < 2}
+                      title="Next conflict"
+                      onClick={gotoNext}
+                    >
+                      ↓
+                    </button>
                     <button className="secondary" onClick={() => applyAll('ours')}>
                       All Current
                     </button>
@@ -181,17 +246,28 @@ function ConflictResolver({ repoPath, kind, onResolved, onAbort }: Props) {
                   </span>
                 </div>
 
+                <div className="conflict-help">{helpText}</div>
+
                 <div className="conflict-blocks">
                   {conflictBlocks.length === 0 && (
                     <div className="empty">No conflict markers found in this file.</div>
                   )}
                   {conflictBlocks.map((block) => {
                     const choice = choices[block.index] ?? 'none'
+                    const isDone = choice !== 'none'
                     return (
-                      <div key={block.index} className="cblock">
+                      <div
+                        key={block.index}
+                        ref={(el) => {
+                          blockRefs.current[block.index] = el
+                        }}
+                        className={`cblock${block.index === activeBlock ? ' active' : ''}${
+                          isDone ? ' done' : ''
+                        }`}
+                      >
                         <div className="cblock-choices">
                           <span className="cblock-label">
-                            Conflict {block.index + 1}
+                            {isDone ? '✓ ' : ''}Conflict {block.index + 1}
                           </span>
                           {(
                             [
