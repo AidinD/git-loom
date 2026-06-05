@@ -1225,6 +1225,12 @@ function App() {
               value={groupInput}
               autoFocus
               onChange={(event) => setGroupInput(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault()
+                  saveGroup()
+                }
+              }}
             />
             <div className="modal-actions">
               <button onClick={saveGroup}>Save</button>
@@ -1295,6 +1301,12 @@ function App() {
               placeholder="https://github.com/org/repo.git"
               value={cloneUrl}
               onChange={(event) => setCloneUrl(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' && cloneUrl.trim().length > 0) {
+                  event.preventDefault()
+                  cloneFrom(cloneUrl)
+                }
+              }}
             />
             <div className="modal-actions">
               <button onClick={() => cloneFrom(cloneUrl)}>Choose folder & clone</button>
@@ -1322,6 +1334,12 @@ function App() {
               value={newBranchName}
               autoFocus
               onChange={(event) => setNewBranchName(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault()
+                  handleCreateBranch()
+                }
+              }}
             />
             <div className="modal-actions">
               <button onClick={handleCreateBranch}>Create</button>
@@ -1346,6 +1364,12 @@ function App() {
               value={renameInput}
               autoFocus
               onChange={(event) => setRenameInput(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault()
+                  saveRename()
+                }
+              }}
             />
             <div className="modal-actions">
               <button onClick={saveRename}>Rename</button>
@@ -1363,6 +1387,7 @@ function App() {
             <p className="modal-text">{confirm.message}</p>
             <div className="modal-actions">
               <button
+                autoFocus
                 onClick={() => {
                   confirm.action()
                   setConfirm(null)
@@ -1479,6 +1504,12 @@ function App() {
                 placeholder="Layout name"
                 value={layoutName}
                 onChange={(event) => setLayoutName(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' && layoutName.trim().length > 0) {
+                    event.preventDefault()
+                    saveCurrentLayout()
+                  }
+                }}
               />
               <button onClick={saveCurrentLayout} disabled={layoutName.trim().length === 0}>
                 Save current

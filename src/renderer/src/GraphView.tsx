@@ -53,6 +53,22 @@ function initialsFor(name: string): string {
   return name.slice(0, 2).toUpperCase()
 }
 
+// Higher priority renders further right (next to the graph) and stays visible
+// when a row has more ref chips than fit; lower-priority ones clip on the left.
+const REF_PRIORITY: Record<RefKind, number> = {
+  head: 3,
+  branch: 2,
+  tag: 1,
+  remote: 0
+}
+
+function sortRefsByPriority(refs: string[], remotes: string[]): string[] {
+  return [...refs].sort(
+    (a, b) =>
+      REF_PRIORITY[parseRef(a, remotes).kind] - REF_PRIORITY[parseRef(b, remotes).kind]
+  )
+}
+
 function canDragRef(parsed: ParsedRef): boolean {
   return parsed.name !== null && parsed.kind !== 'tag'
 }
@@ -258,7 +274,7 @@ function GraphView() {
             onDoubleClick={() => onCheckout(commit.hash)}
             onContextMenu={(event) => commitMenu(event, commit)}
           >
-            {commit.refs.map((ref) => renderChip(ref))}
+            {sortRefsByPriority(commit.refs, remotes).map((ref) => renderChip(ref))}
           </li>
         ))}
       </ul>

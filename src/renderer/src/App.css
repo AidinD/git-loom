@@ -1211,7 +1211,7 @@ body {
   padding: 0;
   flex: none;
   width: max-content;
-  max-width: 260px;
+  max-width: 320px;
 }
 
 .refs-row {
@@ -1295,6 +1295,10 @@ body {
   font-weight: 600;
   color: #11131a;
   user-select: none;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ref-head {
