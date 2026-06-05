@@ -11,6 +11,7 @@ import type {
 } from '../../shared/types'
 import ChangesPanel from './ChangesPanel'
 import DiffPanel from './DiffPanel'
+import FilesPanel from './FilesPanel'
 import PrPanel from './PrPanel'
 import RepoSwitcher from './RepoSwitcher'
 import BranchSwitcher from './BranchSwitcher'
@@ -82,6 +83,10 @@ function DiffDockPanel() {
   return <DiffPanel />
 }
 
+function FilesDockPanel() {
+  return <FilesPanel />
+}
+
 function PrDockPanel() {
   return <PrPanel />
 }
@@ -90,6 +95,7 @@ const DOCK_COMPONENTS = {
   changes: ChangesDockPanel,
   graph: GraphDockPanel,
   diff: DiffDockPanel,
+  files: FilesDockPanel,
   pr: PrDockPanel
 }
 
@@ -125,6 +131,7 @@ function App() {
   const [commitDescription, setCommitDescription] = useState('')
   const [commitCoauthors, setCommitCoauthors] = useState('')
   const [diffView, setDiffView] = useState<DiffView | null>(null)
+  const [selectedDiffFile, setSelectedDiffFile] = useState<string | null>(null)
   const [repos, setRepos] = useState<RepoEntry[]>([])
   const [groupModalRepo, setGroupModalRepo] = useState<RepoEntry | null>(null)
   const [groupInput, setGroupInput] = useState('')
@@ -194,7 +201,10 @@ function App() {
     buildDefaultLayout(api)
   }
 
-  function showPanel(id: 'graph' | 'changes' | 'diff' | 'pr', title: string): void {
+  function showPanel(
+    id: 'graph' | 'changes' | 'diff' | 'files' | 'pr',
+    title: string
+  ): void {
     const api = dockApi.current
     if (!api) {
       return
@@ -614,6 +624,7 @@ function App() {
         subtitle: staged ? 'staged' : 'unstaged',
         text: result.text
       })
+      setSelectedDiffFile(null)
       showPanel('diff', 'Diff')
     } else {
       setError(result.error)
@@ -646,6 +657,8 @@ function App() {
         subtitle: 'commit',
         text: result.text
       })
+      setSelectedDiffFile(null)
+      showPanel('files', 'Files')
       showPanel('diff', 'Diff')
     } else {
       setError(result.error)
@@ -855,7 +868,9 @@ function App() {
     onUnstageMany: handleUnstageMany,
     onDiscardMany: handleDiscardMany,
     onStashMany: handleStashMany,
-    diffView
+    diffView,
+    selectedDiffFile,
+    setSelectedDiffFile
   }
 
   return (
@@ -925,6 +940,7 @@ function App() {
               items: [
                 { label: 'History', onClick: () => showPanel('graph', 'History') },
                 { label: 'Changes', onClick: () => showPanel('changes', 'Changes') },
+                { label: 'Files', onClick: () => showPanel('files', 'Files') },
                 { label: 'Diff', onClick: () => showPanel('diff', 'Diff') },
                 { label: 'Pull requests', onClick: () => showPanel('pr', 'Pull requests') }
               ]

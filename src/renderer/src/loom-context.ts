@@ -58,6 +58,8 @@ export interface LoomContextValue {
   onDropStash: (ref: string) => void
   onDiscard: (file: string, untracked: boolean) => void
   diffView: DiffView | null
+  selectedDiffFile: string | null
+  setSelectedDiffFile: (file: string | null) => void
 }
 
 export const LoomContext = createContext<LoomContextValue | null>(null)

@@ -108,8 +108,9 @@ Captured from GitHub Desktop screenshots — not yet scoped, just ideas.
 - [done] Split (side-by-side before/after) view with a Unified/Split toggle.
 - [done] Commit diffs are clean (`git show --patch --format=`, no stat/commit-header
   noise).
-- [done] Pick one file at a time — the file list is a selector; only the selected
-  file's diff shows (default Split). Widen the Diff panel for proper side-by-side.
+- [done] Pick one file at a time — the file list is now its **own dockable "Files"
+  panel** (separate from the Diff panel); selecting a file shows only its diff
+  (default Split). Commit clicks open both Files + Diff; arrange them freely.
 - Follow-up: per-file +/- counts; intra-line (word-level) highlighting.
 
 **History / commit detail**
