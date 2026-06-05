@@ -918,11 +918,60 @@ body {
 }
 
 .repo-group-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-dim);
   padding: 6px 4px 2px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.repo-group-title:hover {
+  color: var(--text);
+}
+
+.repo-group-chevron {
+  width: 10px;
+  flex: none;
+}
+
+.repo-group-count {
+  margin-left: auto;
+  color: var(--text-dim);
+  font-size: 10px;
+}
+
+.repo-group-title.drop-target {
+  background: var(--selection);
+  color: var(--text);
+}
+
+.repo-item.dragging {
+  opacity: 0.4;
+}
+
+.repo-item.drop-before {
+  box-shadow: inset 0 2px 0 0 var(--accent);
+}
+
+.repo-newgroup {
+  margin-top: 6px;
+  padding: 8px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-dim);
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+}
+
+.repo-newgroup.drop-target {
+  border-color: var(--accent);
+  color: var(--text);
+  background: var(--selection);
 }
 
 .repo-item {

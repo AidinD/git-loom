@@ -771,6 +771,12 @@ function App() {
     setRepos(await window.api.removeRepo(path))
   }
 
+  async function handleReorderRepos(
+    items: { path: string; group: string }[]
+  ): Promise<void> {
+    setRepos(await window.api.setReposLayout(items))
+  }
+
   /** Switches to a repo, but first verifies the folder still exists on disk. */
   async function handleSwitchRepo(path: string): Promise<void> {
     const exists = await window.api.repoExists(path)
@@ -1020,6 +1026,7 @@ function App() {
           onClone={openCloneModal}
           onRemove={handleRemoveRepo}
           onSetGroup={openGroupModal}
+          onReorder={(items) => void handleReorderRepos(items)}
         />
         {repoPath && (
           <>

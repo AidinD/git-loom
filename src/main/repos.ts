@@ -69,3 +69,28 @@ export function setRepoGroup(path: string, group: string): RepoEntry[] {
   }
   return store.repos
 }
+
+/**
+ * Rewrites the repo array to the given order and group assignments in one go.
+ * Any repos missing from `items` (e.g. filtered out in the UI) are appended
+ * unchanged so nothing is lost.
+ */
+export function setReposLayout(items: { path: string; group: string }[]): RepoEntry[] {
+  const store = read()
+  const byPath = new Map(store.repos.map((repo) => [repo.path, repo]))
+  const next: RepoEntry[] = []
+  for (const item of items) {
+    const existing = byPath.get(item.path)
+    if (existing) {
+      existing.group = item.group.trim()
+      next.push(existing)
+      byPath.delete(item.path)
+    }
+  }
+  for (const leftover of byPath.values()) {
+    next.push(leftover)
+  }
+  store.repos = next
+  write(store)
+  return store.repos
+}

@@ -51,6 +51,7 @@ import {
   addRepo,
   removeRepo,
   setRepoGroup,
+  setReposLayout,
   getCurrentRepo,
   setCurrentRepo
 } from './repos'
@@ -380,6 +381,13 @@ app.whenReady().then(() => {
     'repos:setGroup',
     async (_event, repoPath: string, group: string) => {
       return setRepoGroup(repoPath, group)
+    }
+  )
+
+  ipcMain.handle(
+    'repos:setLayout',
+    async (_event, items: { path: string; group: string }[]) => {
+      return setReposLayout(items)
     }
   )
 
