@@ -835,6 +835,16 @@ body {
   color: #b9d98a;
 }
 
+.word-diff-add {
+  background: rgba(158, 206, 106, 0.4);
+  border-radius: 2px;
+}
+
+.word-diff-del {
+  background: rgba(247, 118, 142, 0.4);
+  border-radius: 2px;
+}
+
 .ds-empty {
   background: rgba(127, 127, 127, 0.05);
 }

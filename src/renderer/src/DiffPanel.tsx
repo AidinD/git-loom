@@ -1,12 +1,70 @@
 import { useState } from 'react'
 import { useLoom } from './loom-context'
-import { parseDiff, groupByFile, toSplit } from './diff-utils'
-import type { DiffLine } from './diff-utils'
+import { parseDiff, groupByFile, toSplit, inlineDiff } from './diff-utils'
+import type { DiffLine, InlineSeg } from './diff-utils'
 
-function UnifiedView({ lines }: { lines: DiffLine[] }) {
+/** Renders inline word-diff segments, or plain text when no segments exist. */
+function InlineText({
+  segs,
+  fallback,
+  side
+}: {
+  segs: InlineSeg[] | undefined
+  fallback: string
+  side: 'add' | 'del'
+}) {
+  if (!segs) {
+    return <>{fallback || ' '}</>
+  }
   return (
     <>
-      {lines.map((line, index) => {
+      {segs.map((seg, index) =>
+        seg.changed ? (
+          <span key={index} className={`word-diff-${side}`}>
+            {seg.text}
+          </span>
+        ) : (
+          <span key={index}>{seg.text}</span>
+        )
+      )}
+    </>
+  )
+}
+
+/** Attaches inline word-diff segments to paired del/add lines (unified view). */
+function annotateInline(lines: DiffLine[]): (DiffLine & { segs?: InlineSeg[] })[] {
+  const out: (DiffLine & { segs?: InlineSeg[] })[] = lines.map((line) => ({ ...line }))
+  let i = 0
+  while (i < out.length) {
+    if (out[i].type !== 'del') {
+      i += 1
+      continue
+    }
+    const delStart = i
+    while (i < out.length && out[i].type === 'del') {
+      i += 1
+    }
+    const addStart = i
+    while (i < out.length && out[i].type === 'add') {
+      i += 1
+    }
+    const count = Math.min(addStart - delStart, i - addStart)
+    for (let k = 0; k < count; k++) {
+      const del = out[delStart + k]
+      const add = out[addStart + k]
+      const diff = inlineDiff(del.text, add.text)
+      del.segs = diff.left
+      add.segs = diff.right
+    }
+  }
+  return out
+}
+
+function UnifiedView({ lines }: { lines: DiffLine[] }) {
+  const annotated = annotateInline(lines)
+  return (
+    <>
+      {annotated.map((line, index) => {
         if (line.type === 'hunk') {
           return (
             <div key={index} className="dl-hunk">
@@ -21,6 +79,7 @@ function UnifiedView({ lines }: { lines: DiffLine[] }) {
             </div>
           )
         }
+        const side = line.type === 'add' ? 'add' : 'del'
         return (
           <div key={index} className={`dl dl-${line.type}`}>
             <span className="dl-num">{line.oldNo ?? ''}</span>
@@ -28,7 +87,13 @@ function UnifiedView({ lines }: { lines: DiffLine[] }) {
             <span className="dl-sign">
               {line.type === 'add' ? '+' : line.type === 'del' ? '−' : ' '}
             </span>
-            <span className="dl-text">{line.text || ' '}</span>
+            <span className="dl-text">
+              {line.type === 'add' || line.type === 'del' ? (
+                <InlineText segs={line.segs} fallback={line.text} side={side} />
+              ) : (
+                line.text || ' '
+              )}
+            </span>
           </div>
         )
       })}
@@ -55,19 +120,33 @@ function SplitView({ lines }: { lines: DiffLine[] }) {
           )
         }
         const changed = row.kind === 'change'
+        const paired = changed && row.left && row.right
+        const segs = paired ? inlineDiff(row.left!.text, row.right!.text) : null
         return (
           <div key={index} className="ds-row">
             <div
               className={`ds-cell${changed && row.left ? ' ds-del' : ''}${!row.left ? ' ds-empty' : ''}`}
             >
               <span className="dl-num">{row.left?.no ?? ''}</span>
-              <span className="ds-text">{row.left?.text ?? ''}</span>
+              <span className="ds-text">
+                {row.left ? (
+                  <InlineText segs={segs?.left} fallback={row.left.text} side="del" />
+                ) : (
+                  ''
+                )}
+              </span>
             </div>
             <div
               className={`ds-cell${changed && row.right ? ' ds-add' : ''}${!row.right ? ' ds-empty' : ''}`}
             >
               <span className="dl-num">{row.right?.no ?? ''}</span>
-              <span className="ds-text">{row.right?.text ?? ''}</span>
+              <span className="ds-text">
+                {row.right ? (
+                  <InlineText segs={segs?.right} fallback={row.right.text} side="add" />
+                ) : (
+                  ''
+                )}
+              </span>
             </div>
           </div>
         )
