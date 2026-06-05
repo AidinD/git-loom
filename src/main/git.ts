@@ -320,8 +320,15 @@ export async function rebaseAbort(dir: string): Promise<CheckoutResult> {
   return { ok: true, message: 'Rebase aborted' }
 }
 
-/** Reverts a commit — creates a new commit that undoes its changes. */
-export async function revert(dir: string, hash: string): Promise<MergeResult> {
+/**
+ * Reverts a commit. With `noCommit`, the inverse is left staged for review
+ * instead of committed immediately.
+ */
+export async function revert(
+  dir: string,
+  hash: string,
+  noCommit: boolean
+): Promise<MergeResult> {
   let root: string | null
   try {
     root = await resolveRepoRoot(dir)
@@ -337,7 +344,8 @@ export async function revert(dir: string, hash: string): Promise<MergeResult> {
     return { ok: false, conflict: false, error: `Not a Git repository: ${dir}` }
   }
 
-  const result = await runGit(['revert', '--no-edit', hash], root)
+  const args = noCommit ? ['revert', '--no-commit', hash] : ['revert', '--no-edit', hash]
+  const result = await runGit(args, root)
   if (result.code !== 0) {
     const output = `${result.stdout}\n${result.stderr}`
     const conflict = /CONFLICT|after resolving the conflicts/i.test(output)
@@ -348,7 +356,9 @@ export async function revert(dir: string, hash: string): Promise<MergeResult> {
     }
   }
 
-  const message = tidy(result.stdout) || `Reverted ${hash.slice(0, 7)}`
+  const message = noCommit
+    ? `Reverted ${hash.slice(0, 7)} — staged, review and commit`
+    : tidy(result.stdout) || `Reverted ${hash.slice(0, 7)}`
   return { ok: true, message }
 }
 

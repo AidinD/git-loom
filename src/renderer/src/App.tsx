@@ -335,13 +335,13 @@ function App() {
     }
   }
 
-  async function doRevert(hash: string): Promise<void> {
+  async function doRevert(hash: string, noCommit: boolean): Promise<void> {
     if (!repoPath) {
       return
     }
     setError(null)
     setInfo(null)
-    const result = await window.api.revert(repoPath, hash)
+    const result = await window.api.revert(repoPath, hash, noCommit)
     await loadLog(repoPath)
     if (result.ok) {
       setInfo(result.message)

@@ -132,9 +132,12 @@ app.whenReady().then(() => {
     return rebaseAbort(repoPath)
   })
 
-  ipcMain.handle('git:revert', async (_event, repoPath: string, hash: string) => {
-    return revert(repoPath, hash)
-  })
+  ipcMain.handle(
+    'git:revert',
+    async (_event, repoPath: string, hash: string, noCommit: boolean) => {
+      return revert(repoPath, hash, noCommit)
+    }
+  )
 
   ipcMain.handle('git:revertAbort', async (_event, repoPath: string) => {
     return revertAbort(repoPath)

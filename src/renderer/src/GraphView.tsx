@@ -99,9 +99,13 @@ function GraphView() {
                   onClick: () => onCheckout(commit.hash)
                 },
                 {
-                  label: 'Revert commit',
+                  label: 'Revert & commit',
                   danger: true,
-                  onClick: () => onRevert(commit.hash)
+                  onClick: () => onRevert(commit.hash, false)
+                },
+                {
+                  label: 'Revert without committing',
+                  onClick: () => onRevert(commit.hash, true)
                 }
               ])
             }}
