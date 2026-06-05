@@ -514,37 +514,78 @@ body {
   font-size: 12px;
 }
 
-.diff-body {
-  margin: 0;
-  padding: 10px 14px;
-  overflow: auto;
+.diff-body2 {
   flex: 1;
-  font-family: 'SFMono-Regular', Consolas, monospace;
+  overflow: auto;
+  font-family: 'SFMono-Regular', Consolas, 'Courier New', monospace;
   font-size: 12px;
-  line-height: 1.5;
+  line-height: 1.55;
+  padding-bottom: 8px;
+}
+
+.dl {
+  display: flex;
   white-space: pre;
 }
 
-.diff-add {
-  color: #9ece6a;
-  background: rgba(158, 206, 106, 0.08);
-}
-
-.diff-del {
-  color: #f7768e;
-  background: rgba(247, 118, 142, 0.08);
-}
-
-.diff-hunk {
-  color: #7dcfff;
-}
-
-.diff-meta {
+.dl-num {
+  flex: none;
+  width: 40px;
+  text-align: right;
+  padding: 0 6px;
   color: var(--text-dim);
+  opacity: 0.7;
+  user-select: none;
 }
 
-.diff-context {
-  color: var(--text);
+.dl-num:nth-of-type(2) {
+  border-right: 1px solid var(--border);
+  margin-right: 4px;
+}
+
+.dl-sign {
+  flex: none;
+  width: 12px;
+  text-align: center;
+  color: var(--text-dim);
+  user-select: none;
+}
+
+.dl-text {
+  flex: 1;
+  padding-right: 12px;
+}
+
+.dl-add {
+  background: rgba(158, 206, 106, 0.12);
+}
+
+.dl-add .dl-sign,
+.dl-add .dl-text {
+  color: #b9d98a;
+}
+
+.dl-del {
+  background: rgba(247, 118, 142, 0.12);
+}
+
+.dl-del .dl-sign,
+.dl-del .dl-text {
+  color: #f0a0ad;
+}
+
+.dl-hunk {
+  padding: 3px 12px;
+  margin: 2px 0;
+  color: #7dcfff;
+  background: rgba(125, 207, 255, 0.07);
+  white-space: pre;
+}
+
+.dl-meta {
+  padding: 0 12px;
+  color: var(--text-dim);
+  white-space: pre;
 }
 
 .repo-switcher {
