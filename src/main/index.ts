@@ -41,7 +41,9 @@ import {
   useOurs,
   useTheirs,
   markResolved,
-  continueConflict
+  continueConflict,
+  readConflictFile,
+  resolveConflictFile
 } from './git'
 import {
   listRepos,
@@ -171,6 +173,17 @@ app.whenReady().then(() => {
     'git:continueConflict',
     async (_event, repoPath: string, kind: 'merge' | 'rebase' | 'revert') => {
       return continueConflict(repoPath, kind)
+    }
+  )
+
+  ipcMain.handle('git:readConflictFile', async (_event, repoPath: string, file: string) => {
+    return readConflictFile(repoPath, file)
+  })
+
+  ipcMain.handle(
+    'git:resolveConflictFile',
+    async (_event, repoPath: string, file: string, content: string) => {
+      return resolveConflictFile(repoPath, file, content)
     }
   )
 

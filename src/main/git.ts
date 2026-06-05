@@ -1,4 +1,5 @@
 import { spawn } from 'child_process'
+import { readFile, writeFile } from 'fs/promises'
 import { join } from 'path'
 import type {
   Commit,
@@ -12,7 +13,8 @@ import type {
   StashListResult,
   BranchesResult,
   AheadBehind,
-  ConflictsResult
+  ConflictsResult,
+  ConflictFileResult
 } from '../shared/types'
 
 const FIELD = '\x1f'
@@ -446,6 +448,56 @@ export async function useTheirs(dir: string, file: string): Promise<CheckoutResu
 /** Marks a manually-edited file as resolved by staging it. */
 export async function markResolved(dir: string, file: string): Promise<CheckoutResult> {
   return runSimple(dir, ['add', '--', file], `Marked ${file} resolved`)
+}
+
+/** Reads the working-tree content of a conflicted file (including markers). */
+export async function readConflictFile(
+  dir: string,
+  file: string
+): Promise<ConflictFileResult> {
+  let root: string | null
+  try {
+    root = await resolveRepoRoot(dir)
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) }
+  }
+
+  if (!root) {
+    return { ok: false, error: `Not a Git repository: ${dir}` }
+  }
+
+  try {
+    const content = await readFile(join(root, file), 'utf8')
+    return { ok: true, content }
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) }
+  }
+}
+
+/** Writes resolved content back to a conflicted file, then stages it. */
+export async function resolveConflictFile(
+  dir: string,
+  file: string,
+  content: string
+): Promise<CheckoutResult> {
+  let root: string | null
+  try {
+    root = await resolveRepoRoot(dir)
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) }
+  }
+
+  if (!root) {
+    return { ok: false, error: `Not a Git repository: ${dir}` }
+  }
+
+  try {
+    await writeFile(join(root, file), content, 'utf8')
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) }
+  }
+
+  return runSimple(dir, ['add', '--', file], `Resolved ${file}`)
 }
 
 /**

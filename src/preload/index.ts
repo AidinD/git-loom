@@ -12,7 +12,8 @@ import type {
   PullRequestsResult,
   BranchesResult,
   AheadBehind,
-  ConflictsResult
+  ConflictsResult,
+  ConflictFileResult
 } from '../shared/types'
 
 const api = {
@@ -49,6 +50,14 @@ const api = {
     kind: 'merge' | 'rebase' | 'revert'
   ): Promise<MergeResult> =>
     ipcRenderer.invoke('git:continueConflict', repoPath, kind),
+  readConflictFile: (repoPath: string, file: string): Promise<ConflictFileResult> =>
+    ipcRenderer.invoke('git:readConflictFile', repoPath, file),
+  resolveConflictFile: (
+    repoPath: string,
+    file: string,
+    content: string
+  ): Promise<CheckoutResult> =>
+    ipcRenderer.invoke('git:resolveConflictFile', repoPath, file, content),
   status: (repoPath: string): Promise<StatusResult> =>
     ipcRenderer.invoke('git:status', repoPath),
   diff: (repoPath: string, file: string, staged: boolean): Promise<DiffResult> =>

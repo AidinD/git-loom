@@ -44,6 +44,10 @@ export type ConflictsResult =
   | { ok: true; files: ConflictFile[] }
   | { ok: false; error: string }
 
+export type ConflictFileResult =
+  | { ok: true; content: string }
+  | { ok: false; error: string }
+
 export interface FileChange {
   path: string
   /** Index (staged) status char from `git status --porcelain`, e.g. M, A, D. */

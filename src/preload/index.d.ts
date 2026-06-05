@@ -11,7 +11,8 @@ import type {
   PullRequestsResult,
   BranchesResult,
   AheadBehind,
-  ConflictsResult
+  ConflictsResult,
+  ConflictFileResult
 } from '../shared/types'
 
 export interface LoomApi {
@@ -32,6 +33,12 @@ export interface LoomApi {
     repoPath: string,
     kind: 'merge' | 'rebase' | 'revert'
   ) => Promise<MergeResult>
+  readConflictFile: (repoPath: string, file: string) => Promise<ConflictFileResult>
+  resolveConflictFile: (
+    repoPath: string,
+    file: string,
+    content: string
+  ) => Promise<CheckoutResult>
   status: (repoPath: string) => Promise<StatusResult>
   diff: (repoPath: string, file: string, staged: boolean) => Promise<DiffResult>
   showCommit: (repoPath: string, hash: string) => Promise<DiffResult>
