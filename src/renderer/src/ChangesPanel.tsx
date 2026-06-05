@@ -162,12 +162,43 @@ function ChangesPanel({
     onShowDiff(path, sectionName === 'staged')
   }
 
+  function handleSectionMenu(
+    event: ReactMouseEvent,
+    sectionName: 'staged' | 'unstaged' | 'stash'
+  ): void {
+    event.preventDefault()
+    const items: ContextMenuItem[] = []
+    if (sectionName === 'staged') {
+      if (staged.length > 0) {
+        items.push({ label: 'Unstage all', onClick: onUnstageAll })
+      }
+    } else if (sectionName === 'unstaged') {
+      if (unstaged.length > 0) {
+        items.push({ label: 'Stage all', onClick: onStageAll })
+      }
+    }
+    if (hasChanges) {
+      items.push({ label: 'Stash all changes', onClick: onStash })
+    }
+    if (sectionName === 'unstaged' && unstaged.length > 0) {
+      items.push({
+        label: 'Discard all',
+        danger: true,
+        onClick: () => onDiscardMany(unstaged.map((file) => file.path))
+      })
+    }
+    if (items.length > 0) {
+      openContextMenu(event.clientX, event.clientY, items)
+    }
+  }
+
   function handleRowMenu(
     event: ReactMouseEvent,
     sectionName: Section,
     path: string
   ): void {
     event.preventDefault()
+    event.stopPropagation()
     const inSelection =
       section === sectionName && selected.includes(path) && selected.length > 1
     const targets = inSelection ? selected : [path]
@@ -333,6 +364,7 @@ function ChangesPanel({
       <div
         className={`sidebar-section sized${dragZone === 'staged' ? ' drag-zone' : ''}`}
         style={{ height: stagedHeight }}
+        onContextMenu={(event) => handleSectionMenu(event, 'staged')}
         {...zoneProps('staged')}
       >
         <h2 className="sidebar-title">
@@ -359,6 +391,7 @@ function ChangesPanel({
       <div
         className={`sidebar-section sized${dragZone === 'unstaged' ? ' drag-zone' : ''}`}
         style={{ height: changesHeight }}
+        onContextMenu={(event) => handleSectionMenu(event, 'unstaged')}
         {...zoneProps('unstaged')}
       >
         <h2 className="sidebar-title">
@@ -384,6 +417,7 @@ function ChangesPanel({
 
       <div
         className={`sidebar-section stash-section${dragZone === 'stash' ? ' drag-zone' : ''}`}
+        onContextMenu={(event) => handleSectionMenu(event, 'stash')}
         {...zoneProps('stash')}
       >
         <h2 className="sidebar-title">
