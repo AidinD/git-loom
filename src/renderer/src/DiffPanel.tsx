@@ -16,13 +16,17 @@ interface SplitCell {
 }
 
 interface SplitRow {
-  kind: 'context' | 'change' | 'hunk' | 'meta' | 'file'
-  text?: string
+  kind: 'context' | 'change' | 'hunk' | 'meta'
   left?: SplitCell
   right?: SplitCell
+  text?: string
 }
 
-// Per-file metadata lines that are pure noise in a viewer.
+interface FileSection {
+  file: string
+  lines: DiffLine[]
+}
+
 const SKIP_PREFIXES = [
   'index ',
   '--- ',
@@ -80,6 +84,20 @@ function parseDiff(text: string): DiffLine[] {
   return out
 }
 
+function groupByFile(lines: DiffLine[]): FileSection[] {
+  const sections: FileSection[] = []
+  let current: FileSection | null = null
+  for (const line of lines) {
+    if (line.type === 'file') {
+      current = { file: line.text, lines: [] }
+      sections.push(current)
+    } else if (current) {
+      current.lines.push(line)
+    }
+  }
+  return sections
+}
+
 function toSplit(lines: DiffLine[]): SplitRow[] {
   const rows: SplitRow[] = []
   let i = 0
@@ -117,17 +135,91 @@ function toSplit(lines: DiffLine[]): SplitRow[] {
       }
       continue
     }
-    rows.push({ kind: line.type as 'hunk' | 'meta' | 'file', text: line.text })
+    rows.push({ kind: line.type === 'hunk' ? 'hunk' : 'meta', text: line.text })
     i += 1
   }
   return rows
 }
 
+function UnifiedView({ lines }: { lines: DiffLine[] }) {
+  return (
+    <>
+      {lines.map((line, index) => {
+        if (line.type === 'hunk') {
+          return (
+            <div key={index} className="dl-hunk">
+              {line.text}
+            </div>
+          )
+        }
+        if (line.type === 'meta' || line.type === 'file') {
+          return (
+            <div key={index} className="dl-meta">
+              {line.text || ' '}
+            </div>
+          )
+        }
+        return (
+          <div key={index} className={`dl dl-${line.type}`}>
+            <span className="dl-num">{line.oldNo ?? ''}</span>
+            <span className="dl-num">{line.newNo ?? ''}</span>
+            <span className="dl-sign">
+              {line.type === 'add' ? '+' : line.type === 'del' ? '−' : ' '}
+            </span>
+            <span className="dl-text">{line.text || ' '}</span>
+          </div>
+        )
+      })}
+    </>
+  )
+}
+
+function SplitView({ lines }: { lines: DiffLine[] }) {
+  return (
+    <>
+      {toSplit(lines).map((row, index) => {
+        if (row.kind === 'hunk') {
+          return (
+            <div key={index} className="dl-hunk">
+              {row.text}
+            </div>
+          )
+        }
+        if (row.kind === 'meta') {
+          return (
+            <div key={index} className="dl-meta">
+              {row.text || ' '}
+            </div>
+          )
+        }
+        const changed = row.kind === 'change'
+        return (
+          <div key={index} className="ds-row">
+            <div
+              className={`ds-cell${changed && row.left ? ' ds-del' : ''}${!row.left ? ' ds-empty' : ''}`}
+            >
+              <span className="dl-num">{row.left?.no ?? ''}</span>
+              <span className="ds-text">{row.left?.text ?? ''}</span>
+            </div>
+            <div
+              className={`ds-cell${changed && row.right ? ' ds-add' : ''}${!row.right ? ' ds-empty' : ''}`}
+            >
+              <span className="dl-num">{row.right?.no ?? ''}</span>
+              <span className="ds-text">{row.right?.text ?? ''}</span>
+            </div>
+          </div>
+        )
+      })}
+    </>
+  )
+}
+
 function DiffPanel() {
   const { diffView } = useLoom()
   const [mode, setMode] = useState<'unified' | 'split'>(
-    () => (localStorage.getItem('loom.diffMode') as 'unified' | 'split') || 'unified'
+    () => (localStorage.getItem('loom.diffMode') as 'unified' | 'split') || 'split'
   )
+  const [selectedFile, setSelectedFile] = useState<string | null>(null)
 
   function setDiffMode(next: 'unified' | 'split'): void {
     setMode(next)
@@ -139,12 +231,10 @@ function DiffPanel() {
   }
 
   const hasContent = diffView.text.trim().length > 0
-  const lines = hasContent ? parseDiff(diffView.text) : []
-  const files = lines.filter((line) => line.type === 'file').map((line) => line.text)
-
-  function scrollToFile(path: string): void {
-    document.getElementById(`dfile-${path}`)?.scrollIntoView({ block: 'start' })
-  }
+  const sections = hasContent ? groupByFile(parseDiff(diffView.text)) : []
+  const files = sections.map((section) => section.file)
+  const active =
+    sections.find((section) => section.file === selectedFile) ?? sections[0] ?? null
 
   return (
     <div className="diff-pane">
@@ -169,14 +259,14 @@ function DiffPanel() {
         </div>
       </header>
 
-      {files.length > 1 && (
+      {files.length > 0 && (
         <div className="diff-files">
           {files.map((file) => (
             <button
               key={file}
-              className="diff-file-chip"
+              className={`diff-file-chip${active?.file === file ? ' active' : ''}`}
               title={file}
-              onClick={() => scrollToFile(file)}
+              onClick={() => setSelectedFile(file)}
             >
               {file}
             </button>
@@ -190,80 +280,12 @@ function DiffPanel() {
             No textual diff (binary, untracked, or no changes).
           </div>
         )}
-
-        {hasContent && mode === 'unified' &&
-          lines.map((line, index) => {
-            if (line.type === 'file') {
-              return (
-                <div key={index} id={`dfile-${line.text}`} className="dl-file">
-                  {line.text}
-                </div>
-              )
-            }
-            if (line.type === 'hunk') {
-              return (
-                <div key={index} className="dl-hunk">
-                  {line.text}
-                </div>
-              )
-            }
-            if (line.type === 'meta') {
-              return (
-                <div key={index} className="dl-meta">
-                  {line.text || ' '}
-                </div>
-              )
-            }
-            return (
-              <div key={index} className={`dl dl-${line.type}`}>
-                <span className="dl-num">{line.oldNo ?? ''}</span>
-                <span className="dl-num">{line.newNo ?? ''}</span>
-                <span className="dl-sign">
-                  {line.type === 'add' ? '+' : line.type === 'del' ? '−' : ' '}
-                </span>
-                <span className="dl-text">{line.text || ' '}</span>
-              </div>
-            )
-          })}
-
-        {hasContent &&
-          mode === 'split' &&
-          toSplit(lines).map((row, index) => {
-            if (row.kind === 'file') {
-              return (
-                <div key={index} id={`dfile-${row.text ?? ''}`} className="dl-file">
-                  {row.text}
-                </div>
-              )
-            }
-            if (row.kind === 'hunk') {
-              return (
-                <div key={index} className="dl-hunk">
-                  {row.text}
-                </div>
-              )
-            }
-            if (row.kind === 'meta') {
-              return (
-                <div key={index} className="dl-meta">
-                  {row.text || ' '}
-                </div>
-              )
-            }
-            const changed = row.kind === 'change'
-            return (
-              <div key={index} className="ds-row">
-                <div className={`ds-cell${changed && row.left ? ' ds-del' : ''}${!row.left ? ' ds-empty' : ''}`}>
-                  <span className="dl-num">{row.left?.no ?? ''}</span>
-                  <span className="ds-text">{row.left?.text ?? ''}</span>
-                </div>
-                <div className={`ds-cell${changed && row.right ? ' ds-add' : ''}${!row.right ? ' ds-empty' : ''}`}>
-                  <span className="dl-num">{row.right?.no ?? ''}</span>
-                  <span className="ds-text">{row.right?.text ?? ''}</span>
-                </div>
-              </div>
-            )
-          })}
+        {active &&
+          (mode === 'unified' ? (
+            <UnifiedView lines={active.lines} />
+          ) : (
+            <SplitView lines={active.lines} />
+          ))}
       </div>
     </div>
   )

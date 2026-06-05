@@ -617,6 +617,12 @@ body {
   border-color: var(--accent);
 }
 
+.diff-file-chip.active {
+  background: var(--accent);
+  color: #11131a;
+  border-color: var(--accent);
+}
+
 .dl-file {
   padding: 7px 12px;
   margin-top: 6px;
