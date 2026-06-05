@@ -13,6 +13,7 @@ import ChangesPanel from './ChangesPanel'
 import DiffPanel from './DiffPanel'
 import PrPanel from './PrPanel'
 import RepoSwitcher from './RepoSwitcher'
+import BranchSwitcher from './BranchSwitcher'
 import GraphView from './GraphView'
 import ContextMenu from './ContextMenu'
 import type { ContextMenuItem } from './ContextMenu'
@@ -105,6 +106,8 @@ function App() {
   const [repoPath, setRepoPath] = useState<string | null>(null)
   const [commits, setCommits] = useState<Commit[]>([])
   const [remotes, setRemotes] = useState<string[]>([])
+  const [branches, setBranches] = useState<string[]>([])
+  const [currentBranch, setCurrentBranch] = useState('')
   const [selected, setSelected] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [info, setInfo] = useState<string | null>(null)
@@ -244,6 +247,11 @@ function App() {
         setCommits(result.commits)
         setRemotes(result.remotes)
         await loadStatus(result.root)
+        const branchResult = await window.api.listBranches(result.root)
+        if (branchResult.ok) {
+          setBranches(branchResult.branches)
+          setCurrentBranch(branchResult.current)
+        }
         setRepos(await window.api.addRepo(result.root))
         window.api.setCurrentRepo(result.root)
       } else {
@@ -809,6 +817,12 @@ function App() {
         />
         {repoPath && (
           <>
+            <BranchSwitcher
+              current={currentBranch}
+              branches={branches}
+              onCheckout={(name) => handleCheckout(name)}
+              onNewBranch={() => openNewBranchModal(null)}
+            />
             <button className="secondary" onClick={() => loadLog(repoPath)}>
               Refresh
             </button>

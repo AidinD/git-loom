@@ -9,7 +9,8 @@ import type {
   DiffResult,
   FileChange,
   CloneResult,
-  StashListResult
+  StashListResult,
+  BranchesResult
 } from '../shared/types'
 
 const FIELD = '\x1f'
@@ -390,6 +391,40 @@ export async function diff(
   }
 
   return { ok: true, text: result.stdout }
+}
+
+/** Lists local branches and the current branch ("" when detached). */
+export async function listBranches(dir: string): Promise<BranchesResult> {
+  let root: string | null
+  try {
+    root = await resolveRepoRoot(dir)
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) }
+  }
+  if (!root) {
+    return { ok: false, error: `Not a Git repository: ${dir}` }
+  }
+
+  const listResult = await runGit(
+    ['for-each-ref', '--format=%(refname:short)', '--sort=-committerdate', 'refs/heads'],
+    root
+  )
+  if (listResult.code !== 0) {
+    return {
+      ok: false,
+      error: listResult.stderr.trim() || `git exited with code ${listResult.code}`
+    }
+  }
+
+  const branches = listResult.stdout
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+
+  const currentResult = await runGit(['branch', '--show-current'], root)
+  const current = currentResult.code === 0 ? currentResult.stdout.trim() : ''
+
+  return { ok: true, branches, current }
 }
 
 /** Returns the `origin` remote URL, or null if there is none. */

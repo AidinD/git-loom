@@ -22,6 +22,7 @@ import {
   fetch,
   pull,
   push,
+  listBranches,
   createBranch,
   deleteBranch,
   renameBranch,
@@ -231,6 +232,10 @@ app.whenReady().then(() => {
 
   ipcMain.handle('git:push', async (_event, repoPath: string) => {
     return push(repoPath)
+  })
+
+  ipcMain.handle('git:branches', async (_event, repoPath: string) => {
+    return listBranches(repoPath)
   })
 
   ipcMain.handle(

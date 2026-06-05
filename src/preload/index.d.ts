@@ -8,7 +8,8 @@ import type {
   CloneResult,
   StashListResult,
   GithubReposResult,
-  PullRequestsResult
+  PullRequestsResult,
+  BranchesResult
 } from '../shared/types'
 
 export interface LoomApi {
@@ -48,6 +49,7 @@ export interface LoomApi {
   push: (repoPath: string) => Promise<CheckoutResult>
   getCurrentRepo: () => Promise<string | null>
   setCurrentRepo: (repoPath: string) => Promise<void>
+  listBranches: (repoPath: string) => Promise<BranchesResult>
   createBranch: (
     repoPath: string,
     name: string,

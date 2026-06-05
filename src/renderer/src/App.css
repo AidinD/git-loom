@@ -566,6 +566,25 @@ body {
   white-space: nowrap;
 }
 
+.branch-current {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--border);
+  color: var(--text);
+  border: none;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  max-width: 240px;
+}
+
+.branch-glyph {
+  color: var(--text-dim);
+}
+
 .chevron {
   font-size: 10px;
 }

@@ -86,8 +86,9 @@ Captured from GitHub Desktop screenshots — not yet scoped, just ideas.
   appended as `Co-authored-by:` trailers on commit.
 
 **Branches**
-- Dedicated branch dropdown: filter, New branch, list with last-commit time,
-  "Choose a branch to merge into <current>".
+- [done] Dedicated branch dropdown in the toolbar: shows the current branch, filter,
+  New branch, click to check out (sorted by most-recent commit). Follow-up: last-commit
+  time per branch, "merge into current".
 
 **Pull requests**
 - [done] Pull Requests panel (View → Pull requests): lists open PRs via `gh pr list`,

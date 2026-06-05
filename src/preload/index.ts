@@ -9,7 +9,8 @@ import type {
   CloneResult,
   StashListResult,
   GithubReposResult,
-  PullRequestsResult
+  PullRequestsResult,
+  BranchesResult
 } from '../shared/types'
 
 const api = {
@@ -83,6 +84,8 @@ const api = {
     ipcRenderer.invoke('repos:getCurrent'),
   setCurrentRepo: (repoPath: string): Promise<void> =>
     ipcRenderer.invoke('repos:setCurrent', repoPath),
+  listBranches: (repoPath: string): Promise<BranchesResult> =>
+    ipcRenderer.invoke('git:branches', repoPath),
   createBranch: (
     repoPath: string,
     name: string,
