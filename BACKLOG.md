@@ -82,7 +82,8 @@ Captured from GitHub Desktop screenshots — not yet scoped, just ideas.
 **Commit UX**
 - [done] Split commit message into Summary (single line) + Description (combined
   with a blank line when committing).
-- Co-authors on a commit (add co-author UI).
+- [done] Co-authors on a commit — "+ Co-authors" toggle reveals a field; lines are
+  appended as `Co-authored-by:` trailers on commit.
 
 **Branches**
 - Dedicated branch dropdown: filter, New branch, list with last-commit time,

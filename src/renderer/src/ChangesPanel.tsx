@@ -12,6 +12,8 @@ interface Props {
   onCommitSummaryChange: (value: string) => void
   commitDescription: string
   onCommitDescriptionChange: (value: string) => void
+  commitCoauthors: string
+  onCommitCoauthorsChange: (value: string) => void
   onStage: (file: string) => void
   onUnstage: (file: string) => void
   onStageAll: () => void
@@ -78,6 +80,8 @@ function ChangesPanel({
   onCommitSummaryChange,
   commitDescription,
   onCommitDescriptionChange,
+  commitCoauthors,
+  onCommitCoauthorsChange,
   onStage,
   onUnstage,
   onStageAll,
@@ -102,6 +106,7 @@ function ChangesPanel({
   const [selected, setSelected] = useState<string[]>([])
   const [section, setSection] = useState<Section | null>(null)
   const [anchor, setAnchor] = useState<number | null>(null)
+  const [showCoauthors, setShowCoauthors] = useState(false)
 
   useEffect(() => {
     localStorage.setItem('loom.stagedHeight', String(stagedHeight))
@@ -351,6 +356,20 @@ function ChangesPanel({
           value={commitDescription}
           onChange={(event) => onCommitDescriptionChange(event.target.value)}
         />
+        <button
+          className="coauthor-toggle"
+          onClick={() => setShowCoauthors((value) => !value)}
+        >
+          {showCoauthors ? '− Co-authors' : '+ Co-authors'}
+        </button>
+        {showCoauthors && (
+          <textarea
+            className="commit-message coauthor-field"
+            placeholder="Co-authors — one per line, e.g. Name &lt;email&gt;"
+            value={commitCoauthors}
+            onChange={(event) => onCommitCoauthorsChange(event.target.value)}
+          />
+        )}
         <button className="commit-button" disabled={!canCommit} onClick={onCommit}>
           Commit {staged.length > 0 ? `(${staged.length})` : ''}
         </button>

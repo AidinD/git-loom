@@ -52,6 +52,8 @@ function ChangesDockPanel() {
       onCommitSummaryChange={l.setCommitSummary}
       commitDescription={l.commitDescription}
       onCommitDescriptionChange={l.setCommitDescription}
+      commitCoauthors={l.commitCoauthors}
+      onCommitCoauthorsChange={l.setCommitCoauthors}
       onStage={l.onStage}
       onUnstage={l.onUnstage}
       onStageAll={l.onStageAll}
@@ -115,6 +117,7 @@ function App() {
   const [stashes, setStashes] = useState<StashEntry[]>([])
   const [commitSummary, setCommitSummary] = useState('')
   const [commitDescription, setCommitDescription] = useState('')
+  const [commitCoauthors, setCommitCoauthors] = useState('')
   const [diffView, setDiffView] = useState<DiffView | null>(null)
   const [repos, setRepos] = useState<RepoEntry[]>([])
   const [groupModalRepo, setGroupModalRepo] = useState<RepoEntry | null>(null)
@@ -512,7 +515,19 @@ function App() {
       return
     }
     const description = commitDescription.trim()
-    const message = description.length > 0 ? `${summary}\n\n${description}` : summary
+    const trailers = commitCoauthors
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0)
+      .map((line) => `Co-authored-by: ${line}`)
+      .join('\n')
+    let message = summary
+    if (description.length > 0) {
+      message += `\n\n${description}`
+    }
+    if (trailers.length > 0) {
+      message += `\n\n${trailers}`
+    }
     setError(null)
     setInfo(null)
     const result = await window.api.commit(repoPath, message)
@@ -523,6 +538,7 @@ function App() {
     setInfo(result.message)
     setCommitSummary('')
     setCommitDescription('')
+    setCommitCoauthors('')
     await loadLog(repoPath)
   }
 
@@ -761,6 +777,8 @@ function App() {
     setCommitSummary,
     commitDescription,
     setCommitDescription,
+    commitCoauthors,
+    setCommitCoauthors,
     onStage: handleStage,
     onUnstage: handleUnstage,
     onStageAll: handleStageAll,

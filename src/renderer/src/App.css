@@ -356,6 +356,24 @@ body {
   resize: none;
 }
 
+.coauthor-toggle {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.coauthor-toggle:hover {
+  color: var(--text);
+}
+
+.coauthor-field {
+  height: 44px;
+}
+
 .commit-button {
   background: var(--accent);
   color: #11131a;
