@@ -37,6 +37,10 @@ A GitHub-Desktop-style repository switcher, but better:
 - [done] **Drag-and-drop** files between Staged / Changes / Stashes sections
   (stage / unstage / stash). Multi-selection drags together.
 - [done] **Name stashes** (dialog on stash) and **stash individual files**.
+- [done] **Drag a stash out** onto Changes/Staged to apply (pop) it.
+- [skipped] **Rename a stash** — git has no native stash-rename (message lives in the
+  stash commit). The only route (drop + `git stash store`) reorders the stack to the
+  top; not worth the side effect. Decided to skip 2026-06-05.
 - [done] Commit via keyboard (Enter in Summary, Ctrl/Cmd+Enter in Description).
 - [done] **Right-click context menu** on files (Show diff / Stage|Unstage / Discard).
 - [done] Discard changes / restore file (⟲ button + confirm).
