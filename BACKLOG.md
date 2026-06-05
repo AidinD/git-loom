@@ -18,10 +18,14 @@ A GitHub-Desktop-style repository switcher, but better:
 - [done] GitKraken-style **left branch/tag column** — refs now live in their own
   column left of the graph (not inline in the commit row); chips stay interactive
   (checkout, rename/delete, drag-merge). Selected row highlights across all columns.
-- **Halyard-style grouping with drag-and-drop**: upgrade the current group-by-text
-  switcher to the same session-grouping UX used in Halyard (`nw-studio-app`) —
-  drag repos between groups, reorder, collapsible groups. Mirror/reuse that component
-  (shared Electron stack payoff).
+- [done] **Drag-and-drop repo grouping** (2026-06-05): drag a repo onto another to
+  reorder + adopt its group; onto a group header to move to that group's end; onto a
+  "+ New group" drop zone to name a new group. Group order follows the drag (a group
+  sits where its first repo is; Ungrouped last) — no separate ordering store. Groups
+  are collapsible (state in localStorage) with a per-group count. Backend
+  `setReposLayout` rewrites order + groups in one op. Built fresh in loom (didn't
+  reuse the Halyard component — different repo/stack ownership). Follow-ups: drag
+  whole groups to reorder; multi-select drag.
 - [done] **Clone browser**: the Clone dialog lists repos the user can access
   (owner + collaborator + org) via the `gh` CLI — searchable, click to clone. Uses
   the user's existing `gh auth` (no token stored in Loom). [done] paginates across
