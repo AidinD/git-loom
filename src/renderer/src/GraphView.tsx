@@ -1,6 +1,8 @@
+import type { MouseEvent as ReactMouseEvent } from 'react'
 import GitGraph from './graph/GitGraph'
 import { useLoom } from './loom-context'
 import type { ContextMenuItem } from './ContextMenu'
+import type { Commit } from '../../shared/types'
 
 const ROW_HEIGHT = 28
 
@@ -72,9 +74,146 @@ function GraphView() {
     )
   }
 
+  function selectRow(commit: Commit): void {
+    setSelected(commit.hash)
+    onShowCommit(commit.hash, commit.subject)
+  }
+
+  function commitMenu(event: ReactMouseEvent, commit: Commit): void {
+    event.preventDefault()
+    openContextMenu(event.clientX, event.clientY, [
+      { label: 'New branch here…', onClick: () => onNewBranchFrom(commit.hash) },
+      { label: 'Check out (detached)', onClick: () => onCheckout(commit.hash) },
+      {
+        label: 'Revert & commit',
+        danger: true,
+        onClick: () => onRevert(commit.hash, false)
+      },
+      {
+        label: 'Revert without committing',
+        onClick: () => onRevert(commit.hash, true)
+      }
+    ])
+  }
+
+  function renderChip(ref: string) {
+    const parsed = parseRef(ref, remotes)
+    const canDrag = canDragRef(parsed)
+    const canDrop = canDropRef(parsed)
+    const classes = [
+      'ref',
+      `ref-${parsed.kind}`,
+      parsed.target ? 'checkoutable' : '',
+      canDrag ? 'draggable' : '',
+      dragOver === parsed.name ? 'drag-over' : ''
+    ]
+      .filter(Boolean)
+      .join(' ')
+    return (
+      <span
+        key={ref}
+        className={classes}
+        title={
+          parsed.target
+            ? `Double-click to check out ${parsed.target} · drag onto another branch to merge`
+            : undefined
+        }
+        draggable={canDrag}
+        onContextMenu={(event) => {
+          event.preventDefault()
+          event.stopPropagation()
+          const items: ContextMenuItem[] = []
+          if (parsed.target) {
+            items.push({
+              label: `Check out ${parsed.target}`,
+              onClick: () => onCheckout(parsed.target)
+            })
+          }
+          if ((parsed.kind === 'branch' || parsed.kind === 'head') && parsed.name) {
+            const branchName = parsed.name
+            items.push({ label: 'Rename…', onClick: () => onRenameBranch(branchName) })
+            items.push({
+              label: 'Delete',
+              danger: true,
+              onClick: () => onDeleteBranch(branchName)
+            })
+          }
+          if (items.length > 0) {
+            openContextMenu(event.clientX, event.clientY, items)
+          }
+        }}
+        onDoubleClick={(event) => {
+          if (!parsed.target) {
+            return
+          }
+          event.stopPropagation()
+          onCheckout(parsed.target)
+        }}
+        onDragStart={(event) => {
+          event.stopPropagation()
+          event.dataTransfer.effectAllowed = 'move'
+          setDragSource(parsed.name)
+        }}
+        onDragEnd={() => {
+          setDragSource(null)
+          setDragOver(null)
+        }}
+        onDragOver={(event) => {
+          if (canDrop && dragSource && dragSource !== parsed.name) {
+            event.preventDefault()
+            setDragOver(parsed.name)
+          }
+        }}
+        onDragLeave={() => {
+          if (dragOver === parsed.name) {
+            setDragOver(null)
+          }
+        }}
+        onDrop={(event) => {
+          event.preventDefault()
+          event.stopPropagation()
+          if (canDrop && parsed.target && dragSource && dragSource !== parsed.name) {
+            const source = dragSource
+            const target = parsed.target
+            const label = parsed.label
+            openContextMenu(event.clientX, event.clientY, [
+              {
+                label: `Merge ${source} into ${label}`,
+                onClick: () => onMerge(source, target, label)
+              },
+              {
+                label: `Rebase ${source} onto ${label}`,
+                onClick: () => onRebase(source, target, label)
+              }
+            ])
+          }
+          setDragOver(null)
+          setDragSource(null)
+        }}
+      >
+        {parsed.label}
+      </span>
+    )
+  }
+
   return (
     <div className="main">
-      <GitGraph commits={commits} rowHeight={ROW_HEIGHT} />
+      <ul className="refs-col">
+        {commits.map((commit) => (
+          <li
+            key={commit.hash}
+            className={`refs-row${selected === commit.hash ? ' selected' : ''}`}
+            style={{ height: ROW_HEIGHT }}
+            onClick={() => selectRow(commit)}
+            onDoubleClick={() => onCheckout(commit.hash)}
+            onContextMenu={(event) => commitMenu(event, commit)}
+          >
+            {commit.refs.map((ref) => renderChip(ref))}
+          </li>
+        ))}
+      </ul>
+
+      <GitGraph commits={commits} rowHeight={ROW_HEIGHT} selectedHash={selected} />
 
       <ul className="commit-list">
         {commits.map((commit) => (
@@ -82,150 +221,12 @@ function GraphView() {
             key={commit.hash}
             className={`commit${selected === commit.hash ? ' selected' : ''}`}
             style={{ height: ROW_HEIGHT }}
-            onClick={() => {
-              setSelected(commit.hash)
-              onShowCommit(commit.hash, commit.subject)
-            }}
+            onClick={() => selectRow(commit)}
             onDoubleClick={() => onCheckout(commit.hash)}
-            onContextMenu={(event) => {
-              event.preventDefault()
-              openContextMenu(event.clientX, event.clientY, [
-                {
-                  label: 'New branch here…',
-                  onClick: () => onNewBranchFrom(commit.hash)
-                },
-                {
-                  label: 'Check out (detached)',
-                  onClick: () => onCheckout(commit.hash)
-                },
-                {
-                  label: 'Revert & commit',
-                  danger: true,
-                  onClick: () => onRevert(commit.hash, false)
-                },
-                {
-                  label: 'Revert without committing',
-                  onClick: () => onRevert(commit.hash, true)
-                }
-              ])
-            }}
+            onContextMenu={(event) => commitMenu(event, commit)}
             title="Double-click to check out this commit (detached)"
           >
             <code className="hash">{commit.hash.slice(0, 7)}</code>
-            {commit.refs.length > 0 && (
-              <span className="refs">
-                {commit.refs.map((ref) => {
-                  const parsed = parseRef(ref, remotes)
-                  const canDrag = canDragRef(parsed)
-                  const canDrop = canDropRef(parsed)
-                  const classes = [
-                    'ref',
-                    `ref-${parsed.kind}`,
-                    parsed.target ? 'checkoutable' : '',
-                    canDrag ? 'draggable' : '',
-                    dragOver === parsed.name ? 'drag-over' : ''
-                  ]
-                    .filter(Boolean)
-                    .join(' ')
-                  return (
-                    <span
-                      key={ref}
-                      className={classes}
-                      title={
-                        parsed.target
-                          ? `Double-click to check out ${parsed.target} · drag onto another branch to merge`
-                          : undefined
-                      }
-                      draggable={canDrag}
-                      onContextMenu={(event) => {
-                        event.preventDefault()
-                        event.stopPropagation()
-                        const items: ContextMenuItem[] = []
-                        if (parsed.target) {
-                          items.push({
-                            label: `Check out ${parsed.target}`,
-                            onClick: () => onCheckout(parsed.target)
-                          })
-                        }
-                        if (
-                          (parsed.kind === 'branch' || parsed.kind === 'head') &&
-                          parsed.name
-                        ) {
-                          const branchName = parsed.name
-                          items.push({
-                            label: 'Rename…',
-                            onClick: () => onRenameBranch(branchName)
-                          })
-                          items.push({
-                            label: 'Delete',
-                            danger: true,
-                            onClick: () => onDeleteBranch(branchName)
-                          })
-                        }
-                        if (items.length > 0) {
-                          openContextMenu(event.clientX, event.clientY, items)
-                        }
-                      }}
-                      onDoubleClick={(event) => {
-                        if (!parsed.target) {
-                          return
-                        }
-                        event.stopPropagation()
-                        onCheckout(parsed.target)
-                      }}
-                      onDragStart={(event) => {
-                        event.stopPropagation()
-                        event.dataTransfer.effectAllowed = 'move'
-                        setDragSource(parsed.name)
-                      }}
-                      onDragEnd={() => {
-                        setDragSource(null)
-                        setDragOver(null)
-                      }}
-                      onDragOver={(event) => {
-                        if (canDrop && dragSource && dragSource !== parsed.name) {
-                          event.preventDefault()
-                          setDragOver(parsed.name)
-                        }
-                      }}
-                      onDragLeave={() => {
-                        if (dragOver === parsed.name) {
-                          setDragOver(null)
-                        }
-                      }}
-                      onDrop={(event) => {
-                        event.preventDefault()
-                        event.stopPropagation()
-                        if (
-                          canDrop &&
-                          parsed.target &&
-                          dragSource &&
-                          dragSource !== parsed.name
-                        ) {
-                          const source = dragSource
-                          const target = parsed.target
-                          const label = parsed.label
-                          openContextMenu(event.clientX, event.clientY, [
-                            {
-                              label: `Merge ${source} into ${label}`,
-                              onClick: () => onMerge(source, target, label)
-                            },
-                            {
-                              label: `Rebase ${source} onto ${label}`,
-                              onClick: () => onRebase(source, target, label)
-                            }
-                          ])
-                        }
-                        setDragOver(null)
-                        setDragSource(null)
-                      }}
-                    >
-                      {parsed.label}
-                    </span>
-                  )
-                })}
-              </span>
-            )}
             <span className="subject">{commit.subject}</span>
             <span className="author">{commit.authorName}</span>
           </li>

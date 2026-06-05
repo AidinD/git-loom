@@ -1015,6 +1015,38 @@ body {
   display: block;
 }
 
+.refs-col {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: none;
+  width: 180px;
+}
+
+.refs-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  padding: 0 8px;
+  box-sizing: border-box;
+  border-bottom: 1px solid transparent;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.refs-row:hover {
+  background: var(--bg-alt);
+}
+
+.refs-row.selected {
+  background: var(--selection);
+}
+
+.refs-row .ref {
+  flex: none;
+}
+
 .commit-list {
   list-style: none;
   margin: 0;

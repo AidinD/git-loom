@@ -15,6 +15,9 @@ A GitHub-Desktop-style repository switcher, but better:
   auto-fetch every ~3 min that refreshes them. Follow-up: per-repo indicators in
   the switcher list too.
 - Persist the repo list + groups locally (e.g. app userData JSON). [done — basic]
+- [done] GitKraken-style **left branch/tag column** — refs now live in their own
+  column left of the graph (not inline in the commit row); chips stay interactive
+  (checkout, rename/delete, drag-merge). Selected row highlights across all columns.
 - **Halyard-style grouping with drag-and-drop**: upgrade the current group-by-text
   switcher to the same session-grouping UX used in Halyard (`nw-studio-app`) —
   drag repos between groups, reorder, collapsible groups. Mirror/reuse that component

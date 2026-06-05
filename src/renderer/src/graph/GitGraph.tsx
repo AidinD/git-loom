@@ -27,9 +27,10 @@ function colorForLane(lane: number): string {
 interface Props {
   commits: Commit[]
   rowHeight: number
+  selectedHash?: string | null
 }
 
-function GitGraph({ commits, rowHeight }: Props) {
+function GitGraph({ commits, rowHeight, selectedHash }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
@@ -73,6 +74,16 @@ function GitGraph({ commits, rowHeight }: Props) {
 
     const laneX = (lane: number): number => MARGIN_LEFT + lane * laneWidth
     const rowY = (row: number): number => row * rowHeight + rowHeight / 2
+
+    // Highlight the selected commit's row so the selection reads across the
+    // refs column, the graph, and the message list as one continuous band.
+    if (selectedHash) {
+      const selectedNode = layout.byHash.get(selectedHash)
+      if (selectedNode) {
+        ctx.fillStyle = '#3a3320'
+        ctx.fillRect(0, selectedNode.row * rowHeight, width, rowHeight)
+      }
+    }
 
     // Edges first, so nodes sit on top of them.
     ctx.lineWidth = 2.5
@@ -120,7 +131,7 @@ function GitGraph({ commits, rowHeight }: Props) {
       ctx.fillStyle = colorForLane(node.lane)
       ctx.fill()
     }
-  }, [commits, rowHeight])
+  }, [commits, rowHeight, selectedHash])
 
   return <canvas ref={canvasRef} className="git-graph" />
 }
