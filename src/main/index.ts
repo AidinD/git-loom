@@ -17,6 +17,7 @@ import {
   clone,
   stashList,
   stashPush,
+  stashFiles,
   stashPop,
   stashDrop,
   fetch,
@@ -212,6 +213,10 @@ app.whenReady().then(() => {
 
   ipcMain.handle('git:stashPush', async (_event, repoPath: string, message: string) => {
     return stashPush(repoPath, message)
+  })
+
+  ipcMain.handle('git:stashFiles', async (_event, repoPath: string, files: string[]) => {
+    return stashFiles(repoPath, files)
   })
 
   ipcMain.handle('git:stashPop', async (_event, repoPath: string, ref: string) => {

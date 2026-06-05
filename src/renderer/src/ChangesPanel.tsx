@@ -21,6 +21,7 @@ interface Props {
   onStageMany: (files: string[]) => void
   onUnstageMany: (files: string[]) => void
   onDiscardMany: (files: string[]) => void
+  onStashMany: (files: string[]) => void
   onCommit: () => void
   onShowDiff: (file: string, staged: boolean) => void
   onStash: () => void
@@ -89,6 +90,7 @@ function ChangesPanel({
   onStageMany,
   onUnstageMany,
   onDiscardMany,
+  onStashMany,
   onCommit,
   onShowDiff,
   onStash,
@@ -182,6 +184,10 @@ function ChangesPanel({
         onClick: () => onStageMany(targets)
       })
     }
+    items.push({
+      label: count > 1 ? `Stash ${count} files` : 'Stash file',
+      onClick: () => onStashMany(targets)
+    })
     items.push({
       label: count > 1 ? `Discard ${count} files` : 'Discard',
       danger: true,

@@ -70,6 +70,8 @@ const api = {
     ipcRenderer.invoke('git:stashList', repoPath),
   stashPush: (repoPath: string, message: string): Promise<CheckoutResult> =>
     ipcRenderer.invoke('git:stashPush', repoPath, message),
+  stashFiles: (repoPath: string, files: string[]): Promise<CheckoutResult> =>
+    ipcRenderer.invoke('git:stashFiles', repoPath, files),
   stashPop: (repoPath: string, ref: string): Promise<CheckoutResult> =>
     ipcRenderer.invoke('git:stashPop', repoPath, ref),
   stashDrop: (repoPath: string, ref: string): Promise<CheckoutResult> =>

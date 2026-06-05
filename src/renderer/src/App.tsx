@@ -62,6 +62,7 @@ function ChangesDockPanel() {
       onStageMany={l.onStageMany}
       onUnstageMany={l.onUnstageMany}
       onDiscardMany={l.onDiscardMany}
+      onStashMany={l.onStashMany}
       onCommit={l.onCommit}
       onShowDiff={l.onShowDiff}
       onStash={l.onStash}
@@ -494,6 +495,21 @@ function App() {
     await loadStatus(repoPath)
   }
 
+  async function handleStashMany(files: string[]): Promise<void> {
+    if (!repoPath || files.length === 0) {
+      return
+    }
+    setError(null)
+    setInfo(null)
+    const result = await window.api.stashFiles(repoPath, files)
+    if (!result.ok) {
+      setError(result.error)
+      return
+    }
+    setInfo(result.message)
+    await loadLog(repoPath)
+  }
+
   function handleDiscardMany(files: string[]): void {
     if (!repoPath || files.length === 0) {
       return
@@ -800,6 +816,7 @@ function App() {
     onStageMany: handleStageMany,
     onUnstageMany: handleUnstageMany,
     onDiscardMany: handleDiscardMany,
+    onStashMany: handleStashMany,
     diffView
   }
 

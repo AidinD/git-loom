@@ -100,6 +100,9 @@ export async function getLog(dir: string, limit = 1000): Promise<LogResult> {
   const result = await runGit(
     [
       'log',
+      // Exclude refs/stash so the stash's internal WIP/index/untracked commits
+      // don't clutter the graph (must precede --all).
+      '--exclude=refs/stash',
       '--all',
       '--topo-order',
       `--max-count=${limit}`,
@@ -642,6 +645,18 @@ export async function stashPush(
     args.push('-m', message.trim())
   }
   return runSimple(dir, args, 'Stashed changes')
+}
+
+/** Stashes only the given files (including untracked ones). */
+export async function stashFiles(
+  dir: string,
+  files: string[]
+): Promise<CheckoutResult> {
+  return runSimple(
+    dir,
+    ['stash', 'push', '--include-untracked', '--', ...files],
+    `Stashed ${files.length} files`
+  )
 }
 
 /** Applies a stash and removes it from the stack (`git stash pop`). */

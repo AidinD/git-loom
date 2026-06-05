@@ -49,6 +49,7 @@ export interface LoomContextValue {
   onStageMany: (files: string[]) => void
   onUnstageMany: (files: string[]) => void
   onDiscardMany: (files: string[]) => void
+  onStashMany: (files: string[]) => void
   onCommit: () => void
   onShowDiff: (file: string, staged: boolean) => void
   onStash: () => void
