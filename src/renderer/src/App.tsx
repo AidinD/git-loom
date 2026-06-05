@@ -100,13 +100,42 @@ const DOCK_COMPONENTS = {
 }
 
 function buildDefaultLayout(api: DockviewApi): void {
+  // Layout: [Changes / Pull requests] | History | Files | Diff
   api.addPanel({ id: 'graph', component: 'graph', title: 'History' })
-  api.addPanel({
+  const changes = api.addPanel({
     id: 'changes',
     component: 'changes',
     title: 'Changes',
     position: { referencePanel: 'graph', direction: 'left' }
   })
+  api.addPanel({
+    id: 'pr',
+    component: 'pr',
+    title: 'Pull requests',
+    position: { referencePanel: 'changes' }
+  })
+  const files = api.addPanel({
+    id: 'files',
+    component: 'files',
+    title: 'Files',
+    position: { referencePanel: 'graph', direction: 'right' }
+  })
+  api.addPanel({
+    id: 'diff',
+    component: 'diff',
+    title: 'Diff',
+    position: { referencePanel: 'files', direction: 'right' }
+  })
+
+  // Keep Changes as the active tab (not Pull requests), and make side columns
+  // reasonable widths (Files narrow, Diff wide). Guarded — sizing API is best-effort.
+  changes.api.setActive()
+  try {
+    changes.group.api.setSize({ width: 300 })
+    files.group.api.setSize({ width: 220 })
+  } catch {
+    // Older/newer dockview sizing API — fall back to default proportions.
+  }
 }
 
 function App() {
