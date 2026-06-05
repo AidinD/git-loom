@@ -287,13 +287,7 @@ function GraphView() {
         ))}
       </ul>
 
-      <GitGraph
-        commits={commits}
-        rowHeight={ROW_HEIGHT}
-        selectedHash={selected}
-        scrollTop={scrollTop}
-        viewportHeight={viewportHeight}
-      />
+      <GitGraph commits={commits} rowHeight={ROW_HEIGHT} selectedHash={selected} />
 
       <ul
         className="commit-list"

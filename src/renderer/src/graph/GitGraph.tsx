@@ -23,13 +23,23 @@ function colorForLane(lane: number): string {
   return PALETTE[lane % PALETTE.length]
 }
 
+/** Nearest scrollable ancestor, so we can window the canvas to the viewport. */
+function findScrollParent(el: HTMLElement): HTMLElement {
+  let node = el.parentElement
+  while (node) {
+    const overflowY = getComputedStyle(node).overflowY
+    if (overflowY === 'auto' || overflowY === 'scroll') {
+      return node
+    }
+    node = node.parentElement
+  }
+  return document.scrollingElement as HTMLElement
+}
+
 interface Props {
   commits: Commit[]
   rowHeight: number
   selectedHash?: string | null
-  /** Scroll offset and viewport height of the shared scroll container. */
-  scrollTop: number
-  viewportHeight: number
 }
 
 /**
@@ -38,13 +48,7 @@ interface Props {
  * scroll frame. This keeps it crisp (full DPR) and unbounded by the browser's
  * max canvas height, however large the history is.
  */
-function GitGraph({
-  commits,
-  rowHeight,
-  selectedHash,
-  scrollTop,
-  viewportHeight
-}: Props) {
+function GitGraph({ commits, rowHeight, selectedHash }: Props) {
   const wrapperRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
@@ -77,10 +81,11 @@ function GitGraph({
     wrapper.style.height = `${totalHeight}px`
     canvas.style.width = `${width}px`
 
+    const scrollParent = findScrollParent(wrapper)
     const laneX = (lane: number): number => MARGIN_LEFT + lane * laneWidth
     const rowY = (row: number): number => row * rowHeight + rowHeight / 2
 
-    {
+    function draw(): void {
       if (!canvas) {
         return
       }
@@ -88,7 +93,8 @@ function GitGraph({
       if (!ctx) {
         return
       }
-      const viewHeight = Math.min(viewportHeight || totalHeight, totalHeight)
+      const scrollTop = scrollParent.scrollTop
+      const viewHeight = Math.min(scrollParent.clientHeight || totalHeight, totalHeight)
       const dpr = window.devicePixelRatio || 1
 
       canvas.style.height = `${viewHeight}px`
@@ -184,7 +190,31 @@ function GitGraph({
         ctx.fill()
       }
     }
-  }, [commits, rowHeight, selectedHash, scrollTop, viewportHeight])
+
+    let frame = 0
+    function scheduleDraw(): void {
+      if (frame) {
+        return
+      }
+      frame = requestAnimationFrame(() => {
+        frame = 0
+        draw()
+      })
+    }
+
+    draw()
+    scrollParent.addEventListener('scroll', scheduleDraw, { passive: true })
+    const resizeObserver = new ResizeObserver(scheduleDraw)
+    resizeObserver.observe(scrollParent)
+
+    return () => {
+      scrollParent.removeEventListener('scroll', scheduleDraw)
+      resizeObserver.disconnect()
+      if (frame) {
+        cancelAnimationFrame(frame)
+      }
+    }
+  }, [commits, rowHeight, selectedHash])
 
   return (
     <div ref={wrapperRef} className="git-graph-col">
