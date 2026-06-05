@@ -36,6 +36,22 @@ function parseRef(ref: string, remotes: string[]): ParsedRef {
   return { kind: 'branch', label: ref, name: ref, target: ref }
 }
 
+function avatarColor(name: string): string {
+  let hash = 0
+  for (let i = 0; i < name.length; i++) {
+    hash = (hash * 31 + name.charCodeAt(i)) >>> 0
+  }
+  return `hsl(${hash % 360} 42% 42%)`
+}
+
+function initialsFor(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[1][0]).toUpperCase()
+  }
+  return name.slice(0, 2).toUpperCase()
+}
+
 function canDragRef(parsed: ParsedRef): boolean {
   return parsed.name !== null && parsed.kind !== 'tag'
 }
@@ -228,6 +244,13 @@ function GraphView() {
           >
             <code className="hash">{commit.hash.slice(0, 7)}</code>
             <span className="subject">{commit.subject}</span>
+            <span
+              className="avatar"
+              style={{ background: avatarColor(commit.authorName) }}
+              title={commit.authorName}
+            >
+              {initialsFor(commit.authorName)}
+            </span>
             <span className="author">{commit.authorName}</span>
           </li>
         ))}
