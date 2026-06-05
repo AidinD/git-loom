@@ -359,7 +359,9 @@ body {
 }
 
 .stash-create:disabled {
-  opacity: 0.45;
+  opacity: 1;
+  background: var(--bg-alt);
+  color: var(--text-dim);
   cursor: default;
 }
 
@@ -439,7 +441,9 @@ body {
 }
 
 .commit-button:disabled {
-  opacity: 0.45;
+  opacity: 1;
+  background: var(--bg-alt);
+  color: var(--text-dim);
   cursor: default;
 }
 
@@ -1384,7 +1388,9 @@ body {
 }
 
 .layout-save button:disabled {
-  opacity: 0.45;
+  opacity: 1;
+  background: var(--bg-alt);
+  color: var(--text-dim);
   cursor: default;
 }
 
