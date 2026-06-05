@@ -2,11 +2,11 @@ import { useEffect, useRef } from 'react'
 import type { Commit } from '../../../shared/types'
 import { computeLayout } from './layout'
 
-const LANE_WIDTH = 16
+const LANE_WIDTH = 18
 const MIN_LANE_WIDTH = 5
-const NODE_RADIUS = 4
-const MARGIN_LEFT = 12
-const MAX_GUTTER = 200
+const NODE_RADIUS = 5.5
+const MARGIN_LEFT = 14
+const MAX_GUTTER = 220
 const MAX_PHYSICAL = 16384
 
 const PALETTE = [
@@ -75,7 +75,9 @@ function GitGraph({ commits, rowHeight }: Props) {
     const rowY = (row: number): number => row * rowHeight + rowHeight / 2
 
     // Edges first, so nodes sit on top of them.
-    ctx.lineWidth = 2
+    ctx.lineWidth = 2.5
+    ctx.lineCap = 'round'
+    ctx.lineJoin = 'round'
     for (const edge of layout.edges) {
       const x1 = laneX(edge.fromLane)
       const y1 = rowY(edge.fromRow)
@@ -104,17 +106,19 @@ function GitGraph({ commits, rowHeight }: Props) {
       ctx.stroke()
     }
 
-    // Nodes on top.
+    // Nodes on top — a bg-coloured halo separates the node from the lines
+    // passing nearby, then a filled coloured dot (GitKraken-ish).
     for (const node of layout.nodes) {
       const x = laneX(node.lane)
       const y = rowY(node.row)
-      ctx.fillStyle = colorForLane(node.lane)
+      ctx.beginPath()
+      ctx.arc(x, y, nodeRadius + 2, 0, Math.PI * 2)
+      ctx.fillStyle = '#1e1e22'
+      ctx.fill()
       ctx.beginPath()
       ctx.arc(x, y, nodeRadius, 0, Math.PI * 2)
+      ctx.fillStyle = colorForLane(node.lane)
       ctx.fill()
-      ctx.lineWidth = 1.5
-      ctx.strokeStyle = '#1e1e22'
-      ctx.stroke()
     }
   }, [commits, rowHeight])
 
