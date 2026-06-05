@@ -140,6 +140,11 @@ function DiffPanel() {
 
   const hasContent = diffView.text.trim().length > 0
   const lines = hasContent ? parseDiff(diffView.text) : []
+  const files = lines.filter((line) => line.type === 'file').map((line) => line.text)
+
+  function scrollToFile(path: string): void {
+    document.getElementById(`dfile-${path}`)?.scrollIntoView({ block: 'start' })
+  }
 
   return (
     <div className="diff-pane">
@@ -164,6 +169,21 @@ function DiffPanel() {
         </div>
       </header>
 
+      {files.length > 1 && (
+        <div className="diff-files">
+          {files.map((file) => (
+            <button
+              key={file}
+              className="diff-file-chip"
+              title={file}
+              onClick={() => scrollToFile(file)}
+            >
+              {file}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="diff-body2">
         {!hasContent && (
           <div className="dl-meta">
@@ -175,7 +195,7 @@ function DiffPanel() {
           lines.map((line, index) => {
             if (line.type === 'file') {
               return (
-                <div key={index} className="dl-file">
+                <div key={index} id={`dfile-${line.text}`} className="dl-file">
                   {line.text}
                 </div>
               )
@@ -211,7 +231,7 @@ function DiffPanel() {
           toSplit(lines).map((row, index) => {
             if (row.kind === 'file') {
               return (
-                <div key={index} className="dl-file">
+                <div key={index} id={`dfile-${row.text ?? ''}`} className="dl-file">
                   {row.text}
                 </div>
               )

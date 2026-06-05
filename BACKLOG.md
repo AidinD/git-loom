@@ -106,8 +106,9 @@ Captured from GitHub Desktop screenshots — not yet scoped, just ideas.
 - [done] Clean file headers (real paths, no diff --git/index/+++ noise), line-number
   gutters, +/- column, full-width tints.
 - [done] Split (side-by-side before/after) view with a Unified/Split toggle.
-- Follow-up: changed-files list as a clickable sidebar for commits; intra-line
-  (word-level) highlighting.
+- [done] Commit diffs are clean (`git show --patch --format=`, no stat/commit-header
+  noise) with a clickable changed-files list at the top (jumps to each file).
+- Follow-up: per-file +/- counts; intra-line (word-level) highlighting.
 
 **History / commit detail**
 - [done] Revert a commit — right-click → "Revert & commit" (`git revert --no-edit`)

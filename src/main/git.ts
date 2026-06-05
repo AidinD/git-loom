@@ -527,7 +527,8 @@ export async function showCommit(dir: string, hash: string): Promise<DiffResult>
     return { ok: false, error: `Not a Git repository: ${dir}` }
   }
 
-  const result = await runGit(['show', '--stat', '--patch', hash], root)
+  // --format= drops the commit header; no --stat — just the clean patch.
+  const result = await runGit(['show', '--patch', '--format=', hash], root)
   if (result.code !== 0) {
     return {
       ok: false,
