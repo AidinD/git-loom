@@ -27,6 +27,10 @@ const api = {
     ipcRenderer.invoke('git:rebase', repoPath, source, target),
   rebaseAbort: (repoPath: string): Promise<CheckoutResult> =>
     ipcRenderer.invoke('git:rebaseAbort', repoPath),
+  revert: (repoPath: string, hash: string): Promise<MergeResult> =>
+    ipcRenderer.invoke('git:revert', repoPath, hash),
+  revertAbort: (repoPath: string): Promise<CheckoutResult> =>
+    ipcRenderer.invoke('git:revertAbort', repoPath),
   status: (repoPath: string): Promise<StatusResult> =>
     ipcRenderer.invoke('git:status', repoPath),
   diff: (repoPath: string, file: string, staged: boolean): Promise<DiffResult> =>

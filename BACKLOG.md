@@ -103,6 +103,8 @@ Captured from GitHub Desktop screenshots — not yet scoped, just ideas.
   Refresh, and Checkout a PR branch (`gh pr checkout`). Follow-up: filter, open in browser.
 
 **History / commit detail**
+- [done] Revert a commit — right-click a commit → "Revert commit" (`git revert
+  --no-edit`); conflicts surface an "Abort revert" button.
 - [done] Selecting a commit in History shows its **commit diff** (`git show --stat
   --patch`) in the Diff panel. Follow-up: a dedicated changed-files list per commit.
 - Author avatars in the graph/history rows.

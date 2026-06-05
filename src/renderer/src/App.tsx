@@ -115,7 +115,9 @@ function App() {
   const [loading, setLoading] = useState(false)
   const [dragSource, setDragSource] = useState<string | null>(null)
   const [dragOver, setDragOver] = useState<string | null>(null)
-  const [conflictKind, setConflictKind] = useState<'merge' | 'rebase' | null>(null)
+  const [conflictKind, setConflictKind] = useState<
+    'merge' | 'rebase' | 'revert' | null
+  >(null)
   const [lastFetched, setLastFetched] = useState<Date | null>(null)
   const [changes, setChanges] = useState<FileChange[]>([])
   const [stashes, setStashes] = useState<StashEntry[]>([])
@@ -333,14 +335,37 @@ function App() {
     }
   }
 
+  async function doRevert(hash: string): Promise<void> {
+    if (!repoPath) {
+      return
+    }
+    setError(null)
+    setInfo(null)
+    const result = await window.api.revert(repoPath, hash)
+    await loadLog(repoPath)
+    if (result.ok) {
+      setInfo(result.message)
+      setConflictKind(null)
+    } else {
+      setError(result.error)
+      if (result.conflict) {
+        setConflictKind('revert')
+      }
+    }
+  }
+
   async function handleAbort(): Promise<void> {
     if (!repoPath) {
       return
     }
-    const result =
-      conflictKind === 'rebase'
-        ? await window.api.rebaseAbort(repoPath)
-        : await window.api.mergeAbort(repoPath)
+    let result
+    if (conflictKind === 'rebase') {
+      result = await window.api.rebaseAbort(repoPath)
+    } else if (conflictKind === 'revert') {
+      result = await window.api.revertAbort(repoPath)
+    } else {
+      result = await window.api.mergeAbort(repoPath)
+    }
     if (result.ok) {
       setInfo(result.message)
       setError(null)
@@ -796,6 +821,7 @@ function App() {
     setSelected,
     onCheckout: handleCheckout,
     onShowCommit: handleShowCommit,
+    onRevert: doRevert,
     onCheckoutPr: handleCheckoutPr,
     dragSource,
     setDragSource,

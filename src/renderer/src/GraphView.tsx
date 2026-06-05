@@ -60,7 +60,8 @@ function GraphView() {
     openContextMenu,
     onRenameBranch,
     onDeleteBranch,
-    onNewBranchFrom
+    onNewBranchFrom,
+    onRevert
   } = useLoom()
 
   if (commits.length === 0) {
@@ -96,6 +97,11 @@ function GraphView() {
                 {
                   label: 'Check out (detached)',
                   onClick: () => onCheckout(commit.hash)
+                },
+                {
+                  label: 'Revert commit',
+                  danger: true,
+                  onClick: () => onRevert(commit.hash)
                 }
               ])
             }}

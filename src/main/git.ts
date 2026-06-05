@@ -320,6 +320,62 @@ export async function rebaseAbort(dir: string): Promise<CheckoutResult> {
   return { ok: true, message: 'Rebase aborted' }
 }
 
+/** Reverts a commit — creates a new commit that undoes its changes. */
+export async function revert(dir: string, hash: string): Promise<MergeResult> {
+  let root: string | null
+  try {
+    root = await resolveRepoRoot(dir)
+  } catch (err) {
+    return {
+      ok: false,
+      conflict: false,
+      error: err instanceof Error ? err.message : String(err)
+    }
+  }
+
+  if (!root) {
+    return { ok: false, conflict: false, error: `Not a Git repository: ${dir}` }
+  }
+
+  const result = await runGit(['revert', '--no-edit', hash], root)
+  if (result.code !== 0) {
+    const output = `${result.stdout}\n${result.stderr}`
+    const conflict = /CONFLICT|after resolving the conflicts/i.test(output)
+    return {
+      ok: false,
+      conflict,
+      error: tidy(result.stderr) || tidy(result.stdout) || 'Revert failed'
+    }
+  }
+
+  const message = tidy(result.stdout) || `Reverted ${hash.slice(0, 7)}`
+  return { ok: true, message }
+}
+
+/** Aborts an in-progress revert. */
+export async function revertAbort(dir: string): Promise<CheckoutResult> {
+  let root: string | null
+  try {
+    root = await resolveRepoRoot(dir)
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) }
+  }
+
+  if (!root) {
+    return { ok: false, error: `Not a Git repository: ${dir}` }
+  }
+
+  const result = await runGit(['revert', '--abort'], root)
+  if (result.code !== 0) {
+    return {
+      ok: false,
+      error: result.stderr.trim() || `git exited with code ${result.code}`
+    }
+  }
+
+  return { ok: true, message: 'Revert aborted' }
+}
+
 /** Returns the working-tree changes (staged + unstaged + untracked). */
 export async function status(dir: string): Promise<StatusResult> {
   let root: string | null

@@ -20,6 +20,8 @@ export interface LoomApi {
   mergeAbort: (repoPath: string) => Promise<CheckoutResult>
   rebase: (repoPath: string, source: string, target: string) => Promise<MergeResult>
   rebaseAbort: (repoPath: string) => Promise<CheckoutResult>
+  revert: (repoPath: string, hash: string) => Promise<MergeResult>
+  revertAbort: (repoPath: string) => Promise<CheckoutResult>
   status: (repoPath: string) => Promise<StatusResult>
   diff: (repoPath: string, file: string, staged: boolean) => Promise<DiffResult>
   showCommit: (repoPath: string, hash: string) => Promise<DiffResult>
