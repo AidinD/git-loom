@@ -1020,7 +1020,8 @@ body {
   margin: 0;
   padding: 0;
   flex: none;
-  width: 180px;
+  width: max-content;
+  max-width: 260px;
 }
 
 .refs-row {

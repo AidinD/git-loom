@@ -117,6 +117,25 @@ function GitGraph({ commits, rowHeight, selectedHash }: Props) {
       ctx.stroke()
     }
 
+    // Thin connector from the left edge (where the ref label sits) to the node,
+    // for commits that carry a branch/tag label.
+    ctx.lineWidth = 1
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.18)'
+    for (const commit of commits) {
+      if (commit.refs.length === 0) {
+        continue
+      }
+      const node = layout.byHash.get(commit.hash)
+      if (!node) {
+        continue
+      }
+      const y = rowY(node.row)
+      ctx.beginPath()
+      ctx.moveTo(0, y)
+      ctx.lineTo(laneX(node.lane) - nodeRadius, y)
+      ctx.stroke()
+    }
+
     // Nodes on top — a bg-coloured halo separates the node from the lines
     // passing nearby, then a filled coloured dot (GitKraken-ish).
     for (const node of layout.nodes) {
