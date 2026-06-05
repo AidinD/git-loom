@@ -109,6 +109,9 @@ function ChangesPanel({
   const [section, setSection] = useState<Section | null>(null)
   const [anchor, setAnchor] = useState<number | null>(null)
   const [showCoauthors, setShowCoauthors] = useState(false)
+  const [dragFiles, setDragFiles] = useState<string[]>([])
+  const [dragFrom, setDragFrom] = useState<Section | null>(null)
+  const [dragZone, setDragZone] = useState<'staged' | 'unstaged' | 'stash' | null>(null)
 
   useEffect(() => {
     localStorage.setItem('loom.stagedHeight', String(stagedHeight))
@@ -196,6 +199,43 @@ function ChangesPanel({
     openContextMenu(event.clientX, event.clientY, items)
   }
 
+  function canDropZone(zone: 'staged' | 'unstaged' | 'stash'): boolean {
+    return dragFiles.length > 0 && (zone === 'stash' || dragFrom !== zone)
+  }
+
+  function handleZoneDrop(zone: 'staged' | 'unstaged' | 'stash'): void {
+    if (canDropZone(zone)) {
+      if (zone === 'staged') {
+        onStageMany(dragFiles)
+      } else if (zone === 'unstaged') {
+        onUnstageMany(dragFiles)
+      } else {
+        onStashMany(dragFiles)
+      }
+    }
+    setDragZone(null)
+    setDragFiles([])
+    setDragFrom(null)
+  }
+
+  function zoneProps(zone: 'staged' | 'unstaged' | 'stash') {
+    return {
+      onDragOver: (event: ReactMouseEvent) => {
+        if (canDropZone(zone)) {
+          event.preventDefault()
+          setDragZone(zone)
+        }
+      },
+      onDragLeave: () => {
+        setDragZone((current) => (current === zone ? null : current))
+      },
+      onDrop: (event: ReactMouseEvent) => {
+        event.preventDefault()
+        handleZoneDrop(zone)
+      }
+    }
+  }
+
   function renderRow(
     file: FileChange,
     sectionName: Section,
@@ -208,6 +248,21 @@ function ChangesPanel({
       <li
         key={`${sectionName}-${file.path}`}
         className={`file${isSelected(sectionName, file.path) ? ' selected' : ''}`}
+        draggable
+        onDragStart={(event) => {
+          const payload =
+            isSelected(sectionName, file.path) && selected.length > 1
+              ? selected
+              : [file.path]
+          setDragFiles(payload)
+          setDragFrom(sectionName)
+          event.dataTransfer.effectAllowed = 'move'
+        }}
+        onDragEnd={() => {
+          setDragFiles([])
+          setDragFrom(null)
+          setDragZone(null)
+        }}
         onClick={(event) => handleRowClick(event, sectionName, index, list)}
         onContextMenu={(event) => handleRowMenu(event, sectionName, file.path)}
         title={file.path}
@@ -267,7 +322,11 @@ function ChangesPanel({
 
   return (
     <aside className="sidebar">
-      <div className="sidebar-section sized" style={{ height: stagedHeight }}>
+      <div
+        className={`sidebar-section sized${dragZone === 'staged' ? ' drag-zone' : ''}`}
+        style={{ height: stagedHeight }}
+        {...zoneProps('staged')}
+      >
         <h2 className="sidebar-title">
           <span>
             Staged <span className="count">{staged.length}</span>
@@ -289,7 +348,11 @@ function ChangesPanel({
         onMouseDown={startDrag(stagedHeight, setStagedHeight, 60, 600)}
       />
 
-      <div className="sidebar-section sized" style={{ height: changesHeight }}>
+      <div
+        className={`sidebar-section sized${dragZone === 'unstaged' ? ' drag-zone' : ''}`}
+        style={{ height: changesHeight }}
+        {...zoneProps('unstaged')}
+      >
         <h2 className="sidebar-title">
           <span>
             Changes <span className="count">{unstaged.length}</span>
@@ -311,7 +374,10 @@ function ChangesPanel({
         onMouseDown={startDrag(changesHeight, setChangesHeight, 60, 600)}
       />
 
-      <div className="sidebar-section stash-section">
+      <div
+        className={`sidebar-section stash-section${dragZone === 'stash' ? ' drag-zone' : ''}`}
+        {...zoneProps('stash')}
+      >
         <h2 className="sidebar-title">
           <span>
             Stashes <span className="count">{stashes.length}</span>

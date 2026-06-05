@@ -34,6 +34,10 @@ A GitHub-Desktop-style repository switcher, but better:
 - [done] **Stage all / unstage all** buttons per section.
 - [done] **Multi-select** files with Ctrl/Shift, then bulk stage/unstage/discard
   via the right-click menu.
+- [done] **Drag-and-drop** files between Staged / Changes / Stashes sections
+  (stage / unstage / stash). Multi-selection drags together.
+- [done] **Name stashes** (dialog on stash) and **stash individual files**.
+- [done] Commit via keyboard (Enter in Summary, Ctrl/Cmd+Enter in Description).
 - [done] **Right-click context menu** on files (Show diff / Stage|Unstage / Discard).
 - [done] Discard changes / restore file (⟲ button + confirm).
 - [done] Branch ops: create (toolbar), rename/delete (right-click branch chip),
