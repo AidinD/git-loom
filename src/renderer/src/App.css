@@ -455,14 +455,36 @@ body {
 }
 
 .files-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   padding: 6px 12px;
   font-size: 12px;
   font-family: 'SFMono-Regular', Consolas, monospace;
   cursor: pointer;
+  border-left: 2px solid transparent;
+}
+
+.files-item-name {
+  flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  border-left: 2px solid transparent;
+}
+
+.files-item-stat {
+  flex: none;
+  display: flex;
+  gap: 6px;
+  font-size: 11px;
+}
+
+.stat-add {
+  color: #57ab5a;
+}
+
+.stat-del {
+  color: #e5534b;
 }
 
 .files-item:hover {

@@ -95,6 +95,19 @@ export function groupByFile(lines: DiffLine[]): FileSection[] {
   return sections
 }
 
+export function countChanges(lines: DiffLine[]): { add: number; del: number } {
+  let add = 0
+  let del = 0
+  for (const line of lines) {
+    if (line.type === 'add') {
+      add += 1
+    } else if (line.type === 'del') {
+      del += 1
+    }
+  }
+  return { add, del }
+}
+
 export function toSplit(lines: DiffLine[]): SplitRow[] {
   const rows: SplitRow[] = []
   let i = 0
