@@ -101,6 +101,9 @@ function GraphView() {
       frame = requestAnimationFrame(() => {
         frame = 0
         setScrollTop(el!.scrollTop)
+        // Refresh the viewport height here too so it can't go stale relative
+        // to what the canvas draws.
+        setViewportHeight(el!.clientHeight)
       })
     }
     setViewportHeight(el.clientHeight)
@@ -284,7 +287,13 @@ function GraphView() {
         ))}
       </ul>
 
-      <GitGraph commits={commits} rowHeight={ROW_HEIGHT} selectedHash={selected} />
+      <GitGraph
+        commits={commits}
+        rowHeight={ROW_HEIGHT}
+        selectedHash={selected}
+        scrollTop={scrollTop}
+        viewportHeight={viewportHeight}
+      />
 
       <ul
         className="commit-list"
