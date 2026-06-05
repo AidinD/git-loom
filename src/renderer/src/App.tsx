@@ -11,6 +11,7 @@ import type {
 } from '../../shared/types'
 import ChangesPanel from './ChangesPanel'
 import DiffPanel from './DiffPanel'
+import PrPanel from './PrPanel'
 import RepoSwitcher from './RepoSwitcher'
 import GraphView from './GraphView'
 import ContextMenu from './ContextMenu'
@@ -77,10 +78,15 @@ function DiffDockPanel() {
   return <DiffPanel />
 }
 
+function PrDockPanel() {
+  return <PrPanel />
+}
+
 const DOCK_COMPONENTS = {
   changes: ChangesDockPanel,
   graph: GraphDockPanel,
-  diff: DiffDockPanel
+  diff: DiffDockPanel,
+  pr: PrDockPanel
 }
 
 function buildDefaultLayout(api: DockviewApi): void {
@@ -175,7 +181,7 @@ function App() {
     buildDefaultLayout(api)
   }
 
-  function showPanel(id: 'graph' | 'changes' | 'diff', title: string): void {
+  function showPanel(id: 'graph' | 'changes' | 'diff' | 'pr', title: string): void {
     const api = dockApi.current
     if (!api) {
       return
@@ -537,6 +543,21 @@ function App() {
     }
   }
 
+  async function handleCheckoutPr(number: number): Promise<void> {
+    if (!repoPath) {
+      return
+    }
+    setError(null)
+    setInfo(null)
+    const result = await window.api.checkoutPullRequest(repoPath, number)
+    if (!result.ok) {
+      setError(result.error)
+      return
+    }
+    setInfo(result.message)
+    await loadLog(repoPath)
+  }
+
   async function handleShowCommit(hash: string, subject: string): Promise<void> {
     if (!repoPath) {
       return
@@ -723,6 +744,7 @@ function App() {
     setSelected,
     onCheckout: handleCheckout,
     onShowCommit: handleShowCommit,
+    onCheckoutPr: handleCheckoutPr,
     dragSource,
     setDragSource,
     dragOver,
@@ -816,7 +838,8 @@ function App() {
               items: [
                 { label: 'History', onClick: () => showPanel('graph', 'History') },
                 { label: 'Changes', onClick: () => showPanel('changes', 'Changes') },
-                { label: 'Diff', onClick: () => showPanel('diff', 'Diff') }
+                { label: 'Diff', onClick: () => showPanel('diff', 'Diff') },
+                { label: 'Pull requests', onClick: () => showPanel('pr', 'Pull requests') }
               ]
             })
           }}

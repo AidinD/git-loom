@@ -7,7 +7,8 @@ import type {
   RepoEntry,
   CloneResult,
   StashListResult,
-  GithubReposResult
+  GithubReposResult,
+  PullRequestsResult
 } from '../shared/types'
 
 export interface LoomApi {
@@ -30,6 +31,8 @@ export interface LoomApi {
   commit: (repoPath: string, message: string) => Promise<CheckoutResult>
   clone: (url: string, parentDir: string) => Promise<CloneResult>
   listGithubRepos: () => Promise<GithubReposResult>
+  listPullRequests: (repoPath: string) => Promise<PullRequestsResult>
+  checkoutPullRequest: (repoPath: string, num: number) => Promise<CheckoutResult>
   revealRepo: (repoPath: string) => Promise<void>
   openRepoOnGitHub: (repoPath: string) => Promise<void>
   listRepos: () => Promise<RepoEntry[]>

@@ -21,6 +21,7 @@ export interface LoomContextValue {
   setSelected: (hash: string | null) => void
   onCheckout: (target: string | null) => void
   onShowCommit: (hash: string, subject: string) => void
+  onCheckoutPr: (number: number) => void
   dragSource: string | null
   setDragSource: (value: string | null) => void
   dragOver: string | null

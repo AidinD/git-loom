@@ -89,8 +89,8 @@ Captured from GitHub Desktop screenshots — not yet scoped, just ideas.
   "Choose a branch to merge into <current>".
 
 **Pull requests**
-- Pull Requests tab: list open PRs for the repo (via gh/GitHub API), filter/refresh,
-  check out a PR branch.
+- [done] Pull Requests panel (View → Pull requests): lists open PRs via `gh pr list`,
+  Refresh, and Checkout a PR branch (`gh pr checkout`). Follow-up: filter, open in browser.
 
 **History / commit detail**
 - [done] Selecting a commit in History shows its **commit diff** (`git show --stat

@@ -39,7 +39,7 @@ import {
   getCurrentRepo,
   setCurrentRepo
 } from './repos'
-import { listGithubRepos } from './github'
+import { listGithubRepos, listPullRequests, checkoutPullRequest } from './github'
 
 /** Converts a git remote URL (ssh or https) to a browsable web URL. */
 function toWebUrl(remote: string): string | null {
@@ -180,6 +180,14 @@ app.whenReady().then(() => {
 
   ipcMain.handle('github:listRepos', async () => {
     return listGithubRepos()
+  })
+
+  ipcMain.handle('github:listPrs', async (_event, repoPath: string) => {
+    return listPullRequests(repoPath)
+  })
+
+  ipcMain.handle('github:checkoutPr', async (_event, repoPath: string, num: number) => {
+    return checkoutPullRequest(repoPath, num)
   })
 
   ipcMain.handle('repo:reveal', async (_event, repoPath: string) => {

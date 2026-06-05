@@ -66,3 +66,15 @@ export interface GithubRepo {
 export type GithubReposResult =
   | { ok: true; repos: GithubRepo[] }
   | { ok: false; error: string }
+
+export interface PullRequest {
+  number: number
+  title: string
+  branch: string
+  author: string
+  url: string
+}
+
+export type PullRequestsResult =
+  | { ok: true; prs: PullRequest[] }
+  | { ok: false; error: string }
