@@ -17,7 +17,7 @@ import type {
 
 export interface LoomApi {
   openRepo: () => Promise<string | null>
-  getLog: (repoPath: string) => Promise<LogResult>
+  getLog: (repoPath: string, limit?: number, skip?: number) => Promise<LogResult>
   checkout: (repoPath: string, target: string) => Promise<CheckoutResult>
   merge: (repoPath: string, source: string, target: string) => Promise<MergeResult>
   mergeAbort: (repoPath: string) => Promise<CheckoutResult>

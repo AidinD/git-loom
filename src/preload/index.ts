@@ -18,8 +18,8 @@ import type {
 
 const api = {
   openRepo: (): Promise<string | null> => ipcRenderer.invoke('repo:open'),
-  getLog: (repoPath: string): Promise<LogResult> =>
-    ipcRenderer.invoke('git:log', repoPath),
+  getLog: (repoPath: string, limit?: number, skip?: number): Promise<LogResult> =>
+    ipcRenderer.invoke('git:log', repoPath, limit, skip),
   checkout: (repoPath: string, target: string): Promise<CheckoutResult> =>
     ipcRenderer.invoke('git:checkout', repoPath, target),
   merge: (repoPath: string, source: string, target: string): Promise<MergeResult> =>

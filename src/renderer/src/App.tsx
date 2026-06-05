@@ -155,6 +155,8 @@ function buildDefaultLayout(api: DockviewApi): void {
 function App() {
   const [repoPath, setRepoPath] = useState<string | null>(null)
   const [commits, setCommits] = useState<Commit[]>([])
+  const [hasMoreCommits, setHasMoreCommits] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [remotes, setRemotes] = useState<string[]>([])
   const [branches, setBranches] = useState<string[]>([])
   const [branchInfo, setBranchInfo] = useState<Record<string, string>>({})
@@ -329,6 +331,7 @@ function App() {
       if (result.ok) {
         setRepoPath(result.root)
         setCommits(result.commits)
+        setHasMoreCommits(result.hasMore)
         setRemotes(result.remotes)
         await loadStatus(result.root)
         const branchResult = await window.api.listBranches(result.root)
@@ -366,6 +369,26 @@ function App() {
       setCommits([])
     } finally {
       setLoading(false)
+    }
+  }
+
+  /** Appends the next page of commits when scrolling near the bottom. */
+  async function loadMoreCommits(): Promise<void> {
+    if (!repoPath || !hasMoreCommits || loadingMore) {
+      return
+    }
+    setLoadingMore(true)
+    try {
+      const result = await window.api.getLog(repoPath, 150, commits.length)
+      if (result.ok) {
+        // Guard against races (e.g. a repo switch mid-flight).
+        setCommits((current) =>
+          current.length === commits.length ? [...current, ...result.commits] : current
+        )
+        setHasMoreCommits(result.hasMore)
+      }
+    } finally {
+      setLoadingMore(false)
     }
   }
 
@@ -983,6 +1006,7 @@ function App() {
 
   const loomValue: LoomContextValue = {
     commits,
+    onLoadMore: () => void loadMoreCommits(),
     remotes,
     repoPath,
     selected,

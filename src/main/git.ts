@@ -87,7 +87,11 @@ async function resolveRepoRoot(dir: string): Promise<string | null> {
  * given directory. Returns a discriminated result so the renderer can show a
  * clean message instead of a raw thrown error.
  */
-export async function getLog(dir: string, limit = 2000): Promise<LogResult> {
+export async function getLog(
+  dir: string,
+  limit = 150,
+  skip = 0
+): Promise<LogResult> {
   let root: string | null
   try {
     root = await resolveRepoRoot(dir)
@@ -110,6 +114,7 @@ export async function getLog(dir: string, limit = 2000): Promise<LogResult> {
       '--exclude=refs/stash',
       '--all',
       '--topo-order',
+      `--skip=${skip}`,
       `--max-count=${limit}`,
       `--pretty=format:${FORMAT}`
     ],
@@ -132,7 +137,9 @@ export async function getLog(dir: string, limit = 2000): Promise<LogResult> {
           .filter(Boolean)
       : []
 
-  return { ok: true, root, commits: parseLog(result.stdout), remotes }
+  const commits = parseLog(result.stdout)
+  // A full page implies there may be more commits past this window.
+  return { ok: true, root, commits, remotes, hasMore: commits.length === limit }
 }
 
 /**

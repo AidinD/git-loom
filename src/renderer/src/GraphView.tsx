@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import type { MouseEvent as ReactMouseEvent } from 'react'
 import GitGraph from './graph/GitGraph'
 import { useLoom } from './loom-context'
@@ -79,8 +80,41 @@ function GraphView() {
     onRenameBranch,
     onDeleteBranch,
     onNewBranchFrom,
-    onRevert
+    onRevert,
+    onLoadMore
   } = useLoom()
+
+  const mainRef = useRef<HTMLDivElement>(null)
+  const onLoadMoreRef = useRef(onLoadMore)
+  onLoadMoreRef.current = onLoadMore
+  const hasCommits = commits.length > 0
+
+  useEffect(() => {
+    const el = mainRef.current
+    if (!el) {
+      return
+    }
+    let frame = 0
+    function onScroll(): void {
+      if (frame) {
+        return
+      }
+      frame = requestAnimationFrame(() => {
+        frame = 0
+        // Within ~600px of the bottom: fetch the next page.
+        if (el!.scrollHeight - el!.scrollTop - el!.clientHeight < 600) {
+          onLoadMoreRef.current()
+        }
+      })
+    }
+    el.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      el.removeEventListener('scroll', onScroll)
+      if (frame) {
+        cancelAnimationFrame(frame)
+      }
+    }
+  }, [hasCommits])
 
   if (commits.length === 0) {
     return (
@@ -213,7 +247,7 @@ function GraphView() {
   }
 
   return (
-    <div className="main">
+    <div className="main" ref={mainRef}>
       <ul className="refs-col">
         {commits.map((commit) => (
           <li
@@ -240,7 +274,7 @@ function GraphView() {
             onClick={() => selectRow(commit)}
             onDoubleClick={() => onCheckout(commit.hash)}
             onContextMenu={(event) => commitMenu(event, commit)}
-            title="Double-click to check out this commit (detached)"
+            title={commit.subject}
           >
             <code className="hash">{commit.hash.slice(0, 7)}</code>
             <span className="subject">{commit.subject}</span>

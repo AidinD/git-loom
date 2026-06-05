@@ -15,6 +15,7 @@ export interface DiffView {
 export interface LoomContextValue {
   // History / graph panel
   commits: Commit[]
+  onLoadMore: () => void
   remotes: string[]
   repoPath: string | null
   selected: string | null

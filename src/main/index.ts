@@ -111,9 +111,12 @@ app.whenReady().then(() => {
     return result.filePaths[0]
   })
 
-  ipcMain.handle('git:log', async (_event, repoPath: string) => {
-    return getLog(repoPath)
-  })
+  ipcMain.handle(
+    'git:log',
+    async (_event, repoPath: string, limit?: number, skip?: number) => {
+      return getLog(repoPath, limit, skip)
+    }
+  )
 
   ipcMain.handle(
     'git:checkout',

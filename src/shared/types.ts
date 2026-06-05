@@ -9,7 +9,7 @@ export interface Commit {
 }
 
 export type LogResult =
-  | { ok: true; root: string; commits: Commit[]; remotes: string[] }
+  | { ok: true; root: string; commits: Commit[]; remotes: string[]; hasMore: boolean }
   | { ok: false; error: string }
 
 export type CheckoutResult =

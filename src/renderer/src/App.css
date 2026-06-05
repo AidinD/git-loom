@@ -1335,6 +1335,10 @@ body {
 }
 
 .author {
+  flex: none;
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
   color: var(--text-dim);
   font-size: 12px;
 }
