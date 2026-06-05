@@ -38,10 +38,10 @@ A GitHub-Desktop-style repository switcher, but better:
 - [done] Adaptive lane width — lane spacing shrinks (down to 5px) when there are
   many concurrent branches so the graph gutter stays bounded (~200px) instead of
   growing very wide; node radius scales with it. History panel scrolls internally.
-- **Virtualize the canvas** (windowing + devicePixelRatio scaling). Phase-2 graph
-  renders a single non-virtualized canvas; to avoid the browser canvas height limit
-  it drops to DPR=1 on very tall graphs (>~16k physical px) and is capped at
-  `--max-count=1000` commits. Windowing removes both limits and restores crispness.
+- [done] **Virtualized graph + history** (2026-06-05). The canvas is sticky to the
+  viewport and repaints only the visible row range per scroll frame (full DPR, no
+  max-canvas-height limit). The refs + commit lists are windowed too (padding spacers
+  + visible slice). History cap raised 1000 → 5000. Scroll resets on repo switch.
 
 ## Changes panel polish (phase 6 follow-ups, requested)
 
@@ -132,8 +132,8 @@ Captured from GitHub Desktop screenshots — not yet scoped, just ideas.
 - [done] Pick one file at a time — the file list is now its **own dockable "Files"
   panel** (separate from the Diff panel); selecting a file shows only its diff
   (default Split). Commit clicks open both Files + Diff; arrange them freely.
-- [done] per-file +/- counts in the Files panel. Follow-up: intra-line (word-level)
-  highlighting.
+- [done] per-file +/- counts in the Files panel. [done] intra-line (word-level)
+  highlighting — token-LCS, in both Split and Unified views.
 
 **History / commit detail**
 - [done] Revert a commit — right-click → "Revert & commit" (`git revert --no-edit`)
