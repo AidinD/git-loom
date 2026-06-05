@@ -111,6 +111,7 @@ function ChangesPanel({
   const [showCoauthors, setShowCoauthors] = useState(false)
   const [dragFiles, setDragFiles] = useState<string[]>([])
   const [dragFrom, setDragFrom] = useState<Section | null>(null)
+  const [dragStashRef, setDragStashRef] = useState<string | null>(null)
   const [dragZone, setDragZone] = useState<'staged' | 'unstaged' | 'stash' | null>(null)
 
   useEffect(() => {
@@ -200,12 +201,18 @@ function ChangesPanel({
   }
 
   function canDropZone(zone: 'staged' | 'unstaged' | 'stash'): boolean {
+    if (dragStashRef) {
+      // A stash can be applied by dropping it back onto the working tree.
+      return zone === 'staged' || zone === 'unstaged'
+    }
     return dragFiles.length > 0 && (zone === 'stash' || dragFrom !== zone)
   }
 
   function handleZoneDrop(zone: 'staged' | 'unstaged' | 'stash'): void {
     if (canDropZone(zone)) {
-      if (zone === 'staged') {
+      if (dragStashRef) {
+        onPopStash(dragStashRef)
+      } else if (zone === 'staged') {
         onStageMany(dragFiles)
       } else if (zone === 'unstaged') {
         onUnstageMany(dragFiles)
@@ -216,6 +223,7 @@ function ChangesPanel({
     setDragZone(null)
     setDragFiles([])
     setDragFrom(null)
+    setDragStashRef(null)
   }
 
   function zoneProps(zone: 'staged' | 'unstaged' | 'stash') {
@@ -393,7 +401,22 @@ function ChangesPanel({
         </h2>
         <ul className="file-list">
           {stashes.map((stash) => (
-            <li key={stash.ref} className="stash" title={stash.ref}>
+            <li
+              key={stash.ref}
+              className="stash"
+              title={`${stash.ref} — drag onto Changes to apply`}
+              draggable
+              onDragStart={(event) => {
+                setDragStashRef(stash.ref)
+                setDragFiles([])
+                setDragFrom(null)
+                event.dataTransfer.effectAllowed = 'move'
+              }}
+              onDragEnd={() => {
+                setDragStashRef(null)
+                setDragZone(null)
+              }}
+            >
               <span className="stash-message">{stash.message}</span>
               <button
                 className="file-action"
