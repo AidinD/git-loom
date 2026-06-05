@@ -11,7 +11,8 @@ import type {
   CloneResult,
   StashListResult,
   BranchesResult,
-  AheadBehind
+  AheadBehind,
+  ConflictsResult
 } from '../shared/types'
 
 const FIELD = '\x1f'
@@ -385,6 +386,91 @@ export async function revertAbort(dir: string): Promise<CheckoutResult> {
   }
 
   return { ok: true, message: 'Revert aborted' }
+}
+
+/** Lists files that currently have unresolved merge conflicts. */
+export async function listConflicts(dir: string): Promise<ConflictsResult> {
+  let root: string | null
+  try {
+    root = await resolveRepoRoot(dir)
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) }
+  }
+
+  if (!root) {
+    return { ok: false, error: `Not a Git repository: ${dir}` }
+  }
+
+  const result = await runGit(
+    ['diff', '--name-only', '--diff-filter=U', '-z'],
+    root
+  )
+  if (result.code !== 0) {
+    return {
+      ok: false,
+      error: result.stderr.trim() || `git exited with code ${result.code}`
+    }
+  }
+
+  const files = result.stdout
+    .split('\0')
+    .map((entry) => entry.trim())
+    .filter((entry) => entry.length > 0)
+    .map((file) => ({ file }))
+
+  return { ok: true, files }
+}
+
+/** Resolves a conflict by taking our version of the file, then staging it. */
+export async function useOurs(dir: string, file: string): Promise<CheckoutResult> {
+  const checkout = await runSimple(dir, ['checkout', '--ours', '--', file], 'Took ours')
+  if (!checkout.ok) {
+    return checkout
+  }
+  return runSimple(dir, ['add', '--', file], `Resolved ${file} (ours)`)
+}
+
+/** Resolves a conflict by taking their version of the file, then staging it. */
+export async function useTheirs(dir: string, file: string): Promise<CheckoutResult> {
+  const checkout = await runSimple(
+    dir,
+    ['checkout', '--theirs', '--', file],
+    'Took theirs'
+  )
+  if (!checkout.ok) {
+    return checkout
+  }
+  return runSimple(dir, ['add', '--', file], `Resolved ${file} (theirs)`)
+}
+
+/** Marks a manually-edited file as resolved by staging it. */
+export async function markResolved(dir: string, file: string): Promise<CheckoutResult> {
+  return runSimple(dir, ['add', '--', file], `Marked ${file} resolved`)
+}
+
+/**
+ * Completes the in-progress operation once all conflicts are resolved.
+ * `core.editor=true` makes git accept the default message non-interactively.
+ */
+export async function continueConflict(
+  dir: string,
+  kind: 'merge' | 'rebase' | 'revert'
+): Promise<MergeResult> {
+  let args: string[]
+  if (kind === 'rebase') {
+    args = ['-c', 'core.editor=true', 'rebase', '--continue']
+  } else if (kind === 'revert') {
+    args = ['-c', 'core.editor=true', 'revert', '--continue']
+  } else {
+    args = ['commit', '--no-edit']
+  }
+
+  const result = await runSimple(dir, args, `${kind} completed`)
+  if (result.ok) {
+    return { ok: true, message: result.message }
+  }
+  // A non-zero exit here usually means conflicts still remain.
+  return { ok: false, conflict: true, error: result.error }
 }
 
 /** Returns the working-tree changes (staged + unstaged + untracked). */

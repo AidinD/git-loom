@@ -36,7 +36,12 @@ import {
   stageAll,
   unstageAll,
   stageFiles,
-  unstageFiles
+  unstageFiles,
+  listConflicts,
+  useOurs,
+  useTheirs,
+  markResolved,
+  continueConflict
 } from './git'
 import {
   listRepos,
@@ -145,6 +150,29 @@ app.whenReady().then(() => {
   ipcMain.handle('git:revertAbort', async (_event, repoPath: string) => {
     return revertAbort(repoPath)
   })
+
+  ipcMain.handle('git:listConflicts', async (_event, repoPath: string) => {
+    return listConflicts(repoPath)
+  })
+
+  ipcMain.handle('git:useOurs', async (_event, repoPath: string, file: string) => {
+    return useOurs(repoPath, file)
+  })
+
+  ipcMain.handle('git:useTheirs', async (_event, repoPath: string, file: string) => {
+    return useTheirs(repoPath, file)
+  })
+
+  ipcMain.handle('git:markResolved', async (_event, repoPath: string, file: string) => {
+    return markResolved(repoPath, file)
+  })
+
+  ipcMain.handle(
+    'git:continueConflict',
+    async (_event, repoPath: string, kind: 'merge' | 'rebase' | 'revert') => {
+      return continueConflict(repoPath, kind)
+    }
+  )
 
   ipcMain.handle('git:status', async (_event, repoPath: string) => {
     return status(repoPath)

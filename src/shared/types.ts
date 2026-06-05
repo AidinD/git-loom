@@ -35,6 +35,15 @@ export type MergeResult =
   | { ok: true; message: string }
   | { ok: false; error: string; conflict: boolean }
 
+/** A file with merge conflicts that the user must resolve. */
+export interface ConflictFile {
+  file: string
+}
+
+export type ConflictsResult =
+  | { ok: true; files: ConflictFile[] }
+  | { ok: false; error: string }
+
 export interface FileChange {
   path: string
   /** Index (staged) status char from `git status --porcelain`, e.g. M, A, D. */

@@ -11,7 +11,8 @@ import type {
   GithubReposResult,
   PullRequestsResult,
   BranchesResult,
-  AheadBehind
+  AheadBehind,
+  ConflictsResult
 } from '../shared/types'
 
 const api = {
@@ -35,6 +36,19 @@ const api = {
   ): Promise<MergeResult> => ipcRenderer.invoke('git:revert', repoPath, hash, noCommit),
   revertAbort: (repoPath: string): Promise<CheckoutResult> =>
     ipcRenderer.invoke('git:revertAbort', repoPath),
+  listConflicts: (repoPath: string): Promise<ConflictsResult> =>
+    ipcRenderer.invoke('git:listConflicts', repoPath),
+  useOurs: (repoPath: string, file: string): Promise<CheckoutResult> =>
+    ipcRenderer.invoke('git:useOurs', repoPath, file),
+  useTheirs: (repoPath: string, file: string): Promise<CheckoutResult> =>
+    ipcRenderer.invoke('git:useTheirs', repoPath, file),
+  markResolved: (repoPath: string, file: string): Promise<CheckoutResult> =>
+    ipcRenderer.invoke('git:markResolved', repoPath, file),
+  continueConflict: (
+    repoPath: string,
+    kind: 'merge' | 'rebase' | 'revert'
+  ): Promise<MergeResult> =>
+    ipcRenderer.invoke('git:continueConflict', repoPath, kind),
   status: (repoPath: string): Promise<StatusResult> =>
     ipcRenderer.invoke('git:status', repoPath),
   diff: (repoPath: string, file: string, staged: boolean): Promise<DiffResult> =>

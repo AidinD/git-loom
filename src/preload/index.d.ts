@@ -10,7 +10,8 @@ import type {
   GithubReposResult,
   PullRequestsResult,
   BranchesResult,
-  AheadBehind
+  AheadBehind,
+  ConflictsResult
 } from '../shared/types'
 
 export interface LoomApi {
@@ -23,6 +24,14 @@ export interface LoomApi {
   rebaseAbort: (repoPath: string) => Promise<CheckoutResult>
   revert: (repoPath: string, hash: string, noCommit: boolean) => Promise<MergeResult>
   revertAbort: (repoPath: string) => Promise<CheckoutResult>
+  listConflicts: (repoPath: string) => Promise<ConflictsResult>
+  useOurs: (repoPath: string, file: string) => Promise<CheckoutResult>
+  useTheirs: (repoPath: string, file: string) => Promise<CheckoutResult>
+  markResolved: (repoPath: string, file: string) => Promise<CheckoutResult>
+  continueConflict: (
+    repoPath: string,
+    kind: 'merge' | 'rebase' | 'revert'
+  ) => Promise<MergeResult>
   status: (repoPath: string) => Promise<StatusResult>
   diff: (repoPath: string, file: string, staged: boolean) => Promise<DiffResult>
   showCommit: (repoPath: string, hash: string) => Promise<DiffResult>

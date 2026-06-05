@@ -16,6 +16,7 @@ import PrPanel from './PrPanel'
 import RepoSwitcher from './RepoSwitcher'
 import BranchSwitcher from './BranchSwitcher'
 import GraphView from './GraphView'
+import ConflictResolver from './ConflictResolver'
 import ContextMenu from './ContextMenu'
 import type { ContextMenuItem } from './ContextMenu'
 import { LoomContext, useLoom } from './loom-context'
@@ -442,6 +443,16 @@ function App() {
     } else {
       setError(result.error)
     }
+    await loadLog(repoPath)
+  }
+
+  async function handleConflictResolved(): Promise<void> {
+    if (!repoPath) {
+      return
+    }
+    setConflictKind(null)
+    setError(null)
+    setInfo('Conflicts resolved')
     await loadLog(repoPath)
   }
 
@@ -1273,6 +1284,15 @@ function App() {
             </div>
           </div>
         </div>
+      )}
+
+      {conflictKind && repoPath && (
+        <ConflictResolver
+          repoPath={repoPath}
+          kind={conflictKind}
+          onResolved={() => void handleConflictResolved()}
+          onAbort={() => void handleAbort()}
+        />
       )}
 
       {missingRepo && (
