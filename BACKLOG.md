@@ -24,8 +24,10 @@ A GitHub-Desktop-style repository switcher, but better:
   sits where its first repo is; Ungrouped last) — no separate ordering store. Groups
   are collapsible (state in localStorage) with a per-group count. Backend
   `setReposLayout` rewrites order + groups in one op. Built fresh in loom (didn't
-  reuse the Halyard component — different repo/stack ownership). Follow-ups: drag
-  whole groups to reorder; multi-select drag.
+  reuse the Halyard component — different repo/stack ownership). [done] drag whole
+  groups to reorder (group headers draggable, Ungrouped pinned last). [done] also
+  available as a dockable **Repositories** left panel (shared RepoList component;
+  default layout + View menu; toolbar dropdown kept). Follow-up: multi-select drag.
 - [done] **Clone browser**: the Clone dialog lists repos the user can access
   (owner + collaborator + org) via the `gh` CLI — searchable, click to clone. Uses
   the user's existing `gh auth` (no token stored in Loom). [done] paginates across
@@ -78,9 +80,10 @@ A GitHub-Desktop-style repository switcher, but better:
 - [done] **Save / load named layouts** — "Layouts" toolbar button opens a dialog to
   save the current arrangement under a name, load, or delete saved layouts
   (`Record<name, layout>` in localStorage, dockview toJSON/fromJSON).
-- [backlog] **Left-most panel listing all repos we have access to** — overlaps the
-  GitHub clone-browser item (needs GitHub auth + API). A persistent left rail of
-  accessible repos, not just the ones opened locally.
+- [partly done] **Left rail of repos** — a dockable **Repositories** panel now lists
+  the *local* repos (grouped, drag-and-drop) on the left. Still backlog: a rail of
+  *all GitHub-accessible* repos (needs GitHub auth + API), overlapping the clone
+  browser — i.e. repos you can access but haven't opened locally.
 
 ## Ideas from GitHub Desktop (reference, 2026-06-04)
 
