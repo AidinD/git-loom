@@ -139,8 +139,11 @@ Captured from GitHub Desktop screenshots — not yet scoped, just ideas.
 - [done] Revert a commit — right-click → "Revert & commit" (`git revert --no-edit`)
   or "Revert without committing" (`--no-commit`, lands staged for review). Conflicts
   surface an "Abort revert" button.
-- [done] Selecting a commit in History shows its **commit diff** (`git show --stat
-  --patch`) in the Diff panel. Follow-up: a dedicated changed-files list per commit.
+- [done] Selecting a commit in History shows its **commit diff** in the Diff panel,
+  and the **Files panel lists that commit's changed files** with [done] per-file +/-
+  counts and [done] A/M/D/R status badges (status inferred client-side from the git
+  diff headers; works for both commit and working-tree diffs). Clicking a file shows
+  its diff.
 - [done] Author avatars in the graph/history rows (color-hashed initials).
 
 **Empty states**
