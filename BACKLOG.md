@@ -26,6 +26,9 @@ A GitHub-Desktop-style repository switcher, but better:
 
 ## Graph rendering
 
+- [done] Adaptive lane width — lane spacing shrinks (down to 5px) when there are
+  many concurrent branches so the graph gutter stays bounded (~200px) instead of
+  growing very wide; node radius scales with it. History panel scrolls internally.
 - **Virtualize the canvas** (windowing + devicePixelRatio scaling). Phase-2 graph
   renders a single non-virtualized canvas; to avoid the browser canvas height limit
   it drops to DPR=1 on very tall graphs (>~16k physical px) and is capped at

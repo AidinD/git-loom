@@ -3,8 +3,10 @@ import type { Commit } from '../../../shared/types'
 import { computeLayout } from './layout'
 
 const LANE_WIDTH = 16
+const MIN_LANE_WIDTH = 5
 const NODE_RADIUS = 4
 const MARGIN_LEFT = 12
+const MAX_GUTTER = 200
 const MAX_PHYSICAL = 16384
 
 const PALETTE = [
@@ -37,8 +39,21 @@ function GitGraph({ commits, rowHeight }: Props) {
     }
 
     const layout = computeLayout(commits)
+    // Shrink lane spacing when there are many concurrent branches so the gutter
+    // stays bounded instead of growing arbitrarily wide.
+    const laneWidth =
+      layout.laneCount > 1
+        ? Math.max(
+            MIN_LANE_WIDTH,
+            Math.min(
+              LANE_WIDTH,
+              Math.floor((MAX_GUTTER - MARGIN_LEFT * 2) / (layout.laneCount - 1))
+            )
+          )
+        : LANE_WIDTH
+    const nodeRadius = Math.max(2.5, Math.min(NODE_RADIUS, laneWidth / 2.5))
     const width =
-      MARGIN_LEFT * 2 + Math.max(0, layout.laneCount - 1) * LANE_WIDTH + NODE_RADIUS * 2
+      MARGIN_LEFT * 2 + Math.max(0, layout.laneCount - 1) * laneWidth + nodeRadius * 2
     const height = commits.length * rowHeight
 
     const baseDpr = window.devicePixelRatio || 1
@@ -56,7 +71,7 @@ function GitGraph({ commits, rowHeight }: Props) {
     ctx.scale(dpr, dpr)
     ctx.clearRect(0, 0, width, height)
 
-    const laneX = (lane: number): number => MARGIN_LEFT + lane * LANE_WIDTH
+    const laneX = (lane: number): number => MARGIN_LEFT + lane * laneWidth
     const rowY = (row: number): number => row * rowHeight + rowHeight / 2
 
     // Edges first, so nodes sit on top of them.
@@ -95,7 +110,7 @@ function GitGraph({ commits, rowHeight }: Props) {
       const y = rowY(node.row)
       ctx.fillStyle = colorForLane(node.lane)
       ctx.beginPath()
-      ctx.arc(x, y, NODE_RADIUS, 0, Math.PI * 2)
+      ctx.arc(x, y, nodeRadius, 0, Math.PI * 2)
       ctx.fill()
       ctx.lineWidth = 1.5
       ctx.strokeStyle = '#1e1e22'
