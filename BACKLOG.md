@@ -102,6 +102,13 @@ Captured from GitHub Desktop screenshots — not yet scoped, just ideas.
 - [done] Pull Requests panel (View → Pull requests): lists open PRs via `gh pr list`,
   Refresh, and Checkout a PR branch (`gh pr checkout`). Follow-up: filter, open in browser.
 
+**Diff view**
+- [done] Clean file headers (real paths, no diff --git/index/+++ noise), line-number
+  gutters, +/- column, full-width tints.
+- [done] Split (side-by-side before/after) view with a Unified/Split toggle.
+- Follow-up: changed-files list as a clickable sidebar for commits; intra-line
+  (word-level) highlighting.
+
 **History / commit detail**
 - [done] Revert a commit — right-click → "Revert & commit" (`git revert --no-edit`)
   or "Revert without committing" (`--no-commit`, lands staged for review). Conflicts

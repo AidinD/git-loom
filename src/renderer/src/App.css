@@ -588,6 +588,84 @@ body {
   white-space: pre;
 }
 
+.dl-file {
+  padding: 7px 12px;
+  margin-top: 6px;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--bg-alt);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+}
+
+.diff-modes {
+  display: flex;
+  gap: 2px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.diff-modes button {
+  background: var(--bg);
+  color: var(--text-dim);
+  border: none;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.diff-modes button.active {
+  background: var(--accent);
+  color: #11131a;
+  font-weight: 600;
+}
+
+.ds-row {
+  display: flex;
+  align-items: stretch;
+}
+
+.ds-cell {
+  width: 50%;
+  display: flex;
+  min-width: 0;
+}
+
+.ds-cell:first-child {
+  border-right: 1px solid var(--border);
+}
+
+.ds-text {
+  flex: 1;
+  min-width: 0;
+  padding: 0 8px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.ds-del {
+  background: rgba(247, 118, 142, 0.12);
+}
+
+.ds-del .ds-text {
+  color: #f0a0ad;
+}
+
+.ds-add {
+  background: rgba(158, 206, 106, 0.12);
+}
+
+.ds-add .ds-text {
+  color: #b9d98a;
+}
+
+.ds-empty {
+  background: rgba(127, 127, 127, 0.05);
+}
+
 .repo-switcher {
   position: relative;
 }
