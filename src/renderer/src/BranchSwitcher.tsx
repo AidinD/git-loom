@@ -3,11 +3,20 @@ import { useState } from 'react'
 interface Props {
   current: string
   branches: string[]
+  info?: Record<string, string>
   onCheckout: (name: string) => void
+  onMerge?: (name: string) => void
   onNewBranch: () => void
 }
 
-function BranchSwitcher({ current, branches, onCheckout, onNewBranch }: Props) {
+function BranchSwitcher({
+  current,
+  branches,
+  info,
+  onCheckout,
+  onMerge,
+  onNewBranch
+}: Props) {
   const [open, setOpen] = useState(false)
   const [filter, setFilter] = useState('')
 
@@ -54,7 +63,7 @@ function BranchSwitcher({ current, branches, onCheckout, onNewBranch }: Props) {
               {filtered.map((branch) => (
                 <div
                   key={branch}
-                  className={`repo-item${branch === current ? ' active' : ''}`}
+                  className={`repo-item branch-item${branch === current ? ' active' : ''}`}
                   onClick={() => {
                     close()
                     onCheckout(branch)
@@ -62,6 +71,22 @@ function BranchSwitcher({ current, branches, onCheckout, onNewBranch }: Props) {
                   title={branch}
                 >
                   <span className="repo-item-name">{branch}</span>
+                  {info?.[branch] && (
+                    <span className="branch-date">{info[branch]}</span>
+                  )}
+                  {onMerge && branch !== current && (
+                    <button
+                      className="branch-merge"
+                      title={`Merge ${branch} into ${current}`}
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        close()
+                        onMerge(branch)
+                      }}
+                    >
+                      Merge
+                    </button>
+                  )}
                 </div>
               ))}
               {filtered.length === 0 && <div className="empty">No branches</div>}

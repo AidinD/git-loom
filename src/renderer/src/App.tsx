@@ -143,6 +143,7 @@ function App() {
   const [commits, setCommits] = useState<Commit[]>([])
   const [remotes, setRemotes] = useState<string[]>([])
   const [branches, setBranches] = useState<string[]>([])
+  const [branchInfo, setBranchInfo] = useState<Record<string, string>>({})
   const [currentBranch, setCurrentBranch] = useState('')
   const [ahead, setAhead] = useState(0)
   const [behind, setBehind] = useState(0)
@@ -317,6 +318,11 @@ function App() {
         if (branchResult.ok) {
           setBranches(branchResult.branches)
           setCurrentBranch(branchResult.current)
+          const map: Record<string, string> = {}
+          for (const entry of branchResult.info) {
+            map[entry.name] = entry.lastCommit
+          }
+          setBranchInfo(map)
         }
         const ab = await window.api.aheadBehind(result.root)
         setAhead(ab.ahead)
@@ -942,7 +948,9 @@ function App() {
             <BranchSwitcher
               current={currentBranch}
               branches={branches}
+              info={branchInfo}
               onCheckout={(name) => handleCheckout(name)}
+              onMerge={(name) => doMerge(name, currentBranch)}
               onNewBranch={() => openNewBranchModal(null)}
             />
             <div className="toolbar-group">

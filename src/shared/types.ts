@@ -16,8 +16,14 @@ export type CheckoutResult =
   | { ok: true; message: string }
   | { ok: false; error: string }
 
+export interface BranchInfo {
+  name: string
+  /** Relative time of the branch tip's last commit, e.g. "3 days ago". */
+  lastCommit: string
+}
+
 export type BranchesResult =
-  | { ok: true; branches: string[]; current: string }
+  | { ok: true; branches: string[]; current: string; info: BranchInfo[] }
   | { ok: false; error: string }
 
 export interface AheadBehind {

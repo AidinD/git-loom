@@ -476,7 +476,12 @@ export async function listBranches(dir: string): Promise<BranchesResult> {
   }
 
   const listResult = await runGit(
-    ['for-each-ref', '--format=%(refname:short)', '--sort=-committerdate', 'refs/heads'],
+    [
+      'for-each-ref',
+      '--format=%(refname:short)%09%(committerdate:relative)',
+      '--sort=-committerdate',
+      'refs/heads'
+    ],
     root
   )
   if (listResult.code !== 0) {
@@ -486,15 +491,20 @@ export async function listBranches(dir: string): Promise<BranchesResult> {
     }
   }
 
-  const branches = listResult.stdout
+  const info = listResult.stdout
     .split('\n')
     .map((line) => line.trim())
     .filter((line) => line.length > 0)
+    .map((line) => {
+      const [name, lastCommit] = line.split('\t')
+      return { name, lastCommit: lastCommit ?? '' }
+    })
+  const branches = info.map((entry) => entry.name)
 
   const currentResult = await runGit(['branch', '--show-current'], root)
   const current = currentResult.code === 0 ? currentResult.stdout.trim() : ''
 
-  return { ok: true, branches, current }
+  return { ok: true, branches, current, info }
 }
 
 /** Commits the current branch is ahead / behind its upstream (0/0 if no upstream). */

@@ -935,6 +935,37 @@ body {
   background: var(--border);
 }
 
+.branch-date {
+  font-size: 11px;
+  color: var(--text-dim);
+  flex: 1;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.branch-merge {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 11px;
+  padding: 1px 7px;
+  border-radius: 4px;
+  flex: none;
+  visibility: hidden;
+}
+
+.branch-item:hover .branch-merge {
+  visibility: visible;
+}
+
+.branch-merge:hover {
+  color: var(--text);
+  background: var(--border);
+}
+
 .statusbar {
   display: flex;
   align-items: center;
