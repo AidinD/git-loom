@@ -215,9 +215,12 @@ app.whenReady().then(() => {
     return stashPush(repoPath, message)
   })
 
-  ipcMain.handle('git:stashFiles', async (_event, repoPath: string, files: string[]) => {
-    return stashFiles(repoPath, files)
-  })
+  ipcMain.handle(
+    'git:stashFiles',
+    async (_event, repoPath: string, files: string[], message: string) => {
+      return stashFiles(repoPath, files, message)
+    }
+  )
 
   ipcMain.handle('git:stashPop', async (_event, repoPath: string, ref: string) => {
     return stashPop(repoPath, ref)

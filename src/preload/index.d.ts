@@ -42,7 +42,11 @@ export interface LoomApi {
   setRepoGroup: (repoPath: string, group: string) => Promise<RepoEntry[]>
   stashList: (repoPath: string) => Promise<StashListResult>
   stashPush: (repoPath: string, message: string) => Promise<CheckoutResult>
-  stashFiles: (repoPath: string, files: string[]) => Promise<CheckoutResult>
+  stashFiles: (
+    repoPath: string,
+    files: string[],
+    message: string
+  ) => Promise<CheckoutResult>
   stashPop: (repoPath: string, ref: string) => Promise<CheckoutResult>
   stashDrop: (repoPath: string, ref: string) => Promise<CheckoutResult>
   fetch: (repoPath: string) => Promise<CheckoutResult>

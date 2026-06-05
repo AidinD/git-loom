@@ -647,16 +647,18 @@ export async function stashPush(
   return runSimple(dir, args, 'Stashed changes')
 }
 
-/** Stashes only the given files (including untracked ones). */
+/** Stashes only the given files (including untracked ones), with an optional name. */
 export async function stashFiles(
   dir: string,
-  files: string[]
+  files: string[],
+  message: string
 ): Promise<CheckoutResult> {
-  return runSimple(
-    dir,
-    ['stash', 'push', '--include-untracked', '--', ...files],
-    `Stashed ${files.length} files`
-  )
+  const args = ['stash', 'push', '--include-untracked']
+  if (message.trim().length > 0) {
+    args.push('-m', message.trim())
+  }
+  args.push('--', ...files)
+  return runSimple(dir, args, `Stashed ${files.length} files`)
 }
 
 /** Applies a stash and removes it from the stack (`git stash pop`). */

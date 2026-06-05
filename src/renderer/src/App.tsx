@@ -132,6 +132,10 @@ function App() {
   const [githubRepos, setGithubRepos] = useState<GithubRepo[]>([])
   const [githubLoading, setGithubLoading] = useState(false)
   const [githubError, setGithubError] = useState<string | null>(null)
+  const [stashRequest, setStashRequest] = useState<{ files: string[] | null } | null>(
+    null
+  )
+  const [stashName, setStashName] = useState('')
   const [layoutsOpen, setLayoutsOpen] = useState(false)
   const [layoutName, setLayoutName] = useState('')
   const [savedLayouts, setSavedLayouts] = useState<Record<string, SavedLayout>>(
@@ -379,20 +383,36 @@ function App() {
     return runRemoteOp((path) => window.api.push(path))
   }
 
-  async function handleStash(): Promise<void> {
-    if (!repoPath) {
+  function requestStash(files: string[] | null): void {
+    setStashRequest({ files })
+    setStashName('')
+  }
+
+  function handleStash(): void {
+    requestStash(null)
+  }
+
+  async function confirmStash(): Promise<void> {
+    if (!repoPath || !stashRequest) {
       return
     }
+    const request = stashRequest
+    const name = stashName.trim()
+    setStashRequest(null)
     setError(null)
     setInfo(null)
-    const result = await window.api.stashPush(repoPath, commitSummary.trim())
+    const result = request.files
+      ? await window.api.stashFiles(repoPath, request.files, name)
+      : await window.api.stashPush(repoPath, name)
     if (!result.ok) {
       setError(result.error)
       return
     }
     setInfo(result.message)
-    setCommitSummary('')
-    setCommitDescription('')
+    if (!request.files) {
+      setCommitSummary('')
+      setCommitDescription('')
+    }
     await loadLog(repoPath)
   }
 
@@ -495,19 +515,11 @@ function App() {
     await loadStatus(repoPath)
   }
 
-  async function handleStashMany(files: string[]): Promise<void> {
-    if (!repoPath || files.length === 0) {
+  function handleStashMany(files: string[]): void {
+    if (files.length === 0) {
       return
     }
-    setError(null)
-    setInfo(null)
-    const result = await window.api.stashFiles(repoPath, files)
-    if (!result.ok) {
-      setError(result.error)
-      return
-    }
-    setInfo(result.message)
-    await loadLog(repoPath)
+    requestStash(files)
   }
 
   function handleDiscardMany(files: string[]): void {
@@ -1100,6 +1112,39 @@ function App() {
                 Confirm
               </button>
               <button className="secondary" onClick={() => setConfirm(null)}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {stashRequest && (
+        <div className="modal-backdrop" onClick={() => setStashRequest(null)}>
+          <div className="modal" onClick={(event) => event.stopPropagation()}>
+            <p className="modal-text">
+              Stash{' '}
+              {stashRequest.files
+                ? `${stashRequest.files.length} file${stashRequest.files.length === 1 ? '' : 's'}`
+                : 'all changes'}
+            </p>
+            <input
+              className="commit-message"
+              style={{ height: 'auto' }}
+              placeholder="Stash name (optional)"
+              value={stashName}
+              autoFocus
+              onChange={(event) => setStashName(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault()
+                  confirmStash()
+                }
+              }}
+            />
+            <div className="modal-actions">
+              <button onClick={confirmStash}>Stash</button>
+              <button className="secondary" onClick={() => setStashRequest(null)}>
                 Cancel
               </button>
             </div>
