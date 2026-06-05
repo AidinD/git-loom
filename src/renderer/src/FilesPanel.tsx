@@ -1,5 +1,12 @@
 import { useLoom } from './loom-context'
-import { parseDiff, groupByFile, countChanges } from './diff-utils'
+import { parseDiff, groupByFile, countChanges, type FileStatus } from './diff-utils'
+
+const STATUS_BADGE: Record<FileStatus, { label: string; title: string }> = {
+  added: { label: 'A', title: 'Added' },
+  deleted: { label: 'D', title: 'Deleted' },
+  renamed: { label: 'R', title: 'Renamed' },
+  modified: { label: 'M', title: 'Modified' }
+}
 
 function FilesPanel() {
   const { diffView, selectedDiffFile, setSelectedDiffFile } = useLoom()
@@ -29,6 +36,12 @@ function FilesPanel() {
             title={section.file}
             onClick={() => setSelectedDiffFile(section.file)}
           >
+            <span
+              className={`files-status status-${section.status}`}
+              title={STATUS_BADGE[section.status].title}
+            >
+              {STATUS_BADGE[section.status].label}
+            </span>
             <span className="files-item-name">{section.file}</span>
             <span className="files-item-stat">
               {add > 0 && <span className="stat-add">+{add}</span>}

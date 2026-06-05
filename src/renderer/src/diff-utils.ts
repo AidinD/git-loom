@@ -1,10 +1,13 @@
 export type LineType = 'add' | 'del' | 'context' | 'hunk' | 'meta' | 'file'
 
+export type FileStatus = 'added' | 'deleted' | 'renamed' | 'modified'
+
 export interface DiffLine {
   type: LineType
   oldNo?: number
   newNo?: number
   text: string
+  status?: FileStatus
 }
 
 export interface SplitCell {
@@ -21,6 +24,7 @@ export interface SplitRow {
 
 export interface FileSection {
   file: string
+  status: FileStatus
   lines: DiffLine[]
 }
 
@@ -30,6 +34,8 @@ const SKIP_PREFIXES = [
   '+++ ',
   'old mode',
   'new mode',
+  'new file',
+  'deleted file',
   'similarity ',
   'rename ',
   'copy ',
@@ -40,12 +46,28 @@ export function parseDiff(text: string): DiffLine[] {
   const out: DiffLine[] = []
   let oldNo = 0
   let newNo = 0
+  let currentFile: DiffLine | null = null
 
   for (const line of text.split('\n')) {
     const fileMatch = line.match(/^diff --git a\/.+ b\/(.+)$/)
     if (fileMatch) {
-      out.push({ type: 'file', text: fileMatch[1] })
+      currentFile = { type: 'file', text: fileMatch[1], status: 'modified' }
+      out.push(currentFile)
       continue
+    }
+    // Infer file status from the git header lines before they are skipped.
+    if (currentFile) {
+      if (line.startsWith('new file')) {
+        currentFile.status = 'added'
+      } else if (line.startsWith('deleted file')) {
+        currentFile.status = 'deleted'
+      } else if (line.startsWith('rename ') || line.startsWith('copy ')) {
+        currentFile.status = 'renamed'
+      } else if (line === '--- /dev/null') {
+        currentFile.status = 'added'
+      } else if (line === '+++ /dev/null') {
+        currentFile.status = 'deleted'
+      }
     }
     if (SKIP_PREFIXES.some((prefix) => line.startsWith(prefix))) {
       continue
@@ -86,7 +108,7 @@ export function groupByFile(lines: DiffLine[]): FileSection[] {
   let current: FileSection | null = null
   for (const line of lines) {
     if (line.type === 'file') {
-      current = { file: line.text, lines: [] }
+      current = { file: line.text, status: line.status ?? 'modified', lines: [] }
       sections.push(current)
     } else if (current) {
       current.lines.push(line)
