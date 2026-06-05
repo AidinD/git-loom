@@ -83,18 +83,20 @@ A GitHub-Desktop-style repository switcher, but better:
 Captured from GitHub Desktop screenshots — not yet scoped, just ideas.
 
 **Repo list / switcher**
-- Auto-group repos by owner (Recent / personal / org), alongside our custom groups.
-- Graceful missing-repo handling: when a repo's folder is gone, show "Can't find X —
-  last seen at <path>" with Locate… / Clone again / Remove.
-- Per-repo state indicators in the list (behind ↓ / unread dot) — overlaps the
-  sync/fetch indicators item above.
-- Private-repo lock icon.
+- [deferred] Auto-group repos by owner (Recent / personal / org) — needs GitHub
+  owner metadata per local repo, which we don't store cheaply. Custom groups work.
+- [done] Graceful missing-repo handling: switching to a repo whose folder is gone
+  shows a dialog with Locate… (repoint the entry) / Remove from list / Cancel.
+  (Clone-again omitted — needs the stored remote URL.)
+- [deferred] Per-repo state indicators in the list (behind ↓ / unread dot) — needs
+  per-repo fetch/metadata; overlaps the sync/fetch indicators item above.
+- [deferred] Private-repo lock icon — needs GitHub visibility metadata per repo.
 
 **Repo actions**
 - [done] Show in file explorer, View on GitHub — moved into a toolbar **⋯ menu**
   (decluttered the toolbar; also Refresh, Layouts, Reset layout live there now).
-  "View on GitHub" now reports when there is no origin remote. Follow-up: open in
-  external editor (needs editor config).
+  "View on GitHub" now reports when there is no origin remote. [done] Open in
+  external editor — ⋯ menu spawns the `code` CLI for the active repo.
 - [done] "Fetched <time>" timestamp shown after a fetch.
 
 **Commit UX**
@@ -105,12 +107,14 @@ Captured from GitHub Desktop screenshots — not yet scoped, just ideas.
 
 **Branches**
 - [done] Dedicated branch dropdown in the toolbar: shows the current branch, filter,
-  New branch, click to check out (sorted by most-recent commit). Follow-up: last-commit
-  time per branch, "merge into current".
+  New branch, click to check out (sorted by most-recent commit). [done] last-commit
+  time per branch shown in the list; [done] "Merge" button on hover merges that
+  branch into the current one.
 
 **Pull requests**
 - [done] Pull Requests panel (View → Pull requests): lists open PRs via `gh pr list`,
-  Refresh, and Checkout a PR branch (`gh pr checkout`). Follow-up: filter, open in browser.
+  Refresh, and Checkout a PR branch (`gh pr checkout`). [done] filter input
+  (title/number/branch); [done] click a PR title to open it on GitHub.
 
 **Diff view**
 - [done] Clean file headers (real paths, no diff --git/index/+++ noise), line-number
@@ -121,7 +125,8 @@ Captured from GitHub Desktop screenshots — not yet scoped, just ideas.
 - [done] Pick one file at a time — the file list is now its **own dockable "Files"
   panel** (separate from the Diff panel); selecting a file shows only its diff
   (default Split). Commit clicks open both Files + Diff; arrange them freely.
-- Follow-up: per-file +/- counts; intra-line (word-level) highlighting.
+- [done] per-file +/- counts in the Files panel. Follow-up: intra-line (word-level)
+  highlighting.
 
 **History / commit detail**
 - [done] Revert a commit — right-click → "Revert & commit" (`git revert --no-edit`)
@@ -129,7 +134,7 @@ Captured from GitHub Desktop screenshots — not yet scoped, just ideas.
   surface an "Abort revert" button.
 - [done] Selecting a commit in History shows its **commit diff** (`git show --stat
   --patch`) in the Diff panel. Follow-up: a dedicated changed-files list per commit.
-- Author avatars in the graph/history rows.
+- [done] Author avatars in the graph/history rows (color-hashed initials).
 
 **Empty states**
 - "No local changes" suggestions panel (open editor / explorer / GitHub), like GH Desktop.
@@ -140,4 +145,15 @@ Captured from GitHub Desktop screenshots — not yet scoped, just ideas.
 - Phase 4: drag-to-merge with preview + confirm (modifier = rebase).
 - Phase 5: multiple named stashes panel.
 - Phase 6: stage/commit/diff panel.
-- Phase 7: rebase-drag, conflict resolver, perf, submodules, LFS.
+- Phase 7: rebase-drag, [done] conflict resolver, perf, submodules, LFS.
+
+## Conflict resolver (done 2026-06-05)
+
+- When merge/rebase/revert stops on conflicts, a resolver dialog lists the
+  conflicted files with per-file **Use ours / Use theirs / Mark resolved**, then
+  **Continue** (enabled once all are resolved) or **Abort**. Continue uses
+  `commit --no-edit` (merge) or `-c core.editor=true … --continue` (rebase/revert)
+  so it completes non-interactively. Verified end-to-end against real merge and
+  rebase conflicts in throwaway repos.
+- Follow-ups: inline 3-way conflict editor (show ours/theirs hunks in the diff
+  panel and edit in place); conflict count badge in the toolbar.
