@@ -91,8 +91,8 @@ Captured from GitHub Desktop screenshots — not yet scoped, just ideas.
   check out a PR branch.
 
 **History / commit detail**
-- Selecting a commit in History shows its detail: message, author/avatar, hash,
-  changed-files list, and the **commit diff** (we currently only diff the working tree).
+- [done] Selecting a commit in History shows its **commit diff** (`git show --stat
+  --patch`) in the Diff panel. Follow-up: a dedicated changed-files list per commit.
 - Author avatars in the graph/history rows.
 
 **Empty states**

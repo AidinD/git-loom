@@ -29,6 +29,8 @@ const api = {
     ipcRenderer.invoke('git:status', repoPath),
   diff: (repoPath: string, file: string, staged: boolean): Promise<DiffResult> =>
     ipcRenderer.invoke('git:diff', repoPath, file, staged),
+  showCommit: (repoPath: string, hash: string): Promise<DiffResult> =>
+    ipcRenderer.invoke('git:showCommit', repoPath, hash),
   stage: (repoPath: string, file: string): Promise<CheckoutResult> =>
     ipcRenderer.invoke('git:stage', repoPath, file),
   stageAll: (repoPath: string): Promise<CheckoutResult> =>

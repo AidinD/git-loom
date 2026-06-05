@@ -516,7 +516,28 @@ function App() {
     }
     const result = await window.api.diff(repoPath, file, staged)
     if (result.ok) {
-      setDiffView({ path: file, staged, text: result.text })
+      setDiffView({
+        title: file,
+        subtitle: staged ? 'staged' : 'unstaged',
+        text: result.text
+      })
+      showPanel('diff', 'Diff')
+    } else {
+      setError(result.error)
+    }
+  }
+
+  async function handleShowCommit(hash: string, subject: string): Promise<void> {
+    if (!repoPath) {
+      return
+    }
+    const result = await window.api.showCommit(repoPath, hash)
+    if (result.ok) {
+      setDiffView({
+        title: `${hash.slice(0, 7)} ${subject}`,
+        subtitle: 'commit',
+        text: result.text
+      })
       showPanel('diff', 'Diff')
     } else {
       setError(result.error)
@@ -691,6 +712,7 @@ function App() {
     selected,
     setSelected,
     onCheckout: handleCheckout,
+    onShowCommit: handleShowCommit,
     dragSource,
     setDragSource,
     dragOver,

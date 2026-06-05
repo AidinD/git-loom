@@ -50,6 +50,7 @@ function GraphView() {
     selected,
     setSelected,
     onCheckout,
+    onShowCommit,
     dragSource,
     setDragSource,
     dragOver,
@@ -80,7 +81,10 @@ function GraphView() {
             key={commit.hash}
             className={`commit${selected === commit.hash ? ' selected' : ''}`}
             style={{ height: ROW_HEIGHT }}
-            onClick={() => setSelected(commit.hash)}
+            onClick={() => {
+              setSelected(commit.hash)
+              onShowCommit(commit.hash, commit.subject)
+            }}
             onDoubleClick={() => onCheckout(commit.hash)}
             onContextMenu={(event) => {
               event.preventDefault()

@@ -3,8 +3,8 @@ import type { Commit, FileChange, StashEntry } from '../../shared/types'
 import type { ContextMenuItem } from './ContextMenu'
 
 export interface DiffView {
-  path: string
-  staged: boolean
+  title: string
+  subtitle: string
   text: string
 }
 
@@ -20,6 +20,7 @@ export interface LoomContextValue {
   selected: string | null
   setSelected: (hash: string | null) => void
   onCheckout: (target: string | null) => void
+  onShowCommit: (hash: string, subject: string) => void
   dragSource: string | null
   setDragSource: (value: string | null) => void
   dragOver: string | null

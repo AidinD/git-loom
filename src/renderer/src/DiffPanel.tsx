@@ -32,8 +32,8 @@ function DiffPanel() {
     <div className="diff-pane">
       <header className="diff-header">
         <span className="diff-title">
-          {diffView.path}
-          <span className="diff-scope">{diffView.staged ? 'staged' : 'unstaged'}</span>
+          {diffView.title}
+          <span className="diff-scope">{diffView.subtitle}</span>
         </span>
       </header>
       <pre className="diff-body">

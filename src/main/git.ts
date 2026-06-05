@@ -392,6 +392,30 @@ export async function diff(
   return { ok: true, text: result.stdout }
 }
 
+/** Returns the full patch for a single commit (`git show`). */
+export async function showCommit(dir: string, hash: string): Promise<DiffResult> {
+  let root: string | null
+  try {
+    root = await resolveRepoRoot(dir)
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) }
+  }
+
+  if (!root) {
+    return { ok: false, error: `Not a Git repository: ${dir}` }
+  }
+
+  const result = await runGit(['show', '--stat', '--patch', hash], root)
+  if (result.code !== 0) {
+    return {
+      ok: false,
+      error: result.stderr.trim() || `git exited with code ${result.code}`
+    }
+  }
+
+  return { ok: true, text: result.stdout }
+}
+
 /** Stages a single file (`git add`). */
 export async function stage(dir: string, file: string): Promise<CheckoutResult> {
   return runSimple(dir, ['add', '--', file], `Staged ${file}`)

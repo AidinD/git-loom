@@ -12,6 +12,7 @@ import {
   stage,
   unstage,
   commit,
+  showCommit,
   clone,
   stashList,
   stashPush,
@@ -123,6 +124,10 @@ app.whenReady().then(() => {
       return diff(repoPath, file, staged)
     }
   )
+
+  ipcMain.handle('git:showCommit', async (_event, repoPath: string, hash: string) => {
+    return showCommit(repoPath, hash)
+  })
 
   ipcMain.handle('git:stage', async (_event, repoPath: string, file: string) => {
     return stage(repoPath, file)
