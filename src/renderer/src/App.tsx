@@ -157,6 +157,8 @@ function App() {
   const [conflictKind, setConflictKind] = useState<
     'merge' | 'rebase' | 'revert' | null
   >(null)
+  const [showConflict, setShowConflict] = useState(false)
+  const [conflictCount, setConflictCount] = useState(0)
   const [lastFetched, setLastFetched] = useState<Date | null>(null)
   const [changes, setChanges] = useState<FileChange[]>([])
   const [stashes, setStashes] = useState<StashEntry[]>([])
@@ -329,6 +331,17 @@ function App() {
         const ab = await window.api.aheadBehind(result.root)
         setAhead(ab.ahead)
         setBehind(ab.behind)
+        // Detect a repo left mid-merge/rebase/revert so the badge shows up
+        // even when we didn't start the operation this session.
+        const state = await window.api.conflictState(result.root)
+        setConflictKind(state)
+        if (state) {
+          const conflicts = await window.api.listConflicts(result.root)
+          setConflictCount(conflicts.ok ? conflicts.files.length : 0)
+        } else {
+          setShowConflict(false)
+          setConflictCount(0)
+        }
         setRepos(await window.api.addRepo(result.root))
         window.api.setCurrentRepo(result.root)
       } else {
@@ -367,6 +380,21 @@ function App() {
     await loadLog(repoPath)
   }
 
+  async function refreshConflictCount(): Promise<void> {
+    if (!repoPath) {
+      return
+    }
+    const result = await window.api.listConflicts(repoPath)
+    setConflictCount(result.ok ? result.files.length : 0)
+  }
+
+  /** Enters conflict mode: records the kind, counts files, opens the resolver. */
+  async function enterConflict(kind: 'merge' | 'rebase' | 'revert'): Promise<void> {
+    setConflictKind(kind)
+    setShowConflict(true)
+    await refreshConflictCount()
+  }
+
   async function doMerge(source: string, target: string): Promise<void> {
     if (!repoPath) {
       return
@@ -381,7 +409,7 @@ function App() {
     } else {
       setError(result.error)
       if (result.conflict) {
-        setConflictKind('merge')
+        await enterConflict('merge')
       }
     }
   }
@@ -400,7 +428,7 @@ function App() {
     } else {
       setError(result.error)
       if (result.conflict) {
-        setConflictKind('rebase')
+        await enterConflict('rebase')
       }
     }
   }
@@ -419,7 +447,7 @@ function App() {
     } else {
       setError(result.error)
       if (result.conflict) {
-        setConflictKind('revert')
+        await enterConflict('revert')
       }
     }
   }
@@ -440,6 +468,8 @@ function App() {
       setInfo(result.message)
       setError(null)
       setConflictKind(null)
+      setShowConflict(false)
+      setConflictCount(0)
     } else {
       setError(result.error)
     }
@@ -451,6 +481,8 @@ function App() {
       return
     }
     setConflictKind(null)
+    setShowConflict(false)
+    setConflictCount(0)
     setError(null)
     setInfo('Conflicts resolved')
     await loadLog(repoPath)
@@ -1023,8 +1055,13 @@ function App() {
           </>
         )}
         {conflictKind && (
-          <button className="danger" onClick={handleAbort}>
-            Abort {conflictKind}
+          <button
+            className="conflict-toolbar-btn"
+            onClick={() => setShowConflict(true)}
+            title={`Resolve ${conflictKind} conflicts`}
+          >
+            ⚠ Resolve conflicts
+            {conflictCount > 0 && <span className="badge-count">{conflictCount}</span>}
           </button>
         )}
 
@@ -1286,12 +1323,16 @@ function App() {
         </div>
       )}
 
-      {conflictKind && repoPath && (
+      {conflictKind && repoPath && showConflict && (
         <ConflictResolver
           repoPath={repoPath}
           kind={conflictKind}
           onResolved={() => void handleConflictResolved()}
           onAbort={() => void handleAbort()}
+          onClose={() => {
+            setShowConflict(false)
+            void refreshConflictCount()
+          }}
         />
       )}
 

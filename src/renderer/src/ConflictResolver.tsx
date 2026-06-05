@@ -14,6 +14,7 @@ interface Props {
   kind: 'merge' | 'rebase' | 'revert'
   onResolved: () => void
   onAbort: () => void
+  onClose: () => void
 }
 
 /**
@@ -21,7 +22,7 @@ interface Props {
  * each conflict block (Current vs Incoming) with per-block accept buttons plus
  * an editable merged-result view. Saving writes the file and stages it.
  */
-function ConflictResolver({ repoPath, kind, onResolved, onAbort }: Props) {
+function ConflictResolver({ repoPath, kind, onResolved, onAbort, onClose }: Props) {
   const [allFiles, setAllFiles] = useState<string[]>([])
   const [unresolved, setUnresolved] = useState<string[]>([])
   const [selected, setSelected] = useState<string | null>(null)
@@ -173,7 +174,7 @@ function ConflictResolver({ repoPath, kind, onResolved, onAbort }: Props) {
   }
 
   return (
-    <div className="modal-backdrop">
+    <div className="modal-backdrop" onClick={onClose}>
       <div
         className="modal conflict-modal"
         onClick={(event) => event.stopPropagation()}
@@ -346,6 +347,9 @@ function ConflictResolver({ repoPath, kind, onResolved, onAbort }: Props) {
         {error && <div className="error conflict-error">{error}</div>}
 
         <div className="modal-actions">
+          <button className="secondary" onClick={onClose}>
+            Later
+          </button>
           <button disabled={busy || !canContinue} onClick={() => void doContinue()}>
             Continue {kind}
           </button>

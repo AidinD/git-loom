@@ -1,4 +1,5 @@
 import { spawn } from 'child_process'
+import { existsSync } from 'fs'
 import { readFile, writeFile } from 'fs/promises'
 import { join } from 'path'
 import type {
@@ -388,6 +389,47 @@ export async function revertAbort(dir: string): Promise<CheckoutResult> {
   }
 
   return { ok: true, message: 'Revert aborted' }
+}
+
+/**
+ * Detects an in-progress operation that may have conflicts, by inspecting the
+ * git directory. Returns null when the working tree is in a normal state.
+ */
+export async function conflictState(
+  dir: string
+): Promise<'merge' | 'rebase' | 'revert' | null> {
+  let root: string | null
+  try {
+    root = await resolveRepoRoot(dir)
+  } catch {
+    return null
+  }
+  if (!root) {
+    return null
+  }
+
+  const gitDirResult = await runGit(['rev-parse', '--absolute-git-dir'], root)
+  if (gitDirResult.code !== 0) {
+    return null
+  }
+  const gitDir = gitDirResult.stdout.trim()
+  if (gitDir.length === 0) {
+    return null
+  }
+
+  if (
+    existsSync(join(gitDir, 'rebase-merge')) ||
+    existsSync(join(gitDir, 'rebase-apply'))
+  ) {
+    return 'rebase'
+  }
+  if (existsSync(join(gitDir, 'REVERT_HEAD'))) {
+    return 'revert'
+  }
+  if (existsSync(join(gitDir, 'MERGE_HEAD'))) {
+    return 'merge'
+  }
+  return null
 }
 
 /** Lists files that currently have unresolved merge conflicts. */

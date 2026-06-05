@@ -37,6 +37,10 @@ const api = {
   ): Promise<MergeResult> => ipcRenderer.invoke('git:revert', repoPath, hash, noCommit),
   revertAbort: (repoPath: string): Promise<CheckoutResult> =>
     ipcRenderer.invoke('git:revertAbort', repoPath),
+  conflictState: (
+    repoPath: string
+  ): Promise<'merge' | 'rebase' | 'revert' | null> =>
+    ipcRenderer.invoke('git:conflictState', repoPath),
   listConflicts: (repoPath: string): Promise<ConflictsResult> =>
     ipcRenderer.invoke('git:listConflicts', repoPath),
   useOurs: (repoPath: string, file: string): Promise<CheckoutResult> =>

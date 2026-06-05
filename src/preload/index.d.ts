@@ -25,6 +25,7 @@ export interface LoomApi {
   rebaseAbort: (repoPath: string) => Promise<CheckoutResult>
   revert: (repoPath: string, hash: string, noCommit: boolean) => Promise<MergeResult>
   revertAbort: (repoPath: string) => Promise<CheckoutResult>
+  conflictState: (repoPath: string) => Promise<'merge' | 'rebase' | 'revert' | null>
   listConflicts: (repoPath: string) => Promise<ConflictsResult>
   useOurs: (repoPath: string, file: string) => Promise<CheckoutResult>
   useTheirs: (repoPath: string, file: string) => Promise<CheckoutResult>

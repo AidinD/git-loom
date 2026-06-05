@@ -43,7 +43,8 @@ import {
   markResolved,
   continueConflict,
   readConflictFile,
-  resolveConflictFile
+  resolveConflictFile,
+  conflictState
 } from './git'
 import {
   listRepos,
@@ -151,6 +152,10 @@ app.whenReady().then(() => {
 
   ipcMain.handle('git:revertAbort', async (_event, repoPath: string) => {
     return revertAbort(repoPath)
+  })
+
+  ipcMain.handle('git:conflictState', async (_event, repoPath: string) => {
+    return conflictState(repoPath)
   })
 
   ipcMain.handle('git:listConflicts', async (_event, repoPath: string) => {
