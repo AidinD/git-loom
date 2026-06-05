@@ -30,6 +30,8 @@ export interface LoomApi {
   commit: (repoPath: string, message: string) => Promise<CheckoutResult>
   clone: (url: string, parentDir: string) => Promise<CloneResult>
   listGithubRepos: () => Promise<GithubReposResult>
+  revealRepo: (repoPath: string) => Promise<void>
+  openRepoOnGitHub: (repoPath: string) => Promise<void>
   listRepos: () => Promise<RepoEntry[]>
   addRepo: (repoPath: string) => Promise<RepoEntry[]>
   removeRepo: (repoPath: string) => Promise<RepoEntry[]>

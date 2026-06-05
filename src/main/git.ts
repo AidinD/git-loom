@@ -392,6 +392,24 @@ export async function diff(
   return { ok: true, text: result.stdout }
 }
 
+/** Returns the `origin` remote URL, or null if there is none. */
+export async function remoteUrl(dir: string): Promise<string | null> {
+  let root: string | null
+  try {
+    root = await resolveRepoRoot(dir)
+  } catch {
+    return null
+  }
+  if (!root) {
+    return null
+  }
+  const result = await runGit(['remote', 'get-url', 'origin'], root)
+  if (result.code !== 0) {
+    return null
+  }
+  return result.stdout.trim() || null
+}
+
 /** Returns the full patch for a single commit (`git show`). */
 export async function showCommit(dir: string, hash: string): Promise<DiffResult> {
   let root: string | null

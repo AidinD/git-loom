@@ -13,6 +13,7 @@ import {
   unstage,
   commit,
   showCommit,
+  remoteUrl,
   clone,
   stashList,
   stashPush,
@@ -39,6 +40,19 @@ import {
   setCurrentRepo
 } from './repos'
 import { listGithubRepos } from './github'
+
+/** Converts a git remote URL (ssh or https) to a browsable web URL. */
+function toWebUrl(remote: string): string | null {
+  const ssh = remote.match(/^git@([^:]+):(.+?)(?:\.git)?$/)
+  if (ssh) {
+    return `https://${ssh[1]}/${ssh[2]}`
+  }
+  const https = remote.match(/^https?:\/\/(.+?)(?:\.git)?$/)
+  if (https) {
+    return `https://${https[1]}`
+  }
+  return null
+}
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -166,6 +180,21 @@ app.whenReady().then(() => {
 
   ipcMain.handle('github:listRepos', async () => {
     return listGithubRepos()
+  })
+
+  ipcMain.handle('repo:reveal', async (_event, repoPath: string) => {
+    shell.openPath(repoPath)
+  })
+
+  ipcMain.handle('repo:openOnGitHub', async (_event, repoPath: string) => {
+    const url = await remoteUrl(repoPath)
+    if (!url) {
+      return
+    }
+    const web = toWebUrl(url)
+    if (web) {
+      shell.openExternal(web)
+    }
   })
 
   ipcMain.handle('git:stashList', async (_event, repoPath: string) => {

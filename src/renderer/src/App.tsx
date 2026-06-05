@@ -102,6 +102,7 @@ function App() {
   const [dragSource, setDragSource] = useState<string | null>(null)
   const [dragOver, setDragOver] = useState<string | null>(null)
   const [conflictKind, setConflictKind] = useState<'merge' | 'rebase' | null>(null)
+  const [lastFetched, setLastFetched] = useState<Date | null>(null)
   const [changes, setChanges] = useState<FileChange[]>([])
   const [stashes, setStashes] = useState<StashEntry[]>([])
   const [commitMessage, setCommitMessage] = useState('')
@@ -344,8 +345,9 @@ function App() {
     }
   }
 
-  function handleFetch(): Promise<void> {
-    return runRemoteOp((path) => window.api.fetch(path))
+  async function handleFetch(): Promise<void> {
+    await runRemoteOp((path) => window.api.fetch(path))
+    setLastFetched(new Date())
   }
 
   function handlePull(): Promise<void> {
@@ -772,6 +774,25 @@ function App() {
             <button className="secondary" onClick={() => openNewBranchModal(null)}>
               New branch
             </button>
+            <button
+              className="secondary"
+              onClick={() => window.api.revealRepo(repoPath)}
+              title="Show in file explorer"
+            >
+              Explorer
+            </button>
+            <button
+              className="secondary"
+              onClick={() => window.api.openRepoOnGitHub(repoPath)}
+              title="Open on GitHub"
+            >
+              GitHub
+            </button>
+            {lastFetched && (
+              <span className="repo-path">
+                Fetched {lastFetched.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </span>
+            )}
           </>
         )}
         <button

@@ -49,6 +49,10 @@ const api = {
     ipcRenderer.invoke('git:clone', url, parentDir),
   listGithubRepos: (): Promise<GithubReposResult> =>
     ipcRenderer.invoke('github:listRepos'),
+  revealRepo: (repoPath: string): Promise<void> =>
+    ipcRenderer.invoke('repo:reveal', repoPath),
+  openRepoOnGitHub: (repoPath: string): Promise<void> =>
+    ipcRenderer.invoke('repo:openOnGitHub', repoPath),
   listRepos: (): Promise<RepoEntry[]> => ipcRenderer.invoke('repos:list'),
   addRepo: (repoPath: string): Promise<RepoEntry[]> =>
     ipcRenderer.invoke('repos:add', repoPath),

@@ -75,8 +75,9 @@ Captured from GitHub Desktop screenshots — not yet scoped, just ideas.
 - Private-repo lock icon.
 
 **Repo actions**
-- Open in external editor (configurable), Show in file explorer, View on GitHub.
-- "Last fetched <time> ago" timestamp next to Fetch.
+- [done] Show in file explorer (Explorer button), View on GitHub (GitHub button).
+  Follow-up: open in external editor (needs editor config).
+- [done] "Fetched <time>" timestamp shown after a fetch.
 
 **Commit UX**
 - Split commit message into Summary + Description (we have a single box).
