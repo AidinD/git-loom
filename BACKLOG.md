@@ -83,8 +83,10 @@ Captured from GitHub Desktop screenshots — not yet scoped, just ideas.
 - Private-repo lock icon.
 
 **Repo actions**
-- [done] Show in file explorer (Explorer button), View on GitHub (GitHub button).
-  Follow-up: open in external editor (needs editor config).
+- [done] Show in file explorer, View on GitHub — moved into a toolbar **⋯ menu**
+  (decluttered the toolbar; also Refresh, Layouts, Reset layout live there now).
+  "View on GitHub" now reports when there is no origin remote. Follow-up: open in
+  external editor (needs editor config).
 - [done] "Fetched <time>" timestamp shown after a fetch.
 
 **Commit UX**

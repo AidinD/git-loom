@@ -211,13 +211,11 @@ app.whenReady().then(() => {
 
   ipcMain.handle('repo:openOnGitHub', async (_event, repoPath: string) => {
     const url = await remoteUrl(repoPath)
-    if (!url) {
-      return
-    }
-    const web = toWebUrl(url)
+    const web = url ? toWebUrl(url) : null
     if (web) {
       shell.openExternal(web)
     }
+    return web
   })
 
   ipcMain.handle('git:stashList', async (_event, repoPath: string) => {

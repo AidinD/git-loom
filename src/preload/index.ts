@@ -64,7 +64,7 @@ const api = {
     ipcRenderer.invoke('github:checkoutPr', repoPath, num),
   revealRepo: (repoPath: string): Promise<void> =>
     ipcRenderer.invoke('repo:reveal', repoPath),
-  openRepoOnGitHub: (repoPath: string): Promise<void> =>
+  openRepoOnGitHub: (repoPath: string): Promise<string | null> =>
     ipcRenderer.invoke('repo:openOnGitHub', repoPath),
   listRepos: (): Promise<RepoEntry[]> => ipcRenderer.invoke('repos:list'),
   addRepo: (repoPath: string): Promise<RepoEntry[]> =>

@@ -922,45 +922,36 @@ function App() {
               onCheckout={(name) => handleCheckout(name)}
               onNewBranch={() => openNewBranchModal(null)}
             />
-            <button className="secondary" onClick={() => loadLog(repoPath)}>
-              Refresh
-            </button>
-            <button className="secondary" onClick={handleFetch}>
-              Fetch
-            </button>
-            <button className="secondary" onClick={handlePull}>
-              Pull
-            </button>
-            <button className="secondary" onClick={handlePush}>
-              Push
-            </button>
-            <button className="secondary" onClick={() => openNewBranchModal(null)}>
-              New branch
-            </button>
-            <button
-              className="secondary"
-              onClick={() => window.api.revealRepo(repoPath)}
-              title="Show in file explorer"
-            >
-              Explorer
-            </button>
-            <button
-              className="secondary"
-              onClick={() => window.api.openRepoOnGitHub(repoPath)}
-              title="Open on GitHub"
-            >
-              GitHub
-            </button>
-            {lastFetched && (
-              <span className="repo-path">
-                Fetched {lastFetched.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </span>
-            )}
+            <div className="toolbar-group">
+              <button className="secondary" onClick={handleFetch}>
+                Fetch
+              </button>
+              <button className="secondary" onClick={handlePull}>
+                Pull
+              </button>
+              <button className="secondary" onClick={handlePush}>
+                Push
+              </button>
+            </div>
           </>
+        )}
+        {conflictKind && (
+          <button className="danger" onClick={handleAbort}>
+            Abort {conflictKind}
+          </button>
+        )}
+
+        <span className="toolbar-spacer" />
+
+        {lastFetched && (
+          <span className="repo-path">
+            Fetched{' '}
+            {lastFetched.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </span>
         )}
         <button
           className="secondary"
-          title="Re-open panels"
+          title="Show / hide panels"
           onClick={(event) => {
             const rect = event.currentTarget.getBoundingClientRect()
             setContextMenu({
@@ -980,20 +971,34 @@ function App() {
         </button>
         <button
           className="secondary"
-          onClick={() => setLayoutsOpen(true)}
-          title="Save / load named layouts"
+          title="More"
+          onClick={(event) => {
+            const rect = event.currentTarget.getBoundingClientRect()
+            const items: ContextMenuItem[] = []
+            if (repoPath) {
+              items.push({ label: 'Refresh', onClick: () => loadLog(repoPath) })
+              items.push({
+                label: 'Open in file explorer',
+                onClick: () => window.api.revealRepo(repoPath)
+              })
+              items.push({
+                label: 'View on GitHub',
+                onClick: () => {
+                  window.api.openRepoOnGitHub(repoPath).then((url) => {
+                    if (!url) {
+                      setError("This repository has no 'origin' remote to open.")
+                    }
+                  })
+                }
+              })
+            }
+            items.push({ label: 'Layouts…', onClick: () => setLayoutsOpen(true) })
+            items.push({ label: 'Reset layout', onClick: resetLayout })
+            setContextMenu({ x: rect.right - 180, y: rect.bottom + 4, items })
+          }}
         >
-          Layouts
+          ⋯
         </button>
-        <button className="secondary" onClick={resetLayout} title="Reset panel layout">
-          Reset layout
-        </button>
-        {conflictKind && (
-          <button className="danger" onClick={handleAbort}>
-            Abort {conflictKind}
-          </button>
-        )}
-        {repoPath && <span className="repo-path">{repoPath}</span>}
       </header>
 
       <LoomContext.Provider value={loomValue}>

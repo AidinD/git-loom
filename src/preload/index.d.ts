@@ -37,7 +37,7 @@ export interface LoomApi {
   listPullRequests: (repoPath: string) => Promise<PullRequestsResult>
   checkoutPullRequest: (repoPath: string, num: number) => Promise<CheckoutResult>
   revealRepo: (repoPath: string) => Promise<void>
-  openRepoOnGitHub: (repoPath: string) => Promise<void>
+  openRepoOnGitHub: (repoPath: string) => Promise<string | null>
   listRepos: () => Promise<RepoEntry[]>
   addRepo: (repoPath: string) => Promise<RepoEntry[]>
   removeRepo: (repoPath: string) => Promise<RepoEntry[]>
