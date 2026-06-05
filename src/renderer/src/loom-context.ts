@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react'
-import type { Commit, FileChange, StashEntry } from '../../shared/types'
+import type { Commit, FileChange, StashEntry, RepoEntry } from '../../shared/types'
 import type { ContextMenuItem } from './ContextMenu'
 
 export interface DiffView {
@@ -60,6 +60,15 @@ export interface LoomContextValue {
   diffView: DiffView | null
   selectedDiffFile: string | null
   setSelectedDiffFile: (file: string | null) => void
+
+  // Repositories panel (mirrors the toolbar dropdown)
+  repos: RepoEntry[]
+  onSwitchRepo: (path: string) => void
+  onAddExistingRepo: () => void
+  onCloneRepo: () => void
+  onRemoveRepo: (path: string) => void
+  onSetRepoGroup: (repo: RepoEntry) => void
+  onReorderRepos: (items: { path: string; group: string }[]) => void
 }
 
 export const LoomContext = createContext<LoomContextValue | null>(null)

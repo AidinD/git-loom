@@ -886,6 +886,19 @@ body {
   gap: 8px;
 }
 
+.repo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.repo-panel {
+  height: 100%;
+  overflow-y: auto;
+  padding: 8px;
+  background: var(--bg);
+}
+
 .repo-filter {
   background: var(--bg);
   border: 1px solid var(--border);

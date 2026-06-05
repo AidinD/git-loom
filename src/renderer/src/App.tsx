@@ -13,6 +13,7 @@ import ChangesPanel from './ChangesPanel'
 import DiffPanel from './DiffPanel'
 import FilesPanel from './FilesPanel'
 import PrPanel from './PrPanel'
+import ReposPanel from './ReposPanel'
 import RepoSwitcher from './RepoSwitcher'
 import BranchSwitcher from './BranchSwitcher'
 import GraphView from './GraphView'
@@ -92,17 +93,28 @@ function PrDockPanel() {
   return <PrPanel />
 }
 
+function ReposDockPanel() {
+  return <ReposPanel />
+}
+
 const DOCK_COMPONENTS = {
   changes: ChangesDockPanel,
   graph: GraphDockPanel,
   diff: DiffDockPanel,
   files: FilesDockPanel,
-  pr: PrDockPanel
+  pr: PrDockPanel,
+  repos: ReposDockPanel
 }
 
 function buildDefaultLayout(api: DockviewApi): void {
-  // Layout: [Changes / Pull requests] | History | Files | Diff
+  // Layout: Repositories | [Changes / Pull requests] | History | Files | Diff
   api.addPanel({ id: 'graph', component: 'graph', title: 'History' })
+  const repos = api.addPanel({
+    id: 'repos',
+    component: 'repos',
+    title: 'Repositories',
+    position: { referencePanel: 'graph', direction: 'left' }
+  })
   const changes = api.addPanel({
     id: 'changes',
     component: 'changes',
@@ -132,6 +144,7 @@ function buildDefaultLayout(api: DockviewApi): void {
   // reasonable widths (Files narrow, Diff wide). Guarded — sizing API is best-effort.
   changes.api.setActive()
   try {
+    repos.group.api.setSize({ width: 240 })
     changes.group.api.setSize({ width: 300 })
     files.group.api.setSize({ width: 220 })
   } catch {
@@ -256,7 +269,7 @@ function App() {
   }
 
   function showPanel(
-    id: 'graph' | 'changes' | 'diff' | 'files' | 'pr',
+    id: 'graph' | 'changes' | 'diff' | 'files' | 'pr' | 'repos',
     title: string
   ): void {
     const api = dockApi.current
@@ -1012,7 +1025,14 @@ function App() {
     onStashMany: handleStashMany,
     diffView,
     selectedDiffFile,
-    setSelectedDiffFile
+    setSelectedDiffFile,
+    repos,
+    onSwitchRepo: (path) => void handleSwitchRepo(path),
+    onAddExistingRepo: handleOpen,
+    onCloneRepo: openCloneModal,
+    onRemoveRepo: handleRemoveRepo,
+    onSetRepoGroup: openGroupModal,
+    onReorderRepos: (items) => void handleReorderRepos(items)
   }
 
   return (
@@ -1089,6 +1109,10 @@ function App() {
               x: rect.left,
               y: rect.bottom + 4,
               items: [
+                {
+                  label: 'Repositories',
+                  onClick: () => showPanel('repos', 'Repositories')
+                },
                 { label: 'History', onClick: () => showPanel('graph', 'History') },
                 { label: 'Changes', onClick: () => showPanel('changes', 'Changes') },
                 { label: 'Files', onClick: () => showPanel('files', 'Files') },
