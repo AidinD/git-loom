@@ -11,7 +11,9 @@ A GitHub-Desktop-style repository switcher, but better:
 - **Filter** box to search repos by name.
 - **Custom groupings** — user-defined groups, NOT just auto-grouping by owner.
   This is a gap in GitHub Desktop and a real differentiator for Loom.
-- Per-repo sync/fetch indicators (ahead/behind, fetch arrow), like GitHub Desktop.
+- [done] Ahead/behind badges on Pull (behind) and Push (ahead), with a quiet
+  auto-fetch every ~3 min that refreshes them. Follow-up: per-repo indicators in
+  the switcher list too.
 - Persist the repo list + groups locally (e.g. app userData JSON). [done — basic]
 - **Halyard-style grouping with drag-and-drop**: upgrade the current group-by-text
   switcher to the same session-grouping UX used in Halyard (`nw-studio-app`) —

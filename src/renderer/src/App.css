@@ -55,6 +55,20 @@ body {
   flex: 1;
 }
 
+.badge-count {
+  display: inline-block;
+  margin-left: 6px;
+  min-width: 16px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: #11131a;
+  color: #fff;
+  font-size: 10px;
+  line-height: 16px;
+  text-align: center;
+  vertical-align: middle;
+}
+
 .toolbar button {
   background: var(--accent);
   color: #11131a;

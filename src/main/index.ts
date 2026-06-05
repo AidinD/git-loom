@@ -26,6 +26,7 @@ import {
   pull,
   push,
   listBranches,
+  aheadBehind,
   createBranch,
   deleteBranch,
   renameBranch,
@@ -255,6 +256,10 @@ app.whenReady().then(() => {
 
   ipcMain.handle('git:branches', async (_event, repoPath: string) => {
     return listBranches(repoPath)
+  })
+
+  ipcMain.handle('git:aheadBehind', async (_event, repoPath: string) => {
+    return aheadBehind(repoPath)
   })
 
   ipcMain.handle(

@@ -10,7 +10,8 @@ import type {
   StashListResult,
   GithubReposResult,
   PullRequestsResult,
-  BranchesResult
+  BranchesResult,
+  AheadBehind
 } from '../shared/types'
 
 const api = {
@@ -99,6 +100,8 @@ const api = {
     ipcRenderer.invoke('repos:setCurrent', repoPath),
   listBranches: (repoPath: string): Promise<BranchesResult> =>
     ipcRenderer.invoke('git:branches', repoPath),
+  aheadBehind: (repoPath: string): Promise<AheadBehind> =>
+    ipcRenderer.invoke('git:aheadBehind', repoPath),
   createBranch: (
     repoPath: string,
     name: string,

@@ -10,7 +10,8 @@ import type {
   FileChange,
   CloneResult,
   StashListResult,
-  BranchesResult
+  BranchesResult,
+  AheadBehind
 } from '../shared/types'
 
 const FIELD = '\x1f'
@@ -494,6 +495,28 @@ export async function listBranches(dir: string): Promise<BranchesResult> {
   const current = currentResult.code === 0 ? currentResult.stdout.trim() : ''
 
   return { ok: true, branches, current }
+}
+
+/** Commits the current branch is ahead / behind its upstream (0/0 if no upstream). */
+export async function aheadBehind(dir: string): Promise<AheadBehind> {
+  let root: string | null
+  try {
+    root = await resolveRepoRoot(dir)
+  } catch {
+    return { ahead: 0, behind: 0 }
+  }
+  if (!root) {
+    return { ahead: 0, behind: 0 }
+  }
+  const result = await runGit(
+    ['rev-list', '--left-right', '--count', '@{upstream}...HEAD'],
+    root
+  )
+  if (result.code !== 0) {
+    return { ahead: 0, behind: 0 }
+  }
+  const parts = result.stdout.trim().split(/\s+/)
+  return { behind: Number(parts[0]) || 0, ahead: Number(parts[1]) || 0 }
 }
 
 /** Returns the `origin` remote URL, or null if there is none. */

@@ -9,7 +9,8 @@ import type {
   StashListResult,
   GithubReposResult,
   PullRequestsResult,
-  BranchesResult
+  BranchesResult,
+  AheadBehind
 } from '../shared/types'
 
 export interface LoomApi {
@@ -57,6 +58,7 @@ export interface LoomApi {
   getCurrentRepo: () => Promise<string | null>
   setCurrentRepo: (repoPath: string) => Promise<void>
   listBranches: (repoPath: string) => Promise<BranchesResult>
+  aheadBehind: (repoPath: string) => Promise<AheadBehind>
   createBranch: (
     repoPath: string,
     name: string,

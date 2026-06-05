@@ -20,6 +20,11 @@ export type BranchesResult =
   | { ok: true; branches: string[]; current: string }
   | { ok: false; error: string }
 
+export interface AheadBehind {
+  ahead: number
+  behind: number
+}
+
 export type MergeResult =
   | { ok: true; message: string }
   | { ok: false; error: string; conflict: boolean }

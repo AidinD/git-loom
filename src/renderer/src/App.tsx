@@ -144,6 +144,8 @@ function App() {
   const [remotes, setRemotes] = useState<string[]>([])
   const [branches, setBranches] = useState<string[]>([])
   const [currentBranch, setCurrentBranch] = useState('')
+  const [ahead, setAhead] = useState(0)
+  const [behind, setBehind] = useState(0)
   const [selected, setSelected] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [info, setInfo] = useState<string | null>(null)
@@ -196,6 +198,24 @@ function App() {
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Quietly auto-fetch every few minutes and refresh the ahead/behind badge.
+  useEffect(() => {
+    if (!repoPath) {
+      return
+    }
+    const id = setInterval(() => {
+      window.api
+        .fetch(repoPath)
+        .then(() => window.api.aheadBehind(repoPath))
+        .then((ab) => {
+          setAhead(ab.ahead)
+          setBehind(ab.behind)
+        })
+        .catch(() => {})
+    }, 180000)
+    return () => clearInterval(id)
+  }, [repoPath])
 
   const dockApi = useRef<DockviewApi | null>(null)
 
@@ -298,6 +318,9 @@ function App() {
           setBranches(branchResult.branches)
           setCurrentBranch(branchResult.current)
         }
+        const ab = await window.api.aheadBehind(result.root)
+        setAhead(ab.ahead)
+        setBehind(ab.behind)
         setRepos(await window.api.addRepo(result.root))
         window.api.setCurrentRepo(result.root)
       } else {
@@ -926,11 +949,21 @@ function App() {
               <button className="secondary" onClick={handleFetch}>
                 Fetch
               </button>
-              <button className="secondary" onClick={handlePull}>
+              <button
+                className="secondary"
+                onClick={handlePull}
+                title={behind > 0 ? `${behind} commit(s) behind` : 'Pull'}
+              >
                 Pull
+                {behind > 0 && <span className="badge-count">{behind}</span>}
               </button>
-              <button className="secondary" onClick={handlePush}>
+              <button
+                className="secondary"
+                onClick={handlePush}
+                title={ahead > 0 ? `${ahead} commit(s) ahead` : 'Push'}
+              >
                 Push
+                {ahead > 0 && <span className="badge-count">{ahead}</span>}
               </button>
             </div>
           </>
