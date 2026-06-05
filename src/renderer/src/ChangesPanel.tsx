@@ -352,15 +352,31 @@ function ChangesPanel({
       <div className="commit-box">
         <input
           className="commit-message commit-summary"
-          placeholder="Summary (required)"
+          placeholder="Summary (required) — Enter to commit"
           value={commitSummary}
           onChange={(event) => onCommitSummaryChange(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              event.preventDefault()
+              if (canCommit) {
+                onCommit()
+              }
+            }
+          }}
         />
         <textarea
           className="commit-message"
-          placeholder="Description"
+          placeholder="Description — Ctrl+Enter to commit"
           value={commitDescription}
           onChange={(event) => onCommitDescriptionChange(event.target.value)}
+          onKeyDown={(event) => {
+            if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+              event.preventDefault()
+              if (canCommit) {
+                onCommit()
+              }
+            }
+          }}
         />
         <button
           className="coauthor-toggle"
