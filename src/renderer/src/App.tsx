@@ -219,6 +219,69 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Escape closes the topmost open modal/overlay.
+  useEffect(() => {
+    function onKey(event: KeyboardEvent): void {
+      if (event.key !== 'Escape') {
+        return
+      }
+      if (contextMenu) {
+        setContextMenu(null)
+        return
+      }
+      if (confirm) {
+        setConfirm(null)
+        return
+      }
+      if (stashRequest) {
+        setStashRequest(null)
+        return
+      }
+      if (groupModalRepo) {
+        setGroupModalRepo(null)
+        return
+      }
+      if (cloneOpen) {
+        setCloneOpen(false)
+        return
+      }
+      if (newBranchOpen) {
+        setNewBranchOpen(false)
+        return
+      }
+      if (renameTarget) {
+        setRenameTarget(null)
+        return
+      }
+      if (missingRepo) {
+        setMissingRepo(null)
+        return
+      }
+      if (layoutsOpen) {
+        setLayoutsOpen(false)
+        return
+      }
+      if (showConflict) {
+        setShowConflict(false)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => {
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [
+    contextMenu,
+    confirm,
+    stashRequest,
+    groupModalRepo,
+    cloneOpen,
+    newBranchOpen,
+    renameTarget,
+    missingRepo,
+    layoutsOpen,
+    showConflict
+  ])
+
   // Quietly auto-fetch every few minutes and refresh the ahead/behind badge.
   useEffect(() => {
     if (!repoPath) {
