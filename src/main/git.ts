@@ -87,7 +87,7 @@ async function resolveRepoRoot(dir: string): Promise<string | null> {
  * given directory. Returns a discriminated result so the renderer can show a
  * clean message instead of a raw thrown error.
  */
-export async function getLog(dir: string, limit = 1000): Promise<LogResult> {
+export async function getLog(dir: string, limit = 5000): Promise<LogResult> {
   let root: string | null
   try {
     root = await resolveRepoRoot(dir)

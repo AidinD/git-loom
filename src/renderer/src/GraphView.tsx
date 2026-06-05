@@ -1,3 +1,4 @@
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { MouseEvent as ReactMouseEvent } from 'react'
 import GitGraph from './graph/GitGraph'
 import { useLoom } from './loom-context'
@@ -5,6 +6,7 @@ import type { ContextMenuItem } from './ContextMenu'
 import type { Commit } from '../../shared/types'
 
 const ROW_HEIGHT = 28
+const OVERSCAN = 8
 
 type RefKind = 'head' | 'branch' | 'remote' | 'tag'
 
@@ -81,6 +83,46 @@ function GraphView() {
     onNewBranchFrom,
     onRevert
   } = useLoom()
+
+  const mainRef = useRef<HTMLDivElement>(null)
+  const [scrollTop, setScrollTop] = useState(0)
+  const [viewportHeight, setViewportHeight] = useState(800)
+
+  useEffect(() => {
+    const el = mainRef.current
+    if (!el) {
+      return
+    }
+    let frame = 0
+    function onScroll(): void {
+      if (frame) {
+        return
+      }
+      frame = requestAnimationFrame(() => {
+        frame = 0
+        setScrollTop(el!.scrollTop)
+      })
+    }
+    setViewportHeight(el.clientHeight)
+    el.addEventListener('scroll', onScroll, { passive: true })
+    const resizeObserver = new ResizeObserver(() => setViewportHeight(el.clientHeight))
+    resizeObserver.observe(el)
+    return () => {
+      el.removeEventListener('scroll', onScroll)
+      resizeObserver.disconnect()
+      if (frame) {
+        cancelAnimationFrame(frame)
+      }
+    }
+  }, [])
+
+  // Reset to the top when the commit set changes (e.g. switching repos).
+  useLayoutEffect(() => {
+    if (mainRef.current) {
+      mainRef.current.scrollTop = 0
+    }
+    setScrollTop(0)
+  }, [commits])
 
   if (commits.length === 0) {
     return (
@@ -212,10 +254,23 @@ function GraphView() {
     )
   }
 
+  const total = commits.length
+  const first = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - OVERSCAN)
+  const last = Math.min(
+    total - 1,
+    Math.ceil((scrollTop + viewportHeight) / ROW_HEIGHT) + OVERSCAN
+  )
+  const visible = commits.slice(first, last + 1)
+  const padTop = first * ROW_HEIGHT
+  const padBottom = (total - 1 - last) * ROW_HEIGHT
+
   return (
-    <div className="main">
-      <ul className="refs-col">
-        {commits.map((commit) => (
+    <div className="main" ref={mainRef}>
+      <ul
+        className="refs-col"
+        style={{ paddingTop: padTop, paddingBottom: padBottom }}
+      >
+        {visible.map((commit) => (
           <li
             key={commit.hash}
             className={`refs-row${selected === commit.hash ? ' selected' : ''}`}
@@ -231,8 +286,11 @@ function GraphView() {
 
       <GitGraph commits={commits} rowHeight={ROW_HEIGHT} selectedHash={selected} />
 
-      <ul className="commit-list">
-        {commits.map((commit) => (
+      <ul
+        className="commit-list"
+        style={{ paddingTop: padTop, paddingBottom: padBottom }}
+      >
+        {visible.map((commit) => (
           <li
             key={commit.hash}
             className={`commit${selected === commit.hash ? ' selected' : ''}`}

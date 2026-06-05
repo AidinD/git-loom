@@ -1194,9 +1194,15 @@ body {
   color: #ff9aa2;
 }
 
-.git-graph {
+.git-graph-col {
   flex: none;
+  align-self: stretch;
+}
+
+.git-graph {
   display: block;
+  position: sticky;
+  top: 0;
 }
 
 .refs-col {
