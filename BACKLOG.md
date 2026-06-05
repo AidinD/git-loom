@@ -38,10 +38,12 @@ A GitHub-Desktop-style repository switcher, but better:
 - [done] Adaptive lane width — lane spacing shrinks (down to 5px) when there are
   many concurrent branches so the graph gutter stays bounded (~200px) instead of
   growing very wide; node radius scales with it. History panel scrolls internally.
-- [done] **Virtualized graph + history** (2026-06-05). The canvas is sticky to the
+- [done] **Virtualized graph canvas** (2026-06-05). The canvas is sticky to the
   viewport and repaints only the visible row range per scroll frame (full DPR, no
-  max-canvas-height limit). The refs + commit lists are windowed too (padding spacers
-  + visible slice). History cap raised 1000 → 5000. Scroll resets on repo switch.
+  max-canvas-height limit), driven by a direct scroll listener so it tracks tightly.
+  The refs + commit lists render in full (their natural height always matches the
+  canvas — windowing them separately caused length-mismatch bugs, so it was dropped).
+  History cap set to 2000 to keep the full DOM lists snappy.
 
 ## Changes panel polish (phase 6 follow-ups, requested)
 
