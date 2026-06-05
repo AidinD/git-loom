@@ -286,13 +286,25 @@ function ConflictResolver({ repoPath, kind, onResolved, onAbort }: Props) {
                             </button>
                           ))}
                         </div>
-                        <div className="cblock-cols">
+                        <div
+                          className={`cblock-cols${
+                            block.base.length > 0 ? ' has-base' : ''
+                          }`}
+                        >
                           <div className="cblock-col ours">
                             <div className="cblock-col-title">
                               Current · {block.oursLabel}
                             </div>
                             <pre>{block.ours.join('\n')}</pre>
                           </div>
+                          {block.base.length > 0 && (
+                            <div className="cblock-col base">
+                              <div className="cblock-col-title">
+                                Base · common ancestor
+                              </div>
+                              <pre>{block.base.join('\n')}</pre>
+                            </div>
+                          )}
                           <div className="cblock-col theirs">
                             <div className="cblock-col-title">
                               Incoming · {block.theirsLabel}

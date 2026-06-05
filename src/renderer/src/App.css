@@ -1621,11 +1621,15 @@ body {
   grid-template-columns: 1fr 1fr;
 }
 
+.cblock-cols.has-base {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
 .cblock-col {
   min-width: 0;
 }
 
-.cblock-col.ours {
+.cblock-col:not(:last-child) {
   border-right: 1px solid var(--border);
 }
 
@@ -1638,6 +1642,10 @@ body {
 
 .cblock-col.ours .cblock-col-title {
   background: rgba(87, 171, 90, 0.12);
+}
+
+.cblock-col.base .cblock-col-title {
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .cblock-col.theirs .cblock-col-title {
@@ -1656,6 +1664,11 @@ body {
 
 .cblock-col.ours pre {
   background: rgba(87, 171, 90, 0.06);
+}
+
+.cblock-col.base pre {
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-dim);
 }
 
 .cblock-col.theirs pre {
