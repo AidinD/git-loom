@@ -56,6 +56,7 @@ function RepoSwitcher({
   const [filter, setFilter] = useState('')
   const [collapsed, setCollapsed] = useState<Set<string>>(loadCollapsed)
   const [dragPath, setDragPath] = useState<string | null>(null)
+  const [dragGroup, setDragGroup] = useState<string | null>(null)
   const [dropRow, setDropRow] = useState<string | null>(null)
   const [dropZone, setDropZone] = useState<string | null>(null)
 
@@ -115,8 +116,30 @@ function RepoSwitcher({
 
   function clearDrag(): void {
     setDragPath(null)
+    setDragGroup(null)
     setDropRow(null)
     setDropZone(null)
+  }
+
+  /** Drops the dragged group's block of repos just before `targetGroupName`. */
+  function dropGroupBefore(targetGroupName: string): void {
+    if (!dragGroup || dragGroup === targetGroupName) {
+      clearDrag()
+      return
+    }
+    const block = repos
+      .filter((repo) => (repo.group || UNGROUPED) === dragGroup)
+      .map((repo) => ({ path: repo.path, group: repo.group }))
+    const rest = repos
+      .filter((repo) => (repo.group || UNGROUPED) !== dragGroup)
+      .map((repo) => ({ path: repo.path, group: repo.group }))
+    let index = rest.findIndex((repo) => (repo.group || UNGROUPED) === targetGroupName)
+    if (index === -1) {
+      index = rest.length
+    }
+    rest.splice(index, 0, ...block)
+    onReorder(rest)
+    clearDrag()
   }
 
   /** Drops the dragged repo just before `targetPath`, adopting its group. */
@@ -208,10 +231,16 @@ function RepoSwitcher({
                     <div
                       className={`repo-group-title${
                         dropZone === group.name ? ' drop-target' : ''
-                      }`}
+                      }${dragGroup === group.name ? ' dragging' : ''}`}
+                      draggable={dragEnabled && group.name !== UNGROUPED}
                       onClick={() => toggleGroup(group.name)}
+                      onDragStart={(event) => {
+                        event.stopPropagation()
+                        setDragGroup(group.name)
+                      }}
+                      onDragEnd={clearDrag}
                       onDragOver={(event) => {
-                        if (dragEnabled && dragPath) {
+                        if (dragEnabled && (dragPath || dragGroup)) {
                           event.preventDefault()
                           setDropZone(group.name)
                         }
@@ -219,7 +248,11 @@ function RepoSwitcher({
                       onDragLeave={() => setDropZone(null)}
                       onDrop={(event) => {
                         event.preventDefault()
-                        dropOnGroup(group.name)
+                        if (dragGroup) {
+                          dropGroupBefore(group.name)
+                        } else {
+                          dropOnGroup(group.name)
+                        }
                       }}
                     >
                       <span className="repo-group-chevron">
