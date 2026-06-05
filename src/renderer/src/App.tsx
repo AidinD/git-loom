@@ -47,8 +47,10 @@ function ChangesDockPanel() {
     <ChangesPanel
       files={l.changes}
       stashes={l.stashes}
-      commitMessage={l.commitMessage}
-      onCommitMessageChange={l.setCommitMessage}
+      commitSummary={l.commitSummary}
+      onCommitSummaryChange={l.setCommitSummary}
+      commitDescription={l.commitDescription}
+      onCommitDescriptionChange={l.setCommitDescription}
       onStage={l.onStage}
       onUnstage={l.onUnstage}
       onStageAll={l.onStageAll}
@@ -105,7 +107,8 @@ function App() {
   const [lastFetched, setLastFetched] = useState<Date | null>(null)
   const [changes, setChanges] = useState<FileChange[]>([])
   const [stashes, setStashes] = useState<StashEntry[]>([])
-  const [commitMessage, setCommitMessage] = useState('')
+  const [commitSummary, setCommitSummary] = useState('')
+  const [commitDescription, setCommitDescription] = useState('')
   const [diffView, setDiffView] = useState<DiffView | null>(null)
   const [repos, setRepos] = useState<RepoEntry[]>([])
   const [groupModalRepo, setGroupModalRepo] = useState<RepoEntry | null>(null)
@@ -364,13 +367,14 @@ function App() {
     }
     setError(null)
     setInfo(null)
-    const result = await window.api.stashPush(repoPath, commitMessage.trim())
+    const result = await window.api.stashPush(repoPath, commitSummary.trim())
     if (!result.ok) {
       setError(result.error)
       return
     }
     setInfo(result.message)
-    setCommitMessage('')
+    setCommitSummary('')
+    setCommitDescription('')
     await loadLog(repoPath)
   }
 
@@ -497,18 +501,22 @@ function App() {
   }
 
   async function handleCommit(): Promise<void> {
-    if (!repoPath || commitMessage.trim().length === 0) {
+    const summary = commitSummary.trim()
+    if (!repoPath || summary.length === 0) {
       return
     }
+    const description = commitDescription.trim()
+    const message = description.length > 0 ? `${summary}\n\n${description}` : summary
     setError(null)
     setInfo(null)
-    const result = await window.api.commit(repoPath, commitMessage.trim())
+    const result = await window.api.commit(repoPath, message)
     if (!result.ok) {
       setError(result.error)
       return
     }
     setInfo(result.message)
-    setCommitMessage('')
+    setCommitSummary('')
+    setCommitDescription('')
     await loadLog(repoPath)
   }
 
@@ -727,8 +735,10 @@ function App() {
     onNewBranchFrom: openNewBranchModal,
     changes,
     stashes,
-    commitMessage,
-    setCommitMessage,
+    commitSummary,
+    setCommitSummary,
+    commitDescription,
+    setCommitDescription,
     onStage: handleStage,
     onUnstage: handleUnstage,
     onStageAll: handleStageAll,

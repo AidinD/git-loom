@@ -35,8 +35,10 @@ export interface LoomContextValue {
   // Changes panel
   changes: FileChange[]
   stashes: StashEntry[]
-  commitMessage: string
-  setCommitMessage: (value: string) => void
+  commitSummary: string
+  setCommitSummary: (value: string) => void
+  commitDescription: string
+  setCommitDescription: (value: string) => void
   onStage: (file: string) => void
   onUnstage: (file: string) => void
   onStageAll: () => void

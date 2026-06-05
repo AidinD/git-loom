@@ -80,7 +80,8 @@ Captured from GitHub Desktop screenshots — not yet scoped, just ideas.
 - [done] "Fetched <time>" timestamp shown after a fetch.
 
 **Commit UX**
-- Split commit message into Summary + Description (we have a single box).
+- [done] Split commit message into Summary (single line) + Description (combined
+  with a blank line when committing).
 - Co-authors on a commit (add co-author UI).
 
 **Branches**

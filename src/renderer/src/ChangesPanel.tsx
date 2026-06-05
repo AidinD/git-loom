@@ -8,8 +8,10 @@ type Section = 'staged' | 'unstaged'
 interface Props {
   files: FileChange[]
   stashes: StashEntry[]
-  commitMessage: string
-  onCommitMessageChange: (value: string) => void
+  commitSummary: string
+  onCommitSummaryChange: (value: string) => void
+  commitDescription: string
+  onCommitDescriptionChange: (value: string) => void
   onStage: (file: string) => void
   onUnstage: (file: string) => void
   onStageAll: () => void
@@ -72,8 +74,10 @@ function stored(key: string, fallback: number): number {
 function ChangesPanel({
   files,
   stashes,
-  commitMessage,
-  onCommitMessageChange,
+  commitSummary,
+  onCommitSummaryChange,
+  commitDescription,
+  onCommitDescriptionChange,
   onStage,
   onUnstage,
   onStageAll,
@@ -108,7 +112,7 @@ function ChangesPanel({
 
   const staged = files.filter(isStaged)
   const unstaged = files.filter(isUnstaged)
-  const canCommit = staged.length > 0 && commitMessage.trim().length > 0
+  const canCommit = staged.length > 0 && commitSummary.trim().length > 0
   const hasChanges = files.length > 0
 
   function isSelected(sectionName: Section, path: string): boolean {
@@ -335,11 +339,17 @@ function ChangesPanel({
       </div>
 
       <div className="commit-box">
+        <input
+          className="commit-message commit-summary"
+          placeholder="Summary (required)"
+          value={commitSummary}
+          onChange={(event) => onCommitSummaryChange(event.target.value)}
+        />
         <textarea
           className="commit-message"
-          placeholder="Commit message"
-          value={commitMessage}
-          onChange={(event) => onCommitMessageChange(event.target.value)}
+          placeholder="Description"
+          value={commitDescription}
+          onChange={(event) => onCommitDescriptionChange(event.target.value)}
         />
         <button className="commit-button" disabled={!canCommit} onClick={onCommit}>
           Commit {staged.length > 0 ? `(${staged.length})` : ''}

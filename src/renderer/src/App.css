@@ -351,6 +351,11 @@ body {
   font-size: 12px;
 }
 
+.commit-summary {
+  height: auto;
+  resize: none;
+}
+
 .commit-button {
   background: var(--accent);
   color: #11131a;
