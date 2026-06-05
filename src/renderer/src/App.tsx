@@ -1015,6 +1015,10 @@ function App() {
                 onClick: () => window.api.revealRepo(repoPath)
               })
               items.push({
+                label: 'Open in VS Code',
+                onClick: () => window.api.openInEditor(repoPath)
+              })
+              items.push({
                 label: 'View on GitHub',
                 onClick: () => {
                   window.api.openRepoOnGitHub(repoPath).then((url) => {

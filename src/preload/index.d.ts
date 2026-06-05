@@ -38,6 +38,8 @@ export interface LoomApi {
   listPullRequests: (repoPath: string) => Promise<PullRequestsResult>
   checkoutPullRequest: (repoPath: string, num: number) => Promise<CheckoutResult>
   revealRepo: (repoPath: string) => Promise<void>
+  openInEditor: (repoPath: string) => Promise<void>
+  openExternal: (url: string) => Promise<void>
   openRepoOnGitHub: (repoPath: string) => Promise<string | null>
   listRepos: () => Promise<RepoEntry[]>
   addRepo: (repoPath: string) => Promise<RepoEntry[]>

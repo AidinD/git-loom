@@ -521,6 +521,19 @@ body {
   white-space: nowrap;
 }
 
+.pr-link {
+  cursor: pointer;
+}
+
+.pr-link:hover {
+  text-decoration: underline;
+}
+
+.pr-header .repo-filter {
+  flex: 1;
+  min-width: 0;
+}
+
 .pr-number {
   color: var(--text-dim);
 }

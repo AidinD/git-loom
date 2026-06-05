@@ -1,4 +1,5 @@
 import { app, shell, BrowserWindow, ipcMain, dialog } from 'electron'
+import { spawn } from 'child_process'
 import { join } from 'path'
 import {
   getLog,
@@ -208,6 +209,20 @@ app.whenReady().then(() => {
 
   ipcMain.handle('repo:reveal', async (_event, repoPath: string) => {
     shell.openPath(repoPath)
+  })
+
+  ipcMain.handle('shell:openExternal', async (_event, url: string) => {
+    shell.openExternal(url)
+  })
+
+  ipcMain.handle('repo:openInEditor', async (_event, repoPath: string) => {
+    // Best-effort: open the repo in VS Code via its CLI.
+    const child = spawn(`code "${repoPath}"`, {
+      shell: true,
+      detached: true,
+      stdio: 'ignore'
+    })
+    child.unref()
   })
 
   ipcMain.handle('repo:openOnGitHub', async (_event, repoPath: string) => {

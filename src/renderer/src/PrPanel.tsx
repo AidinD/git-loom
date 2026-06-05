@@ -7,6 +7,7 @@ function PrPanel() {
   const [prs, setPrs] = useState<PullRequest[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [filter, setFilter] = useState('')
 
   function refresh(): void {
     if (!repoPath) {
@@ -34,7 +35,12 @@ function PrPanel() {
   return (
     <div className="pr-pane">
       <header className="pr-header">
-        <span>Pull requests</span>
+        <input
+          className="repo-filter"
+          placeholder="Filter pull requests"
+          value={filter}
+          onChange={(event) => setFilter(event.target.value)}
+        />
         <button className="secondary" onClick={refresh}>
           Refresh
         </button>
@@ -47,10 +53,24 @@ function PrPanel() {
         )}
         {!loading &&
           !error &&
-          prs.map((pr) => (
+          prs
+            .filter((pr) => {
+              const needle = filter.trim().toLowerCase()
+              return (
+                needle.length === 0 ||
+                pr.title.toLowerCase().includes(needle) ||
+                String(pr.number).includes(needle) ||
+                pr.branch.toLowerCase().includes(needle)
+              )
+            })
+            .map((pr) => (
             <div key={pr.number} className="pr-item">
               <div className="pr-row1">
-                <span className="pr-title">
+                <span
+                  className="pr-title pr-link"
+                  title="Open on GitHub"
+                  onClick={() => window.api.openExternal(pr.url)}
+                >
                   <span className="pr-number">#{pr.number}</span> {pr.title}
                 </span>
                 <button className="secondary" onClick={() => onCheckoutPr(pr.number)}>
