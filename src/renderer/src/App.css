@@ -1730,8 +1730,12 @@ body {
   padding: 5px 12px;
 }
 
+.conflict-detail-actions button:disabled,
 .conflict-merged-actions button:disabled {
-  opacity: 0.4;
+  opacity: 1;
+  background: var(--bg-alt);
+  color: var(--text-dim);
+  border: 1px solid var(--border);
   cursor: default;
 }
 
