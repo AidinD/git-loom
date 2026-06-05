@@ -65,6 +65,8 @@ const api = {
     ipcRenderer.invoke('github:checkoutPr', repoPath, num),
   revealRepo: (repoPath: string): Promise<void> =>
     ipcRenderer.invoke('repo:reveal', repoPath),
+  repoExists: (repoPath: string): Promise<boolean> =>
+    ipcRenderer.invoke('repo:exists', repoPath),
   openInEditor: (repoPath: string): Promise<void> =>
     ipcRenderer.invoke('repo:openInEditor', repoPath),
   openExternal: (url: string): Promise<void> =>

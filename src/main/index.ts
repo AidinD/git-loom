@@ -1,5 +1,6 @@
 import { app, shell, BrowserWindow, ipcMain, dialog } from 'electron'
 import { spawn } from 'child_process'
+import { existsSync } from 'fs'
 import { join } from 'path'
 import {
   getLog,
@@ -209,6 +210,10 @@ app.whenReady().then(() => {
 
   ipcMain.handle('repo:reveal', async (_event, repoPath: string) => {
     shell.openPath(repoPath)
+  })
+
+  ipcMain.handle('repo:exists', async (_event, repoPath: string) => {
+    return existsSync(repoPath)
   })
 
   ipcMain.handle('shell:openExternal', async (_event, url: string) => {

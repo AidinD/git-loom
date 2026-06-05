@@ -189,6 +189,7 @@ function App() {
   const [renameTarget, setRenameTarget] = useState<string | null>(null)
   const [renameInput, setRenameInput] = useState('')
   const [confirm, setConfirm] = useState<ConfirmState | null>(null)
+  const [missingRepo, setMissingRepo] = useState<string | null>(null)
 
   useEffect(() => {
     window.api.listRepos().then(setRepos)
@@ -727,6 +728,40 @@ function App() {
     setRepos(await window.api.removeRepo(path))
   }
 
+  /** Switches to a repo, but first verifies the folder still exists on disk. */
+  async function handleSwitchRepo(path: string): Promise<void> {
+    const exists = await window.api.repoExists(path)
+    if (!exists) {
+      setMissingRepo(path)
+      return
+    }
+    await loadLog(path)
+  }
+
+  /** Lets the user point a missing repo entry at its new location on disk. */
+  async function relocateMissingRepo(): Promise<void> {
+    const oldPath = missingRepo
+    if (!oldPath) {
+      return
+    }
+    const newPath = await window.api.openRepo()
+    if (!newPath) {
+      return
+    }
+    await window.api.removeRepo(oldPath)
+    setRepos(await window.api.addRepo(newPath))
+    setMissingRepo(null)
+    await loadLog(newPath)
+  }
+
+  async function removeMissingRepo(): Promise<void> {
+    if (!missingRepo) {
+      return
+    }
+    setRepos(await window.api.removeRepo(missingRepo))
+    setMissingRepo(null)
+  }
+
   function openGroupModal(repo: RepoEntry): void {
     setGroupModalRepo(repo)
     setGroupInput(repo.group)
@@ -937,7 +972,7 @@ function App() {
         <RepoSwitcher
           repos={repos}
           currentPath={repoPath}
-          onSwitch={(path) => loadLog(path)}
+          onSwitch={(path) => handleSwitchRepo(path)}
           onAddExisting={handleOpen}
           onClone={openCloneModal}
           onRemove={handleRemoveRepo}
@@ -1233,6 +1268,27 @@ function App() {
                 Confirm
               </button>
               <button className="secondary" onClick={() => setConfirm(null)}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {missingRepo && (
+        <div className="modal-backdrop" onClick={() => setMissingRepo(null)}>
+          <div className="modal" onClick={(event) => event.stopPropagation()}>
+            <p className="modal-text">
+              Repository folder not found:
+              <br />
+              <code className="modal-path">{missingRepo}</code>
+            </p>
+            <div className="modal-actions">
+              <button onClick={() => void relocateMissingRepo()}>Locate…</button>
+              <button className="danger" onClick={() => void removeMissingRepo()}>
+                Remove from list
+              </button>
+              <button className="secondary" onClick={() => setMissingRepo(null)}>
                 Cancel
               </button>
             </div>
