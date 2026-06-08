@@ -125,6 +125,8 @@ const api = {
     ipcRenderer.invoke('repos:setGroup', repoPath, group),
   setReposLayout: (items: { path: string; group: string }[]): Promise<RepoEntry[]> =>
     ipcRenderer.invoke('repos:setLayout', items),
+  renameRepoGroup: (oldName: string, newName: string): Promise<RepoEntry[]> =>
+    ipcRenderer.invoke('repos:renameGroup', oldName, newName),
   stashList: (repoPath: string): Promise<StashListResult> =>
     ipcRenderer.invoke('git:stashList', repoPath),
   stashPush: (repoPath: string, message: string): Promise<CheckoutResult> =>

@@ -81,6 +81,7 @@ export interface LoomApi {
   setReposLayout: (
     items: { path: string; group: string }[]
   ) => Promise<RepoEntry[]>
+  renameRepoGroup: (oldName: string, newName: string) => Promise<RepoEntry[]>
   stashList: (repoPath: string) => Promise<StashListResult>
   stashPush: (repoPath: string, message: string) => Promise<CheckoutResult>
   stashFiles: (

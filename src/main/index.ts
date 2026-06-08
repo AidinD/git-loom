@@ -56,6 +56,7 @@ import {
   addRepo,
   removeRepo,
   setRepoGroup,
+  renameRepoGroup,
   setReposLayout,
   getCurrentRepo,
   setCurrentRepo
@@ -426,6 +427,13 @@ app.whenReady().then(() => {
     'repos:setLayout',
     async (_event, items: { path: string; group: string }[]) => {
       return setReposLayout(items)
+    }
+  )
+
+  ipcMain.handle(
+    'repos:renameGroup',
+    async (_event, oldName: string, newName: string) => {
+      return renameRepoGroup(oldName, newName)
     }
   )
 

@@ -185,6 +185,8 @@ function App() {
   const [repos, setRepos] = useState<RepoEntry[]>([])
   const [groupModalRepo, setGroupModalRepo] = useState<RepoEntry | null>(null)
   const [groupInput, setGroupInput] = useState('')
+  const [groupRenameOld, setGroupRenameOld] = useState<string | null>(null)
+  const [groupRenameInput, setGroupRenameInput] = useState('')
   const [cloneOpen, setCloneOpen] = useState(false)
   const [cloneUrl, setCloneUrl] = useState('')
   const [cloneFilter, setCloneFilter] = useState('')
@@ -241,6 +243,10 @@ function App() {
         setGroupModalRepo(null)
         return
       }
+      if (groupRenameOld !== null) {
+        setGroupRenameOld(null)
+        return
+      }
       if (cloneOpen) {
         setCloneOpen(false)
         return
@@ -274,6 +280,7 @@ function App() {
     confirm,
     stashRequest,
     groupModalRepo,
+    groupRenameOld,
     cloneOpen,
     newBranchOpen,
     renameTarget,
@@ -1035,6 +1042,19 @@ function App() {
     setGroupModalRepo(null)
   }
 
+  function openRenameGroup(oldName: string): void {
+    setGroupRenameOld(oldName)
+    setGroupRenameInput(oldName)
+  }
+
+  async function saveGroupRename(): Promise<void> {
+    if (groupRenameOld === null) {
+      return
+    }
+    setRepos(await window.api.renameRepoGroup(groupRenameOld, groupRenameInput))
+    setGroupRenameOld(null)
+  }
+
   function openCloneModal(): void {
     setCloneOpen(true)
     setCloneUrl('')
@@ -1234,6 +1254,7 @@ function App() {
     onCloneRepo: openCloneModal,
     onRemoveRepo: handleRemoveRepo,
     onSetRepoGroup: openGroupModal,
+    onRenameRepoGroup: openRenameGroup,
     onReorderRepos: (items) => void handleReorderRepos(items)
   }
 
@@ -1248,6 +1269,7 @@ function App() {
           onClone={openCloneModal}
           onRemove={handleRemoveRepo}
           onSetGroup={openGroupModal}
+          onRenameGroup={openRenameGroup}
           onReorder={(items) => void handleReorderRepos(items)}
         />
         {repoPath && (
@@ -1417,6 +1439,36 @@ function App() {
             <div className="modal-actions">
               <button onClick={saveGroup}>Save</button>
               <button className="secondary" onClick={() => setGroupModalRepo(null)}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {groupRenameOld !== null && (
+        <div className="modal-backdrop" onClick={() => setGroupRenameOld(null)}>
+          <div className="modal" onClick={(event) => event.stopPropagation()}>
+            <p className="modal-text">
+              Rename group <strong>{groupRenameOld}</strong>
+            </p>
+            <input
+              className="commit-message"
+              style={{ height: 'auto' }}
+              placeholder="New group name (empty = ungroup)"
+              value={groupRenameInput}
+              autoFocus
+              onChange={(event) => setGroupRenameInput(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault()
+                  saveGroupRename()
+                }
+              }}
+            />
+            <div className="modal-actions">
+              <button onClick={saveGroupRename}>Rename</button>
+              <button className="secondary" onClick={() => setGroupRenameOld(null)}>
                 Cancel
               </button>
             </div>

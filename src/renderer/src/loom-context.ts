@@ -75,6 +75,7 @@ export interface LoomContextValue {
   onCloneRepo: () => void
   onRemoveRepo: (path: string) => void
   onSetRepoGroup: (repo: RepoEntry) => void
+  onRenameRepoGroup: (oldName: string) => void
   onReorderRepos: (items: { path: string; group: string }[]) => void
 }
 

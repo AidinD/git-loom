@@ -10,6 +10,7 @@ interface Props {
   onRemove: (path: string) => void
   onSetGroup: (repo: RepoEntry) => void
   onReorder: (items: { path: string; group: string }[]) => void
+  onRenameGroup?: (oldName: string) => void
   /** Called after a switch/add/clone — used by the dropdown to close itself. */
   onActivate?: () => void
 }
@@ -57,6 +58,7 @@ function RepoList({
   onRemove,
   onSetGroup,
   onReorder,
+  onRenameGroup,
   onActivate
 }: Props) {
   const [filter, setFilter] = useState('')
@@ -238,6 +240,18 @@ function RepoList({
                 <span className="repo-group-chevron">{isCollapsed ? '▸' : '▾'}</span>
                 <span>{group.name}</span>
                 <span className="repo-group-count">{group.repos.length}</span>
+                {onRenameGroup && group.name !== UNGROUPED && (
+                  <button
+                    className="repo-group-rename"
+                    title="Rename group"
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      onRenameGroup(group.name)
+                    }}
+                  >
+                    ✎
+                  </button>
+                )}
               </div>
 
               {!isCollapsed &&

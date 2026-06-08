@@ -70,6 +70,19 @@ export function setRepoGroup(path: string, group: string): RepoEntry[] {
   return store.repos
 }
 
+/** Renames a group by reassigning every repo in it to the new group name. */
+export function renameRepoGroup(oldName: string, newName: string): RepoEntry[] {
+  const store = read()
+  const trimmed = newName.trim()
+  for (const repo of store.repos) {
+    if ((repo.group || '') === oldName) {
+      repo.group = trimmed
+    }
+  }
+  write(store)
+  return store.repos
+}
+
 /**
  * Rewrites the repo array to the given order and group assignments in one go.
  * Any repos missing from `items` (e.g. filtered out in the UI) are appended

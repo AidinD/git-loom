@@ -1108,6 +1108,27 @@ body {
   font-size: 10px;
 }
 
+.repo-group-rename {
+  flex: none;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 11px;
+  padding: 0 2px;
+  border-radius: 3px;
+  visibility: hidden;
+}
+
+.repo-group-title:hover .repo-group-rename {
+  visibility: visible;
+}
+
+.repo-group-rename:hover {
+  color: var(--text);
+  background: var(--border);
+}
+
 .repo-group-title.drop-target {
   background: var(--selection);
   color: var(--text);

@@ -10,6 +10,7 @@ interface Props {
   onClone: () => void
   onRemove: (path: string) => void
   onSetGroup: (repo: RepoEntry) => void
+  onRenameGroup: (oldName: string) => void
   onReorder: (items: { path: string; group: string }[]) => void
 }
 
@@ -21,6 +22,7 @@ function RepoSwitcher({
   onClone,
   onRemove,
   onSetGroup,
+  onRenameGroup,
   onReorder
 }: Props) {
   const [open, setOpen] = useState(false)
@@ -47,6 +49,7 @@ function RepoSwitcher({
               onClone={onClone}
               onRemove={onRemove}
               onSetGroup={onSetGroup}
+              onRenameGroup={onRenameGroup}
               onReorder={onReorder}
               onActivate={() => setOpen(false)}
             />

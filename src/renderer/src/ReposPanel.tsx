@@ -14,6 +14,7 @@ function ReposPanel() {
         onClone={l.onCloneRepo}
         onRemove={l.onRemoveRepo}
         onSetGroup={l.onSetRepoGroup}
+        onRenameGroup={l.onRenameRepoGroup}
         onReorder={l.onReorderRepos}
       />
     </div>
