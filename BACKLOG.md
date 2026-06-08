@@ -156,10 +156,18 @@ Captured from GitHub Desktop screenshots — not yet scoped, just ideas.
   with a per-commit action: pick / squash / fixup / drop. Drives `git rebase -i`
   non-interactively via GIT_SEQUENCE_EDITOR (writes our todo) + GIT_EDITOR=true.
   Conflicts use the rebase conflict resolver. Mechanism CLI-validated.
-  Follow-up: **reword** (custom messages — needs a message-supplying editor);
-  drag commits directly in the graph canvas (vs the modal).
-- [backlog] **Blame** and **single-file history** — new panels.
-- [backlog] **Undo/redo stack** beyond last-commit (reflog-based, broader).
+  [done] **reword** (editable message per commit; driven via a GIT_EDITOR queue
+  helper, squash still takes the default — CLI-validated incl. mixed reword+squash).
+  Follow-up: drag commits directly in the graph canvas (vs the modal).
+- [done] **Single-file history** — right-click a file → File history (git log
+  --follow); click a commit opens its diff. Shown as a modal.
+- [done] **Blame** — right-click a file → Blame; per-line author/hash gutter via
+  git blame --porcelain; click a hash opens that commit. Modal.
+- [backlog] **Undo/redo stack** beyond last-commit (reflog-based, broader) —
+  deferred: risky/ambiguous semantics.
+- [backlog] **Drag commits in the graph canvas** to rebase (vs the modal).
+- [backlog] **Commit signing** (GPG/SSH) — needs the user's key setup.
+- [backlog] **Image diff** — binary blob handling.
 
 **History / commit detail**
 - [done] Revert a commit — right-click → "Revert & commit" (`git revert --no-edit`)
@@ -173,7 +181,9 @@ Captured from GitHub Desktop screenshots — not yet scoped, just ideas.
 - [done] Author avatars in the graph/history rows (color-hashed initials).
 
 **Empty states**
-- "No local changes" suggestions panel (open editor / explorer / GitHub), like GH Desktop.
+- [done] Clean-tree empty state in the Changes panel ("No local changes — working
+  tree clean", points to the ⋯ menu). Lighter than GH Desktop's action panel since
+  open-editor/explorer/GitHub already live in the ⋯ menu.
 
 ## Later phases (from the plan)
 
