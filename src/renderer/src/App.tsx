@@ -19,6 +19,7 @@ import RepoSwitcher from './RepoSwitcher'
 import BranchSwitcher from './BranchSwitcher'
 import GraphView from './GraphView'
 import ConflictResolver from './ConflictResolver'
+import CleanupBranchesModal from './CleanupBranchesModal'
 import RebaseModal from './RebaseModal'
 import type { RebaseRow } from './RebaseModal'
 import ContextMenu from './ContextMenu'
@@ -186,6 +187,7 @@ function App() {
     'merge' | 'rebase' | 'revert' | 'cherry-pick' | null
   >(null)
   const [showConflict, setShowConflict] = useState(false)
+  const [showCleanup, setShowCleanup] = useState(false)
   const [conflictCount, setConflictCount] = useState(0)
   const [rebaseBase, setRebaseBase] = useState<string | null>(null)
   const [rebaseRows, setRebaseRows] = useState<RebaseRow[]>([])
@@ -1710,6 +1712,7 @@ function App() {
               onCheckout={(name) => handleCheckout(name)}
               onMerge={(name) => doMerge(name, currentBranch)}
               onNewBranch={() => openNewBranchModal(null)}
+              onCleanup={() => setShowCleanup(true)}
             />
             <div className="toolbar-group">
               <button className="secondary" onClick={handleFetch}>
@@ -2220,6 +2223,18 @@ function App() {
           onClose={() => {
             setShowConflict(false)
             void refreshConflictCount()
+          }}
+        />
+      )}
+
+      {showCleanup && repoPath && (
+        <CleanupBranchesModal
+          repoPath={repoPath}
+          onClose={() => setShowCleanup(false)}
+          onDone={(message) => {
+            setShowCleanup(false)
+            setInfo(message)
+            void loadLog(repoPath)
           }}
         />
       )}

@@ -57,6 +57,8 @@ warning — click **More info → Run anyway**.
 - Create / rename / delete (and force-delete) branches; delete a branch on the remote,
   or delete it everywhere (local + upstream) in one step; branch picker with last-commit
   time and one-click merge
+- **Clean up local branches** that have no remote counterpart (never pushed, or upstream
+  gone after a merged PR) — a checkbox preview with safe and force delete
 - Fetch / pull / push with ahead/behind badges and quiet auto-fetch
 - Multi-repo switcher + dockable **Repositories** panel with drag-and-drop grouping
   (reorder, collapse, rename groups)

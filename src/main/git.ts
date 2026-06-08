@@ -8,6 +8,9 @@ import type {
   LogResult,
   CheckoutResult,
   UpstreamResult,
+  LocalBranchesResult,
+  BranchDeleteOutcome,
+  DeleteBranchesResult,
   MergeResult,
   StatusResult,
   DiffResult,
@@ -1416,6 +1419,84 @@ export async function getUpstream(
   }
   const branch = remoteRef.replace(/^refs\/heads\//, '')
   return { ok: true, upstream: { remote, branch } }
+}
+
+/**
+ * Lists all local branches with their tracking state, so the UI can offer to
+ * clean up branches that have no remote (no upstream, or an upstream that is
+ * gone). Reflects the last fetch — run a pruning fetch first for accuracy.
+ */
+export async function listLocalBranches(dir: string): Promise<LocalBranchesResult> {
+  let root: string | null
+  try {
+    root = await resolveRepoRoot(dir)
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) }
+  }
+  if (!root) {
+    return { ok: false, error: `Not a Git repository: ${dir}` }
+  }
+  const result = await runGit(
+    [
+      'for-each-ref',
+      '--format=%(HEAD)%09%(refname:short)%09%(upstream:short)%09%(upstream:track)',
+      'refs/heads'
+    ],
+    root
+  )
+  if (result.code !== 0) {
+    return {
+      ok: false,
+      error: tidy(result.stderr) || `git exited with code ${result.code}`
+    }
+  }
+  const branches = result.stdout
+    .split('\n')
+    .filter((line) => line.trim().length > 0)
+    .map((line) => {
+      const [head, name, upstream, track] = line.split('\t')
+      return {
+        name,
+        current: (head ?? '').trim() === '*',
+        upstream: upstream || null,
+        gone: (track ?? '').includes('gone')
+      }
+    })
+  return { ok: true, branches }
+}
+
+/**
+ * Deletes several local branches, reporting the outcome per branch so partial
+ * failures (e.g. `-d` refusing an unmerged branch) are surfaced individually.
+ */
+export async function deleteBranches(
+  dir: string,
+  names: string[],
+  force: boolean
+): Promise<DeleteBranchesResult> {
+  let root: string | null
+  try {
+    root = await resolveRepoRoot(dir)
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) }
+  }
+  if (!root) {
+    return { ok: false, error: `Not a Git repository: ${dir}` }
+  }
+  const outcomes: BranchDeleteOutcome[] = []
+  for (const name of names) {
+    const result = await runGit(['branch', force ? '-D' : '-d', name], root)
+    if (result.code !== 0) {
+      outcomes.push({
+        name,
+        ok: false,
+        error: tidy(result.stderr) || tidy(result.stdout) || 'delete failed'
+      })
+    } else {
+      outcomes.push({ name, ok: true })
+    }
+  }
+  return { ok: true, outcomes }
 }
 
 /** Renames a local branch. */

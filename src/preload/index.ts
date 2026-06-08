@@ -3,6 +3,8 @@ import type {
   LogResult,
   CheckoutResult,
   UpstreamResult,
+  LocalBranchesResult,
+  DeleteBranchesResult,
   MergeResult,
   StatusResult,
   DiffResult,
@@ -208,6 +210,14 @@ const api = {
     ipcRenderer.invoke('git:deleteRemoteBranch', repoPath, remote, branch),
   getUpstream: (repoPath: string, name: string): Promise<UpstreamResult> =>
     ipcRenderer.invoke('git:getUpstream', repoPath, name),
+  listLocalBranches: (repoPath: string): Promise<LocalBranchesResult> =>
+    ipcRenderer.invoke('git:listLocalBranches', repoPath),
+  deleteBranches: (
+    repoPath: string,
+    names: string[],
+    force: boolean
+  ): Promise<DeleteBranchesResult> =>
+    ipcRenderer.invoke('git:deleteBranches', repoPath, names, force),
   renameBranch: (
     repoPath: string,
     oldName: string,

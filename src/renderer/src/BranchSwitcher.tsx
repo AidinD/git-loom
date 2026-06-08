@@ -7,6 +7,7 @@ interface Props {
   onCheckout: (name: string) => void
   onMerge?: (name: string) => void
   onNewBranch: () => void
+  onCleanup: () => void
 }
 
 function BranchSwitcher({
@@ -15,7 +16,8 @@ function BranchSwitcher({
   info,
   onCheckout,
   onMerge,
-  onNewBranch
+  onNewBranch,
+  onCleanup
 }: Props) {
   const [open, setOpen] = useState(false)
   const [filter, setFilter] = useState('')
@@ -57,6 +59,16 @@ function BranchSwitcher({
                 }}
               >
                 + New branch
+              </button>
+              <button
+                className="secondary"
+                title="Delete local branches that have no remote counterpart"
+                onClick={() => {
+                  close()
+                  onCleanup()
+                }}
+              >
+                Clean up…
               </button>
             </div>
             <div className="repo-groups">

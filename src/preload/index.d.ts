@@ -2,6 +2,8 @@ import type {
   LogResult,
   CheckoutResult,
   UpstreamResult,
+  LocalBranchesResult,
+  DeleteBranchesResult,
   MergeResult,
   StatusResult,
   DiffResult,
@@ -138,6 +140,12 @@ export interface LoomApi {
     branch: string
   ) => Promise<CheckoutResult>
   getUpstream: (repoPath: string, name: string) => Promise<UpstreamResult>
+  listLocalBranches: (repoPath: string) => Promise<LocalBranchesResult>
+  deleteBranches: (
+    repoPath: string,
+    names: string[],
+    force: boolean
+  ) => Promise<DeleteBranchesResult>
   renameBranch: (
     repoPath: string,
     oldName: string,

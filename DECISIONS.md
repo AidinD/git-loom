@@ -5,6 +5,26 @@ Newest entries can go on top. Format: decision · alternatives · why.
 
 ---
 
+## 2026-06-08 — Bulk cleanup of local branches without a remote
+
+### Preview + checkboxes + two delete buttons, not a blind confirm
+- **Decision:** "Clean up local branches" opens a modal listing every local branch that
+  has no upstream OR whose upstream is gone, each tagged with which case it is, with a
+  checkbox per branch (all pre-checked). Two actions: *Delete selected* (safe, `git
+  branch -d`, refuses unmerged) and *Force delete* (`-D`). A "Fetch & prune" button
+  refreshes gone-status. The current branch and `main`/`master` are never listed.
+- **Alternatives:** A single "Delete N branches?" confirmation; only targeting "gone"
+  branches; only targeting "no upstream" branches.
+- **Why:** This is the most destructive action in the app, so visibility beats a count.
+  Per-branch checkboxes let the user exclude anything they recognise; defaulting to the
+  safe `-d` means even an over-broad selection can't drop unmerged work without an
+  explicit second click on Force delete. Including both "no upstream" and "gone" matches
+  the user's intent, and the per-branch tag keeps the distinction clear. Bulk delete runs
+  one `git branch` per branch so partial failures (e.g. `-d` refusing an unmerged branch)
+  are reported individually, and the refused ones stay selected for a one-click force.
+
+---
+
 ## 2026-06-08 — Remote-branch deletion + "delete everywhere"
 
 ### Resolve the remote ref via upstream, not by name-matching

@@ -20,6 +20,31 @@ export type UpstreamResult =
   | { ok: true; upstream: { remote: string; branch: string } | null }
   | { ok: false; error: string }
 
+/** A local branch with its tracking state, used for branch cleanup. */
+export interface LocalBranchInfo {
+  name: string
+  current: boolean
+  /** The configured upstream (e.g. "origin/feature"), or null if none. */
+  upstream: string | null
+  /** True when an upstream is configured but its remote branch is gone. */
+  gone: boolean
+}
+
+export type LocalBranchesResult =
+  | { ok: true; branches: LocalBranchInfo[] }
+  | { ok: false; error: string }
+
+/** Per-branch result of a bulk delete. */
+export interface BranchDeleteOutcome {
+  name: string
+  ok: boolean
+  error?: string
+}
+
+export type DeleteBranchesResult =
+  | { ok: true; outcomes: BranchDeleteOutcome[] }
+  | { ok: false; error: string }
+
 export interface BranchInfo {
   name: string
   /** Relative time of the branch tip's last commit, e.g. "3 days ago". */

@@ -44,6 +44,8 @@ import {
   createBranch,
   deleteBranch,
   deleteRemoteBranch,
+  deleteBranches,
+  listLocalBranches,
   getUpstream,
   renameBranch,
   discardFile,
@@ -472,6 +474,17 @@ app.whenReady().then(() => {
   ipcMain.handle('git:getUpstream', async (_event, repoPath: string, name: string) => {
     return getUpstream(repoPath, name)
   })
+
+  ipcMain.handle('git:listLocalBranches', async (_event, repoPath: string) => {
+    return listLocalBranches(repoPath)
+  })
+
+  ipcMain.handle(
+    'git:deleteBranches',
+    async (_event, repoPath: string, names: string[], force: boolean) => {
+      return deleteBranches(repoPath, names, force)
+    }
+  )
 
   ipcMain.handle(
     'git:renameBranch',
