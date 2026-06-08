@@ -167,7 +167,8 @@ Captured from GitHub Desktop screenshots — not yet scoped, just ideas.
   deferred: risky/ambiguous semantics.
 - [backlog] **Drag commits in the graph canvas** to rebase (vs the modal).
 - [backlog] **Commit signing** (GPG/SSH) — needs the user's key setup.
-- [backlog] **Image diff** — binary blob handling.
+- [done] **Image diff** (2026-06-08) — image files in a working-tree diff show a
+  before/after preview (checkerboard backing) instead of binary "files differ".
 
 **History / commit detail**
 - [done] Revert a commit — right-click → "Revert & commit" (`git revert --no-edit`)
