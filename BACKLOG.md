@@ -62,6 +62,7 @@ A GitHub-Desktop-style repository switcher, but better:
   checkbox for line-level staging. Reconstructs a one-hunk (or partial-line) patch and
   applies it via `git apply --cached [--reverse] --recount`. Verified end-to-end.
   Follow-up: line selection in split view; range-select with shift-click.
+- [done] **Double-click a file** in the Changes panel to stage/unstage it.
 - [done] Commit via keyboard (Enter in Summary, Ctrl/Cmd+Enter in Description).
 - [done] **Right-click context menu** on files (Show diff / Stage|Unstage / Discard).
 - [done] Discard changes / restore file (⟲ button + confirm).
@@ -141,6 +142,19 @@ Captured from GitHub Desktop screenshots — not yet scoped, just ideas.
   (default Split). Commit clicks open both Files + Diff; arrange them freely.
 - [done] per-file +/- counts in the Files panel. [done] intra-line (word-level)
   highlighting — token-LCS, in both Split and Unified views.
+
+**History power features (web-research sweep, 2026-06-05)**
+- [done] **Cherry-pick** a commit onto the current branch (commit context menu);
+  conflicts flow through the conflict resolver.
+- [done] **Reset** current branch to a commit — soft / mixed / hard (context menu,
+  confirmed; hard warns about lost changes).
+- [done] **Undo last commit** (More menu) — soft reset HEAD~1, keeps changes staged.
+- [done] **Search commits** — History search bar filters by message/author/hash,
+  highlights matches, Enter / ↑↓ jump between them and scroll into view.
+- [backlog] **Interactive rebase with drag** (reorder/squash/fixup/drop) — the big
+  signature feature; deferred to its own focused pass (needs visual testing).
+- [backlog] **Blame** and **single-file history** — new panels.
+- [backlog] **Undo/redo stack** beyond last-commit (reflog-based, broader).
 
 **History / commit detail**
 - [done] Revert a commit — right-click → "Revert & commit" (`git revert --no-edit`)
