@@ -251,7 +251,9 @@ export async function checkout(
     return { ok: false, error: `Not a Git repository: ${dir}` }
   }
 
-  const result = await runGit(['checkout', target], root)
+  // -q suppresses git's locally-modified-files summary ("M\tfile") and the
+  // "Switched to..." chatter, so our own clean message is used instead.
+  const result = await runGit(['checkout', '-q', target], root)
   if (result.code !== 0) {
     return {
       ok: false,
@@ -259,10 +261,7 @@ export async function checkout(
     }
   }
 
-  // git reports "Switched to branch ...", "Already on ...", and detached-HEAD
-  // notices on stderr even on success — surface it so the action feels alive.
-  const message = tidy(result.stderr) || tidy(result.stdout) || `Checked out ${target}`
-  return { ok: true, message }
+  return { ok: true, message: `Checked out ${target}` }
 }
 
 /**
@@ -1285,11 +1284,11 @@ export async function createBranch(
   name: string,
   startPoint?: string
 ): Promise<CheckoutResult> {
-  const args = ['checkout', '-b', name]
+  const args = ['checkout', '-q', '-b', name]
   if (startPoint) {
     args.push(startPoint)
   }
-  return runSimple(dir, args, `Created ${name}`)
+  return runSimple(dir, args, `Created branch ${name}`)
 }
 
 /** Deletes a local branch (safe: refuses if not fully merged). */
