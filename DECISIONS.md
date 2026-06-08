@@ -193,6 +193,28 @@ bulk stage/unstage/discard). Also moved the whole project out of Northwind/Inter
   - **Reword deferred** — needs a message-supplying editor, not just `true`.
   - Mechanism CLI-validated (reorder/squash/drop) before building the UI.
 
+### Versioning, releases & auto-update (2026-06-08)
+- **Auto-bump:** a tracked pre-commit hook (`.githooks/pre-commit`,
+  `core.hooksPath=.githooks`) bumps the package.json patch on every commit and
+  stages it. Since Loom is 100% AI-coded, the version doubles as a build counter.
+  Bypass with `--no-verify`. Note: `core.hooksPath` is local config — a fresh clone
+  must run `git config core.hooksPath .githooks` once.
+- **Packaging:** electron-builder, Windows NSIS, **unsigned** (SmartScreen warning
+  accepted for a personal tool; EV cert is the only way to fully avoid it — overkill).
+- **Distribution:** publish to **GitHub Releases on the public `AidinD/git-loom`**.
+  No separate release repo and **no embedded token** — unlike Halyard (whose release
+  repo is private, so it embeds a read-only token); electron-updater reads public
+  releases without auth.
+- **CI over local publish:** a GitHub Actions workflow builds + publishes on a `v*`
+  tag push (uses the default `GITHUB_TOKEN`). Repeatable, no local secrets. To cut a
+  release: tag the current version `v<x.y.z>` and push the tag.
+- **Auto-update UX:** electron-updater checks on launch (packaged only), downloads in
+  the background, and the main process notifies the renderer → a persistent "Update
+  ready — Restart & update" toast (`quitAndInstall`). In-app prompt chosen over the
+  silent `checkForUpdatesAndNotify` native notification (more visible/controllable).
+- **Error/info toasts:** replaced the cramped status bar with a floating, stacked
+  toast (icon + title + wrapping message); info auto-dismisses, errors persist.
+
 ### UX calibration
 - **Danger-red** reserved for actions that can lose work (hard reset, discard,
   force-delete) — un-flagged Revert (it's non-destructive; adds a commit).
