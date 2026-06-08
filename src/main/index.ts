@@ -341,9 +341,12 @@ app.whenReady().then(() => {
     }
   )
 
-  ipcMain.handle('git:commit', async (_event, repoPath: string, message: string) => {
-    return commit(repoPath, message)
-  })
+  ipcMain.handle(
+    'git:commit',
+    async (_event, repoPath: string, message: string, sign?: boolean) => {
+      return commit(repoPath, message, sign)
+    }
+  )
 
   ipcMain.handle('git:clone', async (_event, url: string, parentDir: string) => {
     return clone(url, parentDir)

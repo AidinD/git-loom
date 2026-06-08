@@ -124,8 +124,8 @@ const api = {
     staged: boolean
   ): Promise<ImageDiffResult> =>
     ipcRenderer.invoke('git:imageDiff', repoPath, file, staged),
-  commit: (repoPath: string, message: string): Promise<CheckoutResult> =>
-    ipcRenderer.invoke('git:commit', repoPath, message),
+  commit: (repoPath: string, message: string, sign?: boolean): Promise<CheckoutResult> =>
+    ipcRenderer.invoke('git:commit', repoPath, message, sign),
   clone: (url: string, parentDir: string): Promise<CloneResult> =>
     ipcRenderer.invoke('git:clone', url, parentDir),
   listGithubRepos: (): Promise<GithubReposResult> =>

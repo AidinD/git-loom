@@ -62,6 +62,8 @@ function ChangesDockPanel() {
       onCommitDescriptionChange={l.setCommitDescription}
       commitCoauthors={l.commitCoauthors}
       onCommitCoauthorsChange={l.setCommitCoauthors}
+      commitSign={l.commitSign}
+      onToggleSign={l.setCommitSign}
       onStage={l.onStage}
       onUnstage={l.onUnstage}
       onStageAll={l.onStageAll}
@@ -205,6 +207,9 @@ function App() {
   const [changes, setChanges] = useState<FileChange[]>([])
   const [stashes, setStashes] = useState<StashEntry[]>([])
   const [commitSummary, setCommitSummary] = useState('')
+  const [commitSign, setCommitSign] = useState(
+    () => localStorage.getItem('loom.signCommits') !== 'false'
+  )
   const [commitDescription, setCommitDescription] = useState('')
   const [commitCoauthors, setCommitCoauthors] = useState('')
   const [diffView, setDiffView] = useState<DiffView | null>(null)
@@ -1154,7 +1159,7 @@ function App() {
     setError(null)
     setInfo(null)
     const before = await captureHead()
-    const result = await window.api.commit(repoPath, message)
+    const result = await window.api.commit(repoPath, message, commitSign)
     if (!result.ok) {
       setError(result.error)
       return
@@ -1487,6 +1492,11 @@ function App() {
     setCommitDescription,
     commitCoauthors,
     setCommitCoauthors,
+    commitSign,
+    setCommitSign: (value: boolean) => {
+      setCommitSign(value)
+      localStorage.setItem('loom.signCommits', String(value))
+    },
     onStage: handleStage,
     onUnstage: handleUnstage,
     onStageAll: handleStageAll,

@@ -57,6 +57,8 @@ export interface LoomContextValue {
   setCommitDescription: (value: string) => void
   commitCoauthors: string
   setCommitCoauthors: (value: string) => void
+  commitSign: boolean
+  setCommitSign: (value: boolean) => void
   onStage: (file: string) => void
   onUnstage: (file: string) => void
   onStageAll: () => void

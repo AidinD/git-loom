@@ -23,6 +23,8 @@ interface Props {
   onDiscardMany: (files: string[]) => void
   onStashMany: (files: string[]) => void
   onCommit: () => void
+  commitSign: boolean
+  onToggleSign: (value: boolean) => void
   onShowDiff: (file: string, staged: boolean) => void
   onFileHistory: (file: string) => void
   onBlame: (file: string) => void
@@ -94,6 +96,8 @@ function ChangesPanel({
   onDiscardMany,
   onStashMany,
   onCommit,
+  commitSign,
+  onToggleSign,
   onShowDiff,
   onFileHistory,
   onBlame,
@@ -627,6 +631,14 @@ function ChangesPanel({
             onChange={(event) => onCommitCoauthorsChange(event.target.value)}
           />
         )}
+        <label className="sign-toggle" title="Sign commits with your SSH key">
+          <input
+            type="checkbox"
+            checked={commitSign}
+            onChange={(event) => onToggleSign(event.target.checked)}
+          />
+          Sign commits
+        </label>
         <button className="commit-button" disabled={!canCommit} onClick={onCommit}>
           Commit {staged.length > 0 ? `(${staged.length})` : ''}
         </button>

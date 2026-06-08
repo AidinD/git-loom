@@ -1232,11 +1232,22 @@ export async function unstageAll(dir: string): Promise<CheckoutResult> {
 }
 
 /** Commits the staged changes with the given message. */
-export async function commit(dir: string, message: string): Promise<CheckoutResult> {
+export async function commit(
+  dir: string,
+  message: string,
+  sign?: boolean
+): Promise<CheckoutResult> {
   // -q suppresses git's "[branch sha] summary / N files changed" echo so our
   // own clean message is used instead of leaking into toasts/command history.
   const summary = message.split('\n')[0]
-  return runSimple(dir, ['commit', '-q', '-m', message], `Committed: ${summary}`)
+  const args = ['commit', '-q']
+  if (sign === true) {
+    args.push('-S')
+  } else if (sign === false) {
+    args.push('--no-gpg-sign')
+  }
+  args.push('-m', message)
+  return runSimple(dir, args, `Committed: ${summary}`)
 }
 
 /** Clones `url` into `parentDir`, returning the path of the new repo. */

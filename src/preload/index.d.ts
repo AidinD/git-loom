@@ -83,7 +83,7 @@ export interface LoomApi {
     file: string,
     staged: boolean
   ) => Promise<ImageDiffResult>
-  commit: (repoPath: string, message: string) => Promise<CheckoutResult>
+  commit: (repoPath: string, message: string, sign?: boolean) => Promise<CheckoutResult>
   clone: (url: string, parentDir: string) => Promise<CloneResult>
   listGithubRepos: () => Promise<GithubReposResult>
   listPullRequests: (repoPath: string) => Promise<PullRequestsResult>
