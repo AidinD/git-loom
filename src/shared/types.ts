@@ -63,6 +63,10 @@ export type BlameResult =
   | { ok: true; lines: BlameLine[] }
   | { ok: false; error: string }
 
+export type ImageDiffResult =
+  | { ok: true; before: string | null; after: string | null }
+  | { ok: false; error: string }
+
 export interface FileChange {
   path: string
   /** Index (staged) status char from `git status --porcelain`, e.g. M, A, D. */

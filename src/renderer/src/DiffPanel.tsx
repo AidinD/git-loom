@@ -184,8 +184,71 @@ function SplitView({ lines }: { lines: DiffLine[] }) {
   )
 }
 
+const IMAGE_EXT = /\.(png|jpe?g|gif|webp|bmp|ico|svg)$/i
+
+function ImageDiffView({
+  repoPath,
+  file,
+  staged
+}: {
+  repoPath: string
+  file: string
+  staged: boolean
+}) {
+  const [data, setData] = useState<{ before: string | null; after: string | null } | null>(
+    null
+  )
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let active = true
+    setData(null)
+    setError(null)
+    window.api.imageDiff(repoPath, file, staged).then((result) => {
+      if (!active) {
+        return
+      }
+      if (result.ok) {
+        setData({ before: result.before, after: result.after })
+      } else {
+        setError(result.error)
+      }
+    })
+    return () => {
+      active = false
+    }
+  }, [repoPath, file, staged])
+
+  if (error) {
+    return <div className="dl-meta">{error}</div>
+  }
+  if (!data) {
+    return <div className="dl-meta">Loading image…</div>
+  }
+  return (
+    <div className="image-diff">
+      <div className="image-diff-side">
+        <div className="image-diff-label image-diff-before">Before</div>
+        {data.before ? (
+          <img className="image-diff-img" src={data.before} alt="before" />
+        ) : (
+          <div className="image-diff-none">(none)</div>
+        )}
+      </div>
+      <div className="image-diff-side">
+        <div className="image-diff-label image-diff-after">After</div>
+        {data.after ? (
+          <img className="image-diff-img" src={data.after} alt="after" />
+        ) : (
+          <div className="image-diff-none">(none)</div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function DiffPanel() {
-  const { diffView, selectedDiffFile, onStageHunk } = useLoom()
+  const { diffView, selectedDiffFile, onStageHunk, repoPath } = useLoom()
   const [mode, setMode] = useState<'unified' | 'split'>(
     () => (localStorage.getItem('loom.diffMode') as 'unified' | 'split') || 'split'
   )
@@ -217,9 +280,17 @@ function DiffPanel() {
   }
 
   const hasContent = diffView.text.trim().length > 0
+  // Image files in a working-tree diff get a before/after preview instead of
+  // the binary "files differ" text.
+  const showImage =
+    !!diffView.file &&
+    diffView.staged !== undefined &&
+    !!repoPath &&
+    IMAGE_EXT.test(diffView.file)
   // Working-tree diffs (a single file with staged/unstaged scope) support
   // per-hunk staging; commit diffs do not.
-  const stageable = !!diffView.file && diffView.staged !== undefined && hasContent
+  const stageable =
+    !showImage && !!diffView.file && diffView.staged !== undefined && hasContent
   const sections = hasContent ? groupByFile(parseDiff(diffView.text)) : []
   const active =
     sections.find((section) => section.file === selectedDiffFile) ?? sections[0] ?? null
@@ -253,7 +324,15 @@ function DiffPanel() {
       </header>
 
       <div className="diff-body2">
-        {!active && (
+        {showImage && (
+          <ImageDiffView
+            repoPath={repoPath!}
+            file={diffView.file!}
+            staged={diffView.staged!}
+          />
+        )}
+
+        {!showImage && !active && (
           <div className="dl-meta">
             No textual diff (binary, untracked, or no changes).
           </div>
@@ -307,7 +386,7 @@ function DiffPanel() {
             )
           })}
 
-        {active && !stageable && (
+        {!showImage && active && !stageable && (
           <>
             {mode === 'unified' ? (
               <UnifiedView lines={active.lines} />

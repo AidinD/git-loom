@@ -25,6 +25,7 @@ import {
   applyPatch,
   fileHistory,
   blame,
+  imageDiff,
   commit,
   showCommit,
   remoteUrl,
@@ -322,6 +323,13 @@ app.whenReady().then(() => {
   ipcMain.handle('git:blame', async (_event, repoPath: string, file: string) => {
     return blame(repoPath, file)
   })
+
+  ipcMain.handle(
+    'git:imageDiff',
+    async (_event, repoPath: string, file: string, staged: boolean) => {
+      return imageDiff(repoPath, file, staged)
+    }
+  )
 
   ipcMain.handle('git:commit', async (_event, repoPath: string, message: string) => {
     return commit(repoPath, message)

@@ -2032,6 +2032,51 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+.image-diff {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 12px;
+}
+
+.image-diff-side {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+}
+
+.image-diff-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.image-diff-before {
+  color: #e5534b;
+}
+
+.image-diff-after {
+  color: #57ab5a;
+}
+
+.image-diff-img {
+  max-width: 100%;
+  max-height: 60vh;
+  object-fit: contain;
+  background:
+    repeating-conic-gradient(#2a2a30 0% 25%, #232328 0% 50%) 0 / 16px 16px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.image-diff-none {
+  color: var(--text-dim);
+  font-size: 12px;
+  padding: 24px;
+}
+
 .conflict-title {
   margin: 0 0 2px;
   font-size: 15px;

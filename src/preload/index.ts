@@ -15,7 +15,8 @@ import type {
   ConflictsResult,
   ConflictFileResult,
   FileHistoryResult,
-  BlameResult
+  BlameResult,
+  ImageDiffResult
 } from '../shared/types'
 
 const api = {
@@ -115,6 +116,12 @@ const api = {
     ipcRenderer.invoke('git:fileHistory', repoPath, file),
   blame: (repoPath: string, file: string): Promise<BlameResult> =>
     ipcRenderer.invoke('git:blame', repoPath, file),
+  imageDiff: (
+    repoPath: string,
+    file: string,
+    staged: boolean
+  ): Promise<ImageDiffResult> =>
+    ipcRenderer.invoke('git:imageDiff', repoPath, file, staged),
   commit: (repoPath: string, message: string): Promise<CheckoutResult> =>
     ipcRenderer.invoke('git:commit', repoPath, message),
   clone: (url: string, parentDir: string): Promise<CloneResult> =>

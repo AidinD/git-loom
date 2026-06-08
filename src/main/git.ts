@@ -19,7 +19,8 @@ import type {
   ConflictFileResult,
   FileHistoryResult,
   BlameResult,
-  BlameLine
+  BlameLine,
+  ImageDiffResult
 } from '../shared/types'
 
 const FIELD = '\x1f'
@@ -102,6 +103,26 @@ function runGitWithInput(
 
     child.stdin.write(input)
     child.stdin.end()
+  })
+}
+
+/** Like runGit, but returns stdout as a Buffer (for binary blobs like images). */
+function runGitBuffer(
+  args: string[],
+  cwd: string
+): Promise<{ code: number; stdout: Buffer }> {
+  return new Promise((resolve, reject) => {
+    const child = spawn('git', ['-c', 'advice.detachedHead=false', ...args], { cwd })
+    const chunks: Buffer[] = []
+    child.stdout.on('data', (chunk) => {
+      chunks.push(chunk)
+    })
+    child.on('error', (err) => {
+      reject(err)
+    })
+    child.on('close', (code) => {
+      resolve({ code: code ?? 1, stdout: Buffer.concat(chunks) })
+    })
   })
 }
 
@@ -907,6 +928,69 @@ export async function fileHistory(
     }
   }
   return { ok: true, commits: parseLog(result.stdout) }
+}
+
+const IMAGE_MIME: Record<string, string> = {
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  gif: 'image/gif',
+  webp: 'image/webp',
+  bmp: 'image/bmp',
+  ico: 'image/x-icon',
+  svg: 'image/svg+xml'
+}
+
+/** True for file extensions we can render as an image preview. */
+export function isImagePath(file: string): boolean {
+  const ext = file.split('.').pop()?.toLowerCase() ?? ''
+  return ext in IMAGE_MIME
+}
+
+/**
+ * Returns before/after data URLs for an image file in a working-tree diff, so
+ * the diff panel can show the pictures instead of "Binary files differ".
+ * unstaged: before=index, after=worktree. staged: before=HEAD, after=index.
+ */
+export async function imageDiff(
+  dir: string,
+  file: string,
+  staged: boolean
+): Promise<ImageDiffResult> {
+  let root: string | null
+  try {
+    root = await resolveRepoRoot(dir)
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) }
+  }
+  if (!root) {
+    return { ok: false, error: `Not a Git repository: ${dir}` }
+  }
+
+  const ext = file.split('.').pop()?.toLowerCase() ?? ''
+  const mime = IMAGE_MIME[ext] ?? 'application/octet-stream'
+  const rootDir = root
+
+  async function fromGit(rev: string): Promise<string | null> {
+    const result = await runGitBuffer(['show', rev], rootDir)
+    if (result.code !== 0 || result.stdout.length === 0) {
+      return null
+    }
+    return `data:${mime};base64,${result.stdout.toString('base64')}`
+  }
+
+  async function fromWorktree(): Promise<string | null> {
+    try {
+      const buf = await readFile(join(rootDir, file))
+      return `data:${mime};base64,${buf.toString('base64')}`
+    } catch {
+      return null
+    }
+  }
+
+  const after = staged ? await fromGit(`:${file}`) : await fromWorktree()
+  const before = staged ? await fromGit(`HEAD:${file}`) : await fromGit(`:${file}`)
+  return { ok: true, before, after }
 }
 
 /** Per-line authorship (git blame) for a file at HEAD. */

@@ -14,7 +14,8 @@ import type {
   ConflictsResult,
   ConflictFileResult,
   FileHistoryResult,
-  BlameResult
+  BlameResult,
+  ImageDiffResult
 } from '../shared/types'
 
 export interface LoomApi {
@@ -76,6 +77,11 @@ export interface LoomApi {
   ) => Promise<CheckoutResult>
   fileHistory: (repoPath: string, file: string) => Promise<FileHistoryResult>
   blame: (repoPath: string, file: string) => Promise<BlameResult>
+  imageDiff: (
+    repoPath: string,
+    file: string,
+    staged: boolean
+  ) => Promise<ImageDiffResult>
   commit: (repoPath: string, message: string) => Promise<CheckoutResult>
   clone: (url: string, parentDir: string) => Promise<CloneResult>
   listGithubRepos: () => Promise<GithubReposResult>

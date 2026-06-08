@@ -2,6 +2,8 @@ name: Release
 
 # Build the Windows installer and publish it to GitHub Releases when a
 # version tag is pushed (e.g. git tag v0.1.0 && git push origin v0.1.0).
+# We build artifacts locally then publish a single release with gh, which
+# avoids electron-builder's occasional duplicate-draft race.
 on:
   push:
     tags:
@@ -23,7 +25,15 @@ jobs:
 
       - run: npm ci
 
-      - name: Build and publish
-        run: npm run release
+      - name: Build installer
+        run: npm run dist
+
+      - name: Publish to GitHub Releases
+        shell: bash
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            dist/*-setup.exe dist/*.blockmap dist/latest.yml \
+            --title "$GITHUB_REF_NAME" \
+            --notes "Loom $GITHUB_REF_NAME"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
