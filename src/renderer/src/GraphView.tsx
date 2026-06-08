@@ -182,6 +182,14 @@ function GraphView() {
       { label: 'Check out (detached)', onClick: () => onCheckout(commit.hash) },
       { label: 'Cherry-pick onto current', onClick: () => onCherryPick(commit.hash) },
       {
+        label: 'Revert & commit',
+        onClick: () => onRevert(commit.hash, false)
+      },
+      {
+        label: 'Revert without committing',
+        onClick: () => onRevert(commit.hash, true)
+      },
+      {
         label: 'Reset current branch here (soft)',
         onClick: () => onResetTo(commit.hash, 'soft')
       },
@@ -193,14 +201,6 @@ function GraphView() {
         label: 'Reset current branch here (hard)',
         danger: true,
         onClick: () => onResetTo(commit.hash, 'hard')
-      },
-      {
-        label: 'Revert & commit',
-        onClick: () => onRevert(commit.hash, false)
-      },
-      {
-        label: 'Revert without committing',
-        onClick: () => onRevert(commit.hash, true)
       }
     ])
   }
