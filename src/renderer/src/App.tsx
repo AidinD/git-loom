@@ -686,7 +686,9 @@ function App() {
     }
     const entry = undoStack[undoStack.length - 1]
     const current = await window.api.getHead(repoPath)
-    const result = await window.api.resetTo(repoPath, entry.sha, 'keep')
+    // --mixed: move HEAD + index but never touch the working tree, so undoing
+    // a commit surfaces its changes back in Changes and no edits are lost.
+    const result = await window.api.resetTo(repoPath, entry.sha, 'mixed')
     if (!result.ok) {
       setError(result.error)
       return
@@ -706,7 +708,7 @@ function App() {
     }
     const entry = redoStack[redoStack.length - 1]
     const current = await window.api.getHead(repoPath)
-    const result = await window.api.resetTo(repoPath, entry.sha, 'keep')
+    const result = await window.api.resetTo(repoPath, entry.sha, 'mixed')
     if (!result.ok) {
       setError(result.error)
       return
