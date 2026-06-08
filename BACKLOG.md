@@ -151,8 +151,13 @@ Captured from GitHub Desktop screenshots — not yet scoped, just ideas.
 - [done] **Undo last commit** (More menu) — soft reset HEAD~1, keeps changes staged.
 - [done] **Search commits** — History search bar filters by message/author/hash,
   highlights matches, Enter / ↑↓ jump between them and scroll into view.
-- [backlog] **Interactive rebase with drag** (reorder/squash/fixup/drop) — the big
-  signature feature; deferred to its own focused pass (needs visual testing).
+- [done] **Interactive rebase** (2026-06-05). Commit menu → "Interactive rebase from
+  here" opens a drag-to-reorder editor (commits above the picked one, oldest first)
+  with a per-commit action: pick / squash / fixup / drop. Drives `git rebase -i`
+  non-interactively via GIT_SEQUENCE_EDITOR (writes our todo) + GIT_EDITOR=true.
+  Conflicts use the rebase conflict resolver. Mechanism CLI-validated.
+  Follow-up: **reword** (custom messages — needs a message-supplying editor);
+  drag commits directly in the graph canvas (vs the modal).
 - [backlog] **Blame** and **single-file history** — new panels.
 - [backlog] **Undo/redo stack** beyond last-commit (reflog-based, broader).
 
