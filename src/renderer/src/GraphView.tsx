@@ -196,7 +196,6 @@ function GraphView() {
       },
       {
         label: 'Revert & commit',
-        danger: true,
         onClick: () => onRevert(commit.hash, false)
       },
       {
