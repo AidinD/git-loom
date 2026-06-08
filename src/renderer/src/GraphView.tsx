@@ -100,6 +100,7 @@ function GraphView() {
     onCherryPick,
     onResetTo,
     onInteractiveRebase,
+    onReorderCommit,
     onLoadMore
   } = useLoom()
 
@@ -109,6 +110,8 @@ function GraphView() {
   const hasCommits = commits.length > 0
   const [query, setQuery] = useState('')
   const [matchPos, setMatchPos] = useState(0)
+  const [dragCommit, setDragCommit] = useState<string | null>(null)
+  const [dropCommit, setDropCommit] = useState<string | null>(null)
 
   useEffect(() => {
     const el = mainRef.current
@@ -379,8 +382,35 @@ function GraphView() {
               key={commit.hash}
               className={`commit${selected === commit.hash ? ' selected' : ''}${
                 matchHashes.has(commit.hash) ? ' search-match' : ''
+              }${dragCommit === commit.hash ? ' dragging' : ''}${
+                dropCommit === commit.hash ? ' drop-target' : ''
               }`}
               style={{ height: ROW_HEIGHT }}
+              draggable
+              onDragStart={() => setDragCommit(commit.hash)}
+              onDragEnd={() => {
+                setDragCommit(null)
+                setDropCommit(null)
+              }}
+              onDragOver={(event) => {
+                if (dragCommit && dragCommit !== commit.hash) {
+                  event.preventDefault()
+                  setDropCommit(commit.hash)
+                }
+              }}
+              onDragLeave={() => {
+                if (dropCommit === commit.hash) {
+                  setDropCommit(null)
+                }
+              }}
+              onDrop={(event) => {
+                event.preventDefault()
+                if (dragCommit && dragCommit !== commit.hash) {
+                  onReorderCommit(dragCommit, commit.hash)
+                }
+                setDragCommit(null)
+                setDropCommit(null)
+              }}
               onClick={() => selectRow(commit)}
               onDoubleClick={() => onCheckout(commit.hash)}
               onContextMenu={(event) => commitMenu(event, commit)}

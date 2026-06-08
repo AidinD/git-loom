@@ -706,6 +706,97 @@ function App() {
     }
   }
 
+  /** Drag-to-reorder in the graph: move `draggedHash` to `targetHash`'s slot. */
+  function handleReorderCommit(draggedHash: string, targetHash: string): void {
+    if (draggedHash === targetHash) {
+      return
+    }
+    const byHash = new Map(commits.map((commit) => [commit.hash, commit]))
+    const head = commits.find((commit) =>
+      commit.refs.some((ref) => ref === 'HEAD' || ref.startsWith('HEAD ->'))
+    )
+    if (!head) {
+      setError('Reordering needs a checked-out branch (HEAD).')
+      return
+    }
+    // Walk the first-parent chain from HEAD until both commits are found.
+    const chain: Commit[] = []
+    let cur: Commit | undefined = head
+    let foundDragged = false
+    let foundTarget = false
+    while (cur) {
+      if (cur.parents.length > 1 && !(foundDragged && foundTarget)) {
+        setError('Cannot reorder across a merge commit.')
+        return
+      }
+      chain.push(cur)
+      if (cur.hash === draggedHash) {
+        foundDragged = true
+      }
+      if (cur.hash === targetHash) {
+        foundTarget = true
+      }
+      if (foundDragged && foundTarget) {
+        break
+      }
+      const parent: string | undefined = cur.parents[0]
+      cur = parent ? byHash.get(parent) : undefined
+    }
+    if (!foundDragged || !foundTarget) {
+      setError('Can only reorder commits on the current branch.')
+      return
+    }
+    const deepest = chain[chain.length - 1]
+    const base = deepest.parents[0]
+    if (!base) {
+      setError('Cannot reorder the root commit.')
+      return
+    }
+    // Reorder in display order (chain is newest-first) so the drop matches what
+    // the user sees, then reverse to the oldest-first rebase todo.
+    const reordered = [...chain]
+    const draggedIndex = reordered.findIndex((commit) => commit.hash === draggedHash)
+    const [moved] = reordered.splice(draggedIndex, 1)
+    const targetIndex = reordered.findIndex((commit) => commit.hash === targetHash)
+    reordered.splice(targetIndex, 0, moved)
+    const rows: RebaseRow[] = [...reordered].reverse().map((commit) => ({
+      hash: commit.hash,
+      subject: commit.subject,
+      action: 'pick' as const
+    }))
+    setConfirm({
+      message: `Reorder ${rows.length} commit(s): move ${draggedHash.slice(0, 7)} to ${targetHash.slice(0, 7)}'s position? This rewrites history (undoable).`,
+      action: () => {
+        void runReorder(base, rows)
+      }
+    })
+  }
+
+  async function runReorder(base: string, rows: RebaseRow[]): Promise<void> {
+    if (!repoPath) {
+      return
+    }
+    setError(null)
+    setInfo(null)
+    const before = await captureHead()
+    const result = await window.api.interactiveRebase(
+      repoPath,
+      base,
+      rows.map((row) => ({ action: row.action, hash: row.hash }))
+    )
+    await loadLog(repoPath)
+    if (result.ok) {
+      setInfo('Reordered commits')
+      setConflictKind(null)
+      pushUndo('reorder', before)
+    } else {
+      setError(result.error)
+      if (result.conflict) {
+        await enterConflict('rebase')
+      }
+    }
+  }
+
   /** HEAD before a history-moving op, so undo can restore it. */
   async function captureHead(): Promise<string | null> {
     if (!repoPath) {
@@ -1473,6 +1564,7 @@ function App() {
     onCherryPick: doCherryPick,
     onResetTo: requestReset,
     onInteractiveRebase: openInteractiveRebase,
+    onReorderCommit: handleReorderCommit,
     onCheckoutPr: handleCheckoutPr,
     dragSource,
     setDragSource,
