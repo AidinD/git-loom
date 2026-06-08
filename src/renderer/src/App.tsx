@@ -1504,7 +1504,11 @@ function App() {
     })
   }
 
-  async function doDeleteBranch(name: string, force = false): Promise<void> {
+  async function doDeleteBranch(
+    name: string,
+    force = false,
+    alsoRemote: { remote: string; branch: string } | null = null
+  ): Promise<void> {
     if (!repoPath) {
       return
     }
@@ -1517,7 +1521,7 @@ function App() {
         setConfirm({
           message: `Branch "${name}" is not fully merged. Force delete? Unmerged commits will be lost.`,
           action: () => {
-            void doDeleteBranch(name, true)
+            void doDeleteBranch(name, true, alsoRemote)
           }
         })
         return
@@ -1525,8 +1529,68 @@ function App() {
       setError(result.error)
       return
     }
+    if (alsoRemote) {
+      // The user already confirmed deleting everywhere; chain the remote delete.
+      await runDeleteRemoteBranch(alsoRemote.remote, alsoRemote.branch, result.message)
+      return
+    }
     setInfo(result.message)
     await loadLog(repoPath)
+  }
+
+  async function runDeleteRemoteBranch(
+    remote: string,
+    branch: string,
+    prefixMessage?: string
+  ): Promise<void> {
+    if (!repoPath) {
+      return
+    }
+    setError(null)
+    const result = await window.api.deleteRemoteBranch(repoPath, remote, branch)
+    if (!result.ok) {
+      setError(result.error)
+      await loadLog(repoPath)
+      return
+    }
+    setInfo(prefixMessage ? `${prefixMessage} · ${result.message}` : result.message)
+    await loadLog(repoPath)
+  }
+
+  function requestDeleteRemoteBranch(remote: string, branch: string): void {
+    setConfirm({
+      message: `Delete branch "${branch}" on remote "${remote}"? This affects everyone using that remote.`,
+      action: () => {
+        void runDeleteRemoteBranch(remote, branch)
+      }
+    })
+  }
+
+  async function requestDeleteBranchEverywhere(name: string): Promise<void> {
+    if (!repoPath) {
+      return
+    }
+    const upstreamResult = await window.api.getUpstream(repoPath, name)
+    if (!upstreamResult.ok) {
+      setError(upstreamResult.error)
+      return
+    }
+    const upstream = upstreamResult.upstream
+    if (!upstream) {
+      setConfirm({
+        message: `Branch "${name}" has no upstream on a remote. Delete the local branch only?`,
+        action: () => {
+          void doDeleteBranch(name)
+        }
+      })
+      return
+    }
+    setConfirm({
+      message: `Delete branch "${name}" locally and "${upstream.branch}" on remote "${upstream.remote}"?`,
+      action: () => {
+        void doDeleteBranch(name, false, upstream)
+      }
+    })
   }
 
   function requestDiscard(file: string, untracked: boolean): void {
@@ -1575,6 +1639,8 @@ function App() {
     openContextMenu: (x, y, items) => setContextMenu({ x, y, items }),
     onRenameBranch: openRenameModal,
     onDeleteBranch: requestDeleteBranch,
+    onDeleteRemoteBranch: requestDeleteRemoteBranch,
+    onDeleteBranchEverywhere: requestDeleteBranchEverywhere,
     onNewBranchFrom: openNewBranchModal,
     changes,
     stashes,

@@ -16,6 +16,10 @@ export type CheckoutResult =
   | { ok: true; message: string }
   | { ok: false; error: string }
 
+export type UpstreamResult =
+  | { ok: true; upstream: { remote: string; branch: string } | null }
+  | { ok: false; error: string }
+
 export interface BranchInfo {
   name: string
   /** Relative time of the branch tip's last commit, e.g. "3 days ago". */

@@ -43,6 +43,8 @@ import {
   aheadBehind,
   createBranch,
   deleteBranch,
+  deleteRemoteBranch,
+  getUpstream,
   renameBranch,
   discardFile,
   stageAll,
@@ -459,6 +461,17 @@ app.whenReady().then(() => {
       return deleteBranch(repoPath, name, force)
     }
   )
+
+  ipcMain.handle(
+    'git:deleteRemoteBranch',
+    async (_event, repoPath: string, remote: string, branch: string) => {
+      return deleteRemoteBranch(repoPath, remote, branch)
+    }
+  )
+
+  ipcMain.handle('git:getUpstream', async (_event, repoPath: string, name: string) => {
+    return getUpstream(repoPath, name)
+  })
 
   ipcMain.handle(
     'git:renameBranch',

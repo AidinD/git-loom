@@ -7,6 +7,7 @@ import type {
   Commit,
   LogResult,
   CheckoutResult,
+  UpstreamResult,
   MergeResult,
   StatusResult,
   DiffResult,
@@ -1345,6 +1346,76 @@ export async function deleteBranch(
   force = false
 ): Promise<CheckoutResult> {
   return runSimple(dir, ['branch', force ? '-D' : '-d', name], `Deleted ${name}`)
+}
+
+/** Deletes a branch on a remote (e.g. `git push origin --delete feature`). */
+export async function deleteRemoteBranch(
+  dir: string,
+  remote: string,
+  branch: string
+): Promise<CheckoutResult> {
+  let root: string | null
+  try {
+    root = await resolveRepoRoot(dir)
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) }
+  }
+  if (!root) {
+    return { ok: false, error: `Not a Git repository: ${dir}` }
+  }
+  const result = await runGit(['push', remote, '--delete', branch], root)
+  if (result.code !== 0) {
+    return {
+      ok: false,
+      error:
+        tidy(result.stderr) ||
+        tidy(result.stdout) ||
+        `git exited with code ${result.code}`
+    }
+  }
+  // git reports the deletion on stderr; return a clean message instead.
+  return { ok: true, message: `Deleted ${remote}/${branch} on remote` }
+}
+
+/**
+ * Resolves the upstream (remote-tracking) branch a local branch pushes to,
+ * split into remote name + branch name. `upstream` is null when the branch has
+ * no upstream configured.
+ */
+export async function getUpstream(
+  dir: string,
+  name: string
+): Promise<UpstreamResult> {
+  let root: string | null
+  try {
+    root = await resolveRepoRoot(dir)
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) }
+  }
+  if (!root) {
+    return { ok: false, error: `Not a Git repository: ${dir}` }
+  }
+  const result = await runGit(
+    [
+      'for-each-ref',
+      '--format=%(upstream:remotename)%09%(upstream:remoteref)',
+      `refs/heads/${name}`
+    ],
+    root
+  )
+  if (result.code !== 0) {
+    return {
+      ok: false,
+      error: tidy(result.stderr) || `git exited with code ${result.code}`
+    }
+  }
+  const line = result.stdout.split('\n')[0] ?? ''
+  const [remote, remoteRef] = line.split('\t')
+  if (!remote || !remoteRef) {
+    return { ok: true, upstream: null }
+  }
+  const branch = remoteRef.replace(/^refs\/heads\//, '')
+  return { ok: true, upstream: { remote, branch } }
 }
 
 /** Renames a local branch. */

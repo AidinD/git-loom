@@ -95,6 +95,8 @@ function GraphView() {
     openContextMenu,
     onRenameBranch,
     onDeleteBranch,
+    onDeleteRemoteBranch,
+    onDeleteBranchEverywhere,
     onNewBranchFrom,
     onRevert,
     onCherryPick,
@@ -254,6 +256,23 @@ function GraphView() {
               danger: true,
               onClick: () => onDeleteBranch(branchName)
             })
+            items.push({
+              label: 'Delete branch everywhere…',
+              danger: true,
+              onClick: () => onDeleteBranchEverywhere(branchName)
+            })
+          }
+          if (parsed.kind === 'remote' && parsed.name) {
+            const slash = parsed.name.indexOf('/')
+            const remote = parsed.name.slice(0, slash)
+            const branch = parsed.name.slice(slash + 1)
+            if (remote && branch && branch !== 'HEAD') {
+              items.push({
+                label: 'Delete remote branch…',
+                danger: true,
+                onClick: () => onDeleteRemoteBranch(remote, branch)
+              })
+            }
           }
           if (items.length > 0) {
             openContextMenu(event.clientX, event.clientY, items)

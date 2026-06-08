@@ -54,7 +54,8 @@ warning — click **More info → Run anyway**.
   continue/abort, a toolbar badge, and jump-to-next-conflict
 
 **Branches, remotes & repos**
-- Create / rename / delete (and force-delete) branches; branch picker with last-commit
+- Create / rename / delete (and force-delete) branches; delete a branch on the remote,
+  or delete it everywhere (local + upstream) in one step; branch picker with last-commit
   time and one-click merge
 - Fetch / pull / push with ahead/behind badges and quiet auto-fetch
 - Multi-repo switcher + dockable **Repositories** panel with drag-and-drop grouping

@@ -2,6 +2,7 @@ import { contextBridge, ipcRenderer } from 'electron'
 import type {
   LogResult,
   CheckoutResult,
+  UpstreamResult,
   MergeResult,
   StatusResult,
   DiffResult,
@@ -199,6 +200,14 @@ const api = {
     force: boolean
   ): Promise<CheckoutResult> =>
     ipcRenderer.invoke('git:deleteBranch', repoPath, name, force),
+  deleteRemoteBranch: (
+    repoPath: string,
+    remote: string,
+    branch: string
+  ): Promise<CheckoutResult> =>
+    ipcRenderer.invoke('git:deleteRemoteBranch', repoPath, remote, branch),
+  getUpstream: (repoPath: string, name: string): Promise<UpstreamResult> =>
+    ipcRenderer.invoke('git:getUpstream', repoPath, name),
   renameBranch: (
     repoPath: string,
     oldName: string,

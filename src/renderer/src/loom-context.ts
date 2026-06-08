@@ -47,6 +47,8 @@ export interface LoomContextValue {
   openContextMenu: (x: number, y: number, items: ContextMenuItem[]) => void
   onRenameBranch: (name: string) => void
   onDeleteBranch: (name: string) => void
+  onDeleteRemoteBranch: (remote: string, branch: string) => void
+  onDeleteBranchEverywhere: (name: string) => void
   onNewBranchFrom: (startPoint: string) => void
 
   // Changes panel

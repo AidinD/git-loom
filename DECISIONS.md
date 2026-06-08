@@ -5,6 +5,24 @@ Newest entries can go on top. Format: decision · alternatives · why.
 
 ---
 
+## 2026-06-08 — Remote-branch deletion + "delete everywhere"
+
+### Resolve the remote ref via upstream, not by name-matching
+- **Decision:** "Delete branch everywhere" (local + remote) finds the remote ref through
+  the branch's configured upstream (`git for-each-ref %(upstream:remotename/remoteref)`),
+  and only offers the remote step when an upstream exists. Deleting a remote branch
+  directly is done from the `origin/…` chip's context menu (`git push <remote> --delete`).
+- **Alternatives:** Scan loaded commit refs for any `<remote>/<name>` match and delete
+  that; or always assume `origin`.
+- **Why:** Upstream is git's authoritative answer for "where does this branch push," and
+  handles the case where the local and remote branch names differ. Name-matching is a
+  guess that breaks on forks/renames and on multiple remotes. When there's no upstream,
+  we fall back to a local-only delete (the user can still target the remote chip
+  directly) rather than guessing. Remote delete returns a clean message because git
+  reports `- [deleted]` on stderr, which we don't want leaking into command history.
+
+---
+
 ## 2026-06-04 — Initial build (phases 1–7 + dockview)
 
 ### Product intent & priority
