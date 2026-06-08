@@ -123,3 +123,79 @@ bulk stage/unstage/discard). Also moved the whole project out of Northwind/Inter
   confirmation — chosen over a hidden modifier key (more discoverable) and over the old
   separate confirm modal. Conflicts surface with a kind-aware "Abort merge/rebase"
   button (`mergeAbort` / `rebaseAbort`). Verify on the sandbox before relying on it.
+
+## 2026-06-05 — Conflict resolver, DnD grouping, diff/staging, virtualization, history rewriting
+
+### Conflict resolver (in-UI, replaces the abort-only escape hatch)
+- **Decision:** Per-file, per-block resolver. Each conflict block shows Current (ours)
+  vs Incoming (theirs) side by side (+ a dimmed Base column when `merge.conflictStyle=diff3`),
+  with Accept Current/Incoming/Both, an All-Current/All-Incoming shortcut, and an
+  **editable merged textarea**; Save writes the file + stages it, gated until no markers
+  remain. Continue uses `commit --no-edit` (merge) or `-c core.editor=true … --continue`
+  (rebase/revert/cherry-pick).
+- **Alternatives:** open-in-external-editor (GitHub Desktop's punt); a full 3-way editor.
+- **Why:** beats GitHub Desktop's "go fix it elsewhere"; the editable-merged view covers
+  manual tweaks without building a full 3-way editor. Known tradeoff: pressing a block
+  button rebuilds the textarea from block choices (clobbers manual edits in other blocks)
+  — accepted for v1.
+- **Detection:** `conflictState` reads `.git` flags (MERGE_HEAD / REVERT_HEAD /
+  CHERRY_PICK_HEAD / rebase dirs) so a repo left mid-op shows a toolbar badge even if the
+  op wasn't started this session. Resolver is dismissible (badge reopens it).
+- **Help row:** spells out which side is which for the *current* op, and warns that
+  **rebase inverts** Current/Incoming — the single most common point of confusion.
+
+### Drag-and-drop repo grouping + Repositories panel
+- **Decision:** Drag repos between groups / reorder; drag group headers to reorder whole
+  groups; "+ New group" drop zone; collapsible groups; rename-group (pencil on header).
+  Group order is **drag-driven** (a group sits where its first repo is; Ungrouped last) —
+  **no separate ordering store**. Backend `setReposLayout` rewrites order+groups in one op.
+- **Alternative rejected:** reuse Halyard's grouping component. Built fresh instead —
+  different repo/stack ownership (Loom is personal), not worth the coupling.
+- **Also:** exposed the same `RepoList` as a dockable **Repositories** left panel (default
+  layout + View menu); kept the toolbar dropdown too. (Earlier this was deferred pending
+  Halyard parity — decided parity wasn't worth it.)
+
+### Diff & staging
+- **Word-level diff:** token-LCS highlight of intra-line changes (Split + Unified),
+  capped at 400 tokens/line (minified-line guard) → falls back to whole-line tint.
+- **Per-file status (A/M/D/R):** inferred client-side from the git diff headers
+  (`new file`/`deleted file`/`rename`/`/dev/null`) — no extra git calls; works for commit
+  and working-tree diffs alike.
+- **Hunk + line staging:** reconstruct a one-hunk (or partial-line) patch and apply with
+  `git apply --cached [--reverse] --recount`. Line patch transform: unselected deletions →
+  context, unselected additions → dropped; `--recount` lets git fix the `@@` counts so we
+  don't compute them. Line selection lives in **Unified view only** (cleanest per-line).
+  Mechanism CLI-validated before any UI. Double-click a Changes-panel file = stage/unstage.
+
+### Graph performance: canvas-only virtualization + incremental load
+- **Decision:** Virtualize **only the canvas** (sticky to viewport, repaints the visible
+  row range via a **direct scroll listener**); the refs/commit lists render in full.
+  History loads **150/page**, appending on scroll near bottom.
+- **Alternatives rejected:** (1) windowing the DOM lists too — tried it, but the lists
+  measured the viewport via React state while the canvas read it live, so they disagreed
+  and the graph ran past the last commit. Full lists always match the canvas height. (2)
+  routing canvas redraws through React state — caused the gutter to lag behind native
+  scroll. (3) the old single tall canvas — hit the ~16k-px browser limit (DPR drop → blur).
+- **Cap:** 2000 commits, to keep the full DOM lists snappy now that only the canvas is windowed.
+
+### History-rewriting sweep (web-research inspired)
+- **Cherry-pick / reset (soft/mixed/hard) / undo-last-commit** from the commit context
+  menu (+ More menu). Reset is confirmed; hard warns. Undo = `reset --soft HEAD~1`.
+  Cherry-pick conflicts flow through the resolver (new `cherry-pick` kind).
+- **Commit search:** highlights matches and jumps between them (Enter / ↑↓) — does **not**
+  filter the list, because filtering would break the graph's lane layout.
+- **Interactive rebase:** commit menu → drag-to-reorder modal with per-commit
+  pick/squash/fixup/drop. Driven by `git rebase -i` with **`GIT_SEQUENCE_EDITOR`** writing
+  our todo file + **`GIT_EDITOR=true`** taking default squash messages.
+  - **Alternatives rejected:** dragging commits directly in the canvas graph (much harder,
+    needs gestures for squash; the modal still *has* drag and is testable); avoiding `-i`
+    via cherry-pick sequences (can't express squash/reorder cleanly).
+  - **Reword deferred** — needs a message-supplying editor, not just `true`.
+  - Mechanism CLI-validated (reorder/squash/drop) before building the UI.
+
+### UX calibration
+- **Danger-red** reserved for actions that can lose work (hard reset, discard,
+  force-delete) — un-flagged Revert (it's non-destructive; adds a commit).
+- **Destructive last:** reset variants sit at the bottom of the commit menu, hard reset last.
+- **Modals:** Enter confirms, Esc closes the topmost overlay. Modal backdrop `z-index`
+  raised above dockview chrome (panels were painting over modals).
