@@ -309,11 +309,7 @@ export async function merge(
     }
   }
 
-  const message =
-    tidy(mergeResult.stdout) ||
-    tidy(mergeResult.stderr) ||
-    `Merged ${source} into ${target}`
-  return { ok: true, message }
+  return { ok: true, message: `Merged ${source} into ${target}` }
 }
 
 /**
@@ -387,11 +383,7 @@ export async function rebase(
     }
   }
 
-  const message =
-    tidy(rebaseResult.stdout) ||
-    tidy(rebaseResult.stderr) ||
-    `Rebased ${source} onto ${target}`
-  return { ok: true, message }
+  return { ok: true, message: `Rebased ${source} onto ${target}` }
 }
 
 /** Aborts an in-progress rebase. */
@@ -556,7 +548,7 @@ export async function revert(
 
   const message = noCommit
     ? `Reverted ${hash.slice(0, 7)} — staged, review and commit`
-    : tidy(result.stdout) || `Reverted ${hash.slice(0, 7)}`
+    : `Reverted ${hash.slice(0, 7)}`
   return { ok: true, message }
 }
 
@@ -791,7 +783,7 @@ export async function cherryPick(dir: string, hash: string): Promise<MergeResult
       error: tidy(result.stderr) || tidy(result.stdout) || 'cherry-pick failed'
     }
   }
-  return { ok: true, message: tidy(result.stdout) || `Cherry-picked ${hash.slice(0, 7)}` }
+  return { ok: true, message: `Cherry-picked ${hash.slice(0, 7)}` }
 }
 
 export async function cherryPickAbort(dir: string): Promise<CheckoutResult> {
@@ -1241,7 +1233,10 @@ export async function unstageAll(dir: string): Promise<CheckoutResult> {
 
 /** Commits the staged changes with the given message. */
 export async function commit(dir: string, message: string): Promise<CheckoutResult> {
-  return runSimple(dir, ['commit', '-m', message], 'Committed')
+  // -q suppresses git's "[branch sha] summary / N files changed" echo so our
+  // own clean message is used instead of leaking into toasts/command history.
+  const summary = message.split('\n')[0]
+  return runSimple(dir, ['commit', '-q', '-m', message], `Committed: ${summary}`)
 }
 
 /** Clones `url` into `parentDir`, returning the path of the new repo. */
