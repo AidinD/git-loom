@@ -1296,11 +1296,12 @@ body {
 .ctx-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 30;
+  z-index: 3000;
 }
 
 .ctx-menu {
   position: fixed;
+  z-index: 3001;
   min-width: 160px;
   background: var(--bg-alt);
   border: 1px solid var(--border);
@@ -1486,6 +1487,7 @@ body {
 .modal-backdrop {
   position: fixed;
   inset: 0;
+  z-index: 2000;
   background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
