@@ -1,0 +1,19 @@
+appId: io.aidin.loom
+productName: Loom
+directories:
+  buildResources: build
+files:
+  - out/**
+  - package.json
+  - '!**/*.map'
+win:
+  target: nsis
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  artifactName: ${productName}-${version}-setup.${ext}
+publish:
+  provider: github
+  owner: AidinD
+  repo: git-loom

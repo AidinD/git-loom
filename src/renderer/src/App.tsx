@@ -191,6 +191,7 @@ function App() {
   } | null>(null)
   const [lastFetched, setLastFetched] = useState<Date | null>(null)
   const [appVersion, setAppVersion] = useState('')
+  const [updateVersion, setUpdateVersion] = useState<string | null>(null)
   const [changes, setChanges] = useState<FileChange[]>([])
   const [stashes, setStashes] = useState<StashEntry[]>([])
   const [commitSummary, setCommitSummary] = useState('')
@@ -226,6 +227,10 @@ function App() {
   const [renameInput, setRenameInput] = useState('')
   const [confirm, setConfirm] = useState<ConfirmState | null>(null)
   const [missingRepo, setMissingRepo] = useState<string | null>(null)
+
+  useEffect(() => {
+    return window.api.onUpdateReady((version) => setUpdateVersion(version))
+  }, [])
 
   useEffect(() => {
     window.api.getVersion().then(setAppVersion)
@@ -1531,6 +1536,32 @@ function App() {
         </div>
       </LoomContext.Provider>
 
+      <div className="toast-stack">
+      {updateVersion && (
+        <div className="toast toast-update" role="alert">
+          <span className="toast-icon">↑</span>
+          <div className="toast-body">
+            <div className="toast-title">Update ready</div>
+            <div className="toast-message">
+              Loom {updateVersion} has been downloaded.
+            </div>
+            <button
+              className="toast-action"
+              onClick={() => void window.api.installUpdate()}
+            >
+              Restart & update
+            </button>
+          </div>
+          <button
+            className="toast-close"
+            title="Later"
+            onClick={() => setUpdateVersion(null)}
+          >
+            ×
+          </button>
+        </div>
+      )}
+
       {(error || info) && (
         <div className={`toast ${error ? 'toast-error' : 'toast-info'}`} role="alert">
           <span className="toast-icon">{error ? '⚠' : '✓'}</span>
@@ -1550,6 +1581,7 @@ function App() {
           </button>
         </div>
       )}
+      </div>
 
       {loading && <div className="loading-tag">Loading…</div>}
 

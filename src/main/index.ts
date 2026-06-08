@@ -1,4 +1,5 @@
 import { app, shell, BrowserWindow, ipcMain, dialog } from 'electron'
+import electronUpdater from 'electron-updater'
 import { spawn } from 'child_process'
 import { existsSync } from 'fs'
 import { join } from 'path'
@@ -67,6 +68,8 @@ import {
 } from './repos'
 import { listGithubRepos, listPullRequests, checkoutPullRequest } from './github'
 
+const { autoUpdater } = electronUpdater
+
 /** Converts a git remote URL (ssh or https) to a browsable web URL. */
 function toWebUrl(remote: string): string | null {
   const ssh = remote.match(/^git@([^:]+):(.+?)(?:\.git)?$/)
@@ -80,8 +83,10 @@ function toWebUrl(remote: string): string | null {
   return null
 }
 
+let mainWindow: BrowserWindow | null = null
+
 function createWindow(): void {
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
     show: false,
@@ -95,7 +100,11 @@ function createWindow(): void {
   })
 
   mainWindow.on('ready-to-show', () => {
-    mainWindow.show()
+    mainWindow?.show()
+  })
+
+  mainWindow.on('closed', () => {
+    mainWindow = null
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
@@ -108,6 +117,23 @@ function createWindow(): void {
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
+}
+
+/**
+ * Checks GitHub Releases for updates (packaged builds only) and tells the
+ * renderer when one is downloaded so it can offer a restart.
+ */
+function setupAutoUpdate(): void {
+  if (!app.isPackaged) {
+    return
+  }
+  autoUpdater.autoDownload = true
+  autoUpdater.on('update-downloaded', (info) => {
+    mainWindow?.webContents.send('update:ready', info.version)
+  })
+  autoUpdater.checkForUpdates().catch(() => {
+    // offline or no releases yet — ignore
+  })
 }
 
 app.whenReady().then(() => {
@@ -460,7 +486,12 @@ app.whenReady().then(() => {
     }
   )
 
+  ipcMain.handle('update:install', async () => {
+    autoUpdater.quitAndInstall()
+  })
+
   createWindow()
+  setupAutoUpdate()
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {

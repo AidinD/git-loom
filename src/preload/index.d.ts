@@ -19,6 +19,8 @@ import type {
 
 export interface LoomApi {
   getVersion: () => Promise<string>
+  onUpdateReady: (callback: (version: string) => void) => () => void
+  installUpdate: () => Promise<void>
   openRepo: () => Promise<string | null>
   getLog: (repoPath: string, limit?: number, skip?: number) => Promise<LogResult>
   checkout: (repoPath: string, target: string) => Promise<CheckoutResult>

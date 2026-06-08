@@ -20,6 +20,12 @@ import type {
 
 const api = {
   getVersion: (): Promise<string> => ipcRenderer.invoke('app:getVersion'),
+  onUpdateReady: (callback: (version: string) => void): (() => void) => {
+    const handler = (_event: unknown, version: string): void => callback(version)
+    ipcRenderer.on('update:ready', handler)
+    return () => ipcRenderer.removeListener('update:ready', handler)
+  },
+  installUpdate: (): Promise<void> => ipcRenderer.invoke('update:install'),
   openRepo: (): Promise<string | null> => ipcRenderer.invoke('repo:open'),
   getLog: (repoPath: string, limit?: number, skip?: number): Promise<LogResult> =>
     ipcRenderer.invoke('git:log', repoPath, limit, skip),
