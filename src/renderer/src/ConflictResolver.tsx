@@ -152,6 +152,22 @@ function ConflictResolver({ repoPath, kind, onResolved, onAbort, onClose }: Prop
     await refresh()
   }
 
+  async function doSkip(): Promise<void> {
+    if (kind === 'merge') {
+      return
+    }
+    setBusy(true)
+    setError(null)
+    const result = await window.api.skipConflict(repoPath, kind)
+    setBusy(false)
+    if (result.ok) {
+      onResolved()
+      return
+    }
+    setError(result.error)
+    await refresh()
+  }
+
   const conflictBlocks = segments.filter(
     (segment): segment is ConflictSegment => segment.kind === 'conflict'
   )
@@ -355,6 +371,16 @@ function ConflictResolver({ repoPath, kind, onResolved, onAbort, onClose }: Prop
           <button disabled={busy || !canContinue} onClick={() => void doContinue()}>
             Continue {kind}
           </button>
+          {kind !== 'merge' && (
+            <button
+              className="secondary"
+              disabled={busy}
+              title="Drop this commit and continue (use when it became empty)"
+              onClick={() => void doSkip()}
+            >
+              Skip commit
+            </button>
+          )}
           <button className="danger" disabled={busy} onClick={onAbort}>
             Abort {kind}
           </button>

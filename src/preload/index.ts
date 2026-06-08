@@ -83,6 +83,10 @@ const api = {
     kind: 'merge' | 'rebase' | 'revert' | 'cherry-pick'
   ): Promise<MergeResult> =>
     ipcRenderer.invoke('git:continueConflict', repoPath, kind),
+  skipConflict: (
+    repoPath: string,
+    kind: 'rebase' | 'cherry-pick' | 'revert'
+  ): Promise<MergeResult> => ipcRenderer.invoke('git:skipConflict', repoPath, kind),
   readConflictFile: (repoPath: string, file: string): Promise<ConflictFileResult> =>
     ipcRenderer.invoke('git:readConflictFile', repoPath, file),
   resolveConflictFile: (

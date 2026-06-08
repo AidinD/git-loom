@@ -372,14 +372,16 @@ export async function rebase(
     }
   }
 
-  const rebaseResult = await runGit(['rebase', target], root)
+  const rebaseResult = await runGit(['rebase', '--autostash', target], root)
   if (rebaseResult.code !== 0) {
     const output = `${rebaseResult.stdout}\n${rebaseResult.stderr}`
     const conflict = /CONFLICT|could not apply|Resolve all conflicts/i.test(output)
     return {
       ok: false,
       conflict,
-      error: tidy(rebaseResult.stdout) || tidy(rebaseResult.stderr) || 'Rebase failed'
+      error: conflict
+        ? 'Rebase stopped on conflicts — resolve them, then Continue.'
+        : tidy(rebaseResult.stdout) || tidy(rebaseResult.stderr) || 'Rebase failed'
     }
   }
 
@@ -488,7 +490,9 @@ export async function interactiveRebase(
     env.GIT_EDITOR = `sh '${fwd(helperPath)}'`
   }
 
-  const result = await runGitWithEnv(['rebase', '-i', baseHash], root, env)
+  // --autostash stashes/​restores a dirty working tree around the rebase, so it
+  // doesn't fail with "cannot rebase: you have unstaged changes".
+  const result = await runGitWithEnv(['rebase', '-i', '--autostash', baseHash], root, env)
   for (const path of cleanup) {
     try {
       await rm(path)
@@ -503,11 +507,13 @@ export async function interactiveRebase(
     return {
       ok: false,
       conflict,
-      error: tidy(result.stderr) || tidy(result.stdout) || 'Interactive rebase failed'
+      error: conflict
+        ? 'Rebase stopped on conflicts — resolve them, then Continue.'
+        : tidy(result.stderr) || tidy(result.stdout) || 'Interactive rebase failed'
     }
   }
 
-  return { ok: true, message: tidy(result.stdout) || 'Rebase complete' }
+  return { ok: true, message: 'Rebase complete' }
 }
 
 /**
@@ -751,10 +757,45 @@ export async function continueConflict(
 
   const result = await runSimple(dir, args, `${kind} completed`)
   if (result.ok) {
-    return { ok: true, message: result.message }
+    return { ok: true, message: `${kind} completed` }
   }
-  // A non-zero exit here usually means conflicts still remain.
-  return { ok: false, conflict: true, error: result.error }
+  // A commit that resolved to no changes can't be continued — needs a skip.
+  if (/empty|nothing to commit/i.test(result.error)) {
+    return {
+      ok: false,
+      conflict: true,
+      error: 'This commit is now empty after resolution — use "Skip commit".'
+    }
+  }
+  // Otherwise conflicts usually still remain.
+  return {
+    ok: false,
+    conflict: true,
+    error: 'Still conflicted — resolve the remaining files, then Continue.'
+  }
+}
+
+/** Skips the current commit in an in-progress rebase/cherry-pick/revert. */
+export async function skipConflict(
+  dir: string,
+  kind: 'rebase' | 'cherry-pick' | 'revert'
+): Promise<MergeResult> {
+  const result = await runSimple(
+    dir,
+    ['-c', 'core.editor=true', kind, '--skip'],
+    `Skipped commit`
+  )
+  if (result.ok) {
+    return { ok: true, message: 'Skipped commit' }
+  }
+  const conflict = /CONFLICT|could not apply|Resolve all conflicts/i.test(result.error)
+  return {
+    ok: false,
+    conflict,
+    error: conflict
+      ? 'Skipped — next commit has conflicts to resolve.'
+      : result.error
+  }
 }
 
 /** Applies an existing commit onto the current branch (cherry-pick). */

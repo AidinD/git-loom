@@ -1,6 +1,6 @@
 {
   "name": "loom",
-  "version": "0.0.17",
+  "version": "0.0.18",
   "description": "A visual Git client with a direct-manipulation commit graph",
   "main": "./out/main/index.js",
   "author": "Aidin",

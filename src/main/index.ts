@@ -54,6 +54,7 @@ import {
   useTheirs,
   markResolved,
   continueConflict,
+  skipConflict,
   readConflictFile,
   resolveConflictFile,
   conflictState
@@ -263,6 +264,13 @@ app.whenReady().then(() => {
       kind: 'merge' | 'rebase' | 'revert' | 'cherry-pick'
     ) => {
       return continueConflict(repoPath, kind)
+    }
+  )
+
+  ipcMain.handle(
+    'git:skipConflict',
+    async (_event, repoPath: string, kind: 'rebase' | 'cherry-pick' | 'revert') => {
+      return skipConflict(repoPath, kind)
     }
   )
 

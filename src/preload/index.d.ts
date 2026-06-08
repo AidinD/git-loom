@@ -53,6 +53,10 @@ export interface LoomApi {
     repoPath: string,
     kind: 'merge' | 'rebase' | 'revert' | 'cherry-pick'
   ) => Promise<MergeResult>
+  skipConflict: (
+    repoPath: string,
+    kind: 'rebase' | 'cherry-pick' | 'revert'
+  ) => Promise<MergeResult>
   conflictState: (
     repoPath: string
   ) => Promise<'merge' | 'rebase' | 'revert' | 'cherry-pick' | null>
