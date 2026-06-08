@@ -165,7 +165,9 @@ Captured from GitHub Desktop screenshots — not yet scoped, just ideas.
   git blame --porcelain; click a hash opens that commit. Modal.
 - [backlog] **Undo/redo stack** beyond last-commit (reflog-based, broader) —
   deferred: risky/ambiguous semantics.
-- [backlog] **Drag commits in the graph canvas** to rebase (vs the modal).
+- [done] **Drag commits to reorder** (2026-06-08) — drag a commit row onto another
+  to move it to that slot; runs the interactiveRebase engine on the computed todo.
+  Guards on the current-branch linear chain, confirms, and is undoable. Validated.
 - [done] **Commit signing** (2026-06-08) — SSH signing set up (dedicated
   passphraseless key + git config + allowed_signers); a persisted "Sign commits"
   toggle passes -S / --no-gpg-sign. Verified end-to-end locally. Remaining manual
