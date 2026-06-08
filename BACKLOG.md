@@ -166,7 +166,10 @@ Captured from GitHub Desktop screenshots — not yet scoped, just ideas.
 - [backlog] **Undo/redo stack** beyond last-commit (reflog-based, broader) —
   deferred: risky/ambiguous semantics.
 - [backlog] **Drag commits in the graph canvas** to rebase (vs the modal).
-- [backlog] **Commit signing** (GPG/SSH) — needs the user's key setup.
+- [done] **Commit signing** (2026-06-08) — SSH signing set up (dedicated
+  passphraseless key + git config + allowed_signers); a persisted "Sign commits"
+  toggle passes -S / --no-gpg-sign. Verified end-to-end locally. Remaining manual
+  step: add the pubkey to GitHub as a signing key for the Verified badge.
 - [done] **Image diff** (2026-06-08) — image files in a working-tree diff show a
   before/after preview (checkerboard backing) instead of binary "files differ".
 

@@ -215,6 +215,27 @@ bulk stage/unstage/discard). Also moved the whole project out of Northwind/Inter
 - **Error/info toasts:** replaced the cramped status bar with a floating, stacked
   toast (icon + title + wrapping message); info auto-dismisses, errors persist.
 
+### Commit signing (2026-06-08)
+- **SSH signing, not GPG.** Much simpler — no keyring, no gpg-agent, no passphrase
+  dance. Generated a dedicated passphraseless `~/.ssh/signing_ed25519` (cmd /c for a
+  truly-empty passphrase — PowerShell quoting kept setting a literal one). git config:
+  `gpg.format ssh`, `user.signingkey <pub>`, `commit.gpgsign true`, and
+  `gpg.ssh.allowedSignersFile ~/.ssh/allowed_signers` for local verification (verified
+  end-to-end: %G? = G).
+- **Loom toggle:** a persisted "Sign commits" checkbox passes `-S` / `--no-gpg-sign`,
+  overriding the global config per preference.
+- **GitHub registration is manual:** adding the key as a signing key needs gh's
+  `admin:ssh_signing_key` scope (an interactive auth refresh), so the user pastes the
+  pubkey into GitHub once for the Verified badge. Not automated to avoid a blind
+  scope escalation.
+
+### Dev-server process management (note)
+- Killing stale electron-vite dev instances via `Get-CimInstance` (WMI) proved flaky
+  ("Shutting down" errors), leaving duplicate instances that fought over the port and
+  userData cache (GPU cache "Access is denied"). Reliable approach: kill by the port
+  owner (`Get-NetTCPConnection -LocalPort 5173.. | Stop-Process -Id OwningProcess`) plus
+  `Get-Process electron | Where Path -like '*Tools\loom*'`. No WMI.
+
 ### UX calibration
 - **Danger-red** reserved for actions that can lose work (hard reset, discard,
   force-delete) — un-flagged Revert (it's non-destructive; adds a commit).
