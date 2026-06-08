@@ -57,6 +57,11 @@ A GitHub-Desktop-style repository switcher, but better:
 - [skipped] **Rename a stash** — git has no native stash-rename (message lives in the
   stash commit). The only route (drop + `git stash store`) reorders the stack to the
   top; not worth the side effect. Decided to skip 2026-06-05.
+- [done] **Hunk- and line-level staging** (2026-06-05, web-research inspired). Diff
+  view shows a Stage/Unstage button per hunk; in unified view each add/del line has a
+  checkbox for line-level staging. Reconstructs a one-hunk (or partial-line) patch and
+  applies it via `git apply --cached [--reverse] --recount`. Verified end-to-end.
+  Follow-up: line selection in split view; range-select with shift-click.
 - [done] Commit via keyboard (Enter in Summary, Ctrl/Cmd+Enter in Description).
 - [done] **Right-click context menu** on files (Show diff / Stage|Unstage / Discard).
 - [done] Discard changes / restore file (⟲ button + confirm).
