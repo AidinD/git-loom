@@ -19,6 +19,7 @@ import type {
 } from '../shared/types'
 
 const api = {
+  getVersion: (): Promise<string> => ipcRenderer.invoke('app:getVersion'),
   openRepo: (): Promise<string | null> => ipcRenderer.invoke('repo:open'),
   getLog: (repoPath: string, limit?: number, skip?: number): Promise<LogResult> =>
     ipcRenderer.invoke('git:log', repoPath, limit, skip),

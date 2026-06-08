@@ -1879,6 +1879,14 @@ body {
   padding: 12px;
 }
 
+.app-version {
+  flex: none;
+  margin-left: 4px;
+  font-size: 11px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
 .conflict-title {
   margin: 0 0 2px;
   font-size: 15px;

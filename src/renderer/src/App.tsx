@@ -190,6 +190,7 @@ function App() {
     lines: BlameLine[]
   } | null>(null)
   const [lastFetched, setLastFetched] = useState<Date | null>(null)
+  const [appVersion, setAppVersion] = useState('')
   const [changes, setChanges] = useState<FileChange[]>([])
   const [stashes, setStashes] = useState<StashEntry[]>([])
   const [commitSummary, setCommitSummary] = useState('')
@@ -227,6 +228,7 @@ function App() {
   const [missingRepo, setMissingRepo] = useState<string | null>(null)
 
   useEffect(() => {
+    window.api.getVersion().then(setAppVersion)
     window.api.listRepos().then(setRepos)
     window.api.getCurrentRepo().then((path) => {
       if (path) {
@@ -1506,6 +1508,7 @@ function App() {
         >
           ⋯
         </button>
+        {appVersion && <span className="app-version">v{appVersion}</span>}
       </header>
 
       <LoomContext.Provider value={loomValue}>

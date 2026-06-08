@@ -18,6 +18,7 @@ import type {
 } from '../shared/types'
 
 export interface LoomApi {
+  getVersion: () => Promise<string>
   openRepo: () => Promise<string | null>
   getLog: (repoPath: string, limit?: number, skip?: number) => Promise<LogResult>
   checkout: (repoPath: string, target: string) => Promise<CheckoutResult>

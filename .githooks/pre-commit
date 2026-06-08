@@ -1,0 +1,6 @@
+#!/bin/sh
+# Auto-bump the patch version on every commit and stage package.json so the
+# bump is part of this commit. Loom is 100% AI-coded, so the version doubles
+# as a build counter. Skip with: git commit --no-verify.
+node -e "const fs=require('fs');const f='package.json';const p=JSON.parse(fs.readFileSync(f,'utf8'));const v=p.version.split('.');v[2]=String(Number(v[2])+1);p.version=v.join('.');fs.writeFileSync(f,JSON.stringify(p,null,2)+'\n')" || exit 0
+git add package.json

@@ -111,6 +111,10 @@ function createWindow(): void {
 }
 
 app.whenReady().then(() => {
+  ipcMain.handle('app:getVersion', async () => {
+    return app.getVersion()
+  })
+
   ipcMain.handle('repo:open', async () => {
     const result = await dialog.showOpenDialog({
       properties: ['openDirectory']
