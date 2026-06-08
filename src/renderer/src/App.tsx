@@ -18,6 +18,8 @@ import RepoSwitcher from './RepoSwitcher'
 import BranchSwitcher from './BranchSwitcher'
 import GraphView from './GraphView'
 import ConflictResolver from './ConflictResolver'
+import RebaseModal from './RebaseModal'
+import type { RebaseRow } from './RebaseModal'
 import ContextMenu from './ContextMenu'
 import type { ContextMenuItem } from './ContextMenu'
 import { LoomContext, useLoom } from './loom-context'
@@ -174,6 +176,8 @@ function App() {
   >(null)
   const [showConflict, setShowConflict] = useState(false)
   const [conflictCount, setConflictCount] = useState(0)
+  const [rebaseBase, setRebaseBase] = useState<string | null>(null)
+  const [rebaseRows, setRebaseRows] = useState<RebaseRow[]>([])
   const [lastFetched, setLastFetched] = useState<Date | null>(null)
   const [changes, setChanges] = useState<FileChange[]>([])
   const [stashes, setStashes] = useState<StashEntry[]>([])
@@ -247,6 +251,10 @@ function App() {
         setGroupRenameOld(null)
         return
       }
+      if (rebaseBase) {
+        setRebaseBase(null)
+        return
+      }
       if (cloneOpen) {
         setCloneOpen(false)
         return
@@ -281,6 +289,7 @@ function App() {
     stashRequest,
     groupModalRepo,
     groupRenameOld,
+    rebaseBase,
     cloneOpen,
     newBranchOpen,
     renameTarget,
@@ -529,6 +538,64 @@ function App() {
     setError(null)
     setInfo(null)
     const result = await window.api.rebase(repoPath, source, target)
+    await loadLog(repoPath)
+    if (result.ok) {
+      setInfo(result.message)
+      setConflictKind(null)
+    } else {
+      setError(result.error)
+      if (result.conflict) {
+        await enterConflict('rebase')
+      }
+    }
+  }
+
+  /** Opens the interactive-rebase editor for the commits above `baseHash`. */
+  function openInteractiveRebase(baseHash: string): void {
+    const byHash = new Map(commits.map((commit) => [commit.hash, commit]))
+    const head = commits.find((commit) =>
+      commit.refs.some((ref) => ref === 'HEAD' || ref.startsWith('HEAD ->'))
+    )
+    if (!head) {
+      setError('Interactive rebase needs a checked-out branch (HEAD).')
+      return
+    }
+    const chain: Commit[] = []
+    let cur: Commit | undefined = head
+    while (cur && cur.hash !== baseHash) {
+      chain.push(cur)
+      const parent: string | undefined = cur.parents[0]
+      cur = parent ? byHash.get(parent) : undefined
+    }
+    if (!cur || cur.hash !== baseHash) {
+      setError('That commit is not an ancestor of HEAD on the current branch.')
+      return
+    }
+    if (chain.length === 0) {
+      setError('No commits above that one to rebase.')
+      return
+    }
+    chain.reverse()
+    setRebaseRows(
+      chain.map((commit) => ({
+        hash: commit.hash,
+        subject: commit.subject,
+        action: 'pick' as const
+      }))
+    )
+    setRebaseBase(baseHash)
+  }
+
+  async function doInteractiveRebase(rows: RebaseRow[]): Promise<void> {
+    const base = rebaseBase
+    setRebaseBase(null)
+    if (!repoPath || !base) {
+      return
+    }
+    setError(null)
+    setInfo(null)
+    const todoLines = rows.map((row) => `${row.action} ${row.hash}`)
+    const result = await window.api.interactiveRebase(repoPath, base, todoLines)
     await loadLog(repoPath)
     if (result.ok) {
       setInfo(result.message)
@@ -1211,6 +1278,7 @@ function App() {
     onRevert: doRevert,
     onCherryPick: doCherryPick,
     onResetTo: requestReset,
+    onInteractiveRebase: openInteractiveRebase,
     onCheckoutPr: handleCheckoutPr,
     dragSource,
     setDragSource,
@@ -1635,6 +1703,15 @@ function App() {
             </div>
           </div>
         </div>
+      )}
+
+      {rebaseBase && (
+        <RebaseModal
+          baseHash={rebaseBase}
+          rows={rebaseRows}
+          onCancel={() => setRebaseBase(null)}
+          onStart={(rows) => void doInteractiveRebase(rows)}
+        />
       )}
 
       {conflictKind && repoPath && showConflict && (

@@ -1701,6 +1701,79 @@ body {
   flex-direction: column;
 }
 
+.rebase-modal {
+  width: 640px;
+  max-width: 92vw;
+}
+
+.rebase-list {
+  max-height: 50vh;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-bottom: 4px;
+}
+
+.rebase-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--border);
+  cursor: grab;
+}
+
+.rebase-row:last-child {
+  border-bottom: none;
+}
+
+.rebase-row.dragging {
+  opacity: 0.4;
+}
+
+.rebase-row.drop-before {
+  box-shadow: inset 0 2px 0 0 var(--accent);
+}
+
+.rebase-row.dropped {
+  opacity: 0.5;
+}
+
+.rebase-row.dropped .rebase-subject {
+  text-decoration: line-through;
+}
+
+.rebase-grip {
+  flex: none;
+  color: var(--text-dim);
+  cursor: grab;
+}
+
+.rebase-action {
+  flex: none;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 4px;
+  font-size: 12px;
+}
+
+.rebase-hash {
+  flex: none;
+  color: var(--accent);
+  font-family: 'SFMono-Regular', Consolas, monospace;
+  font-size: 12px;
+}
+
+.rebase-subject {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+
 .conflict-title {
   margin: 0 0 2px;
   font-size: 15px;

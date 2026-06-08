@@ -99,6 +99,7 @@ function GraphView() {
     onRevert,
     onCherryPick,
     onResetTo,
+    onInteractiveRebase,
     onLoadMore
   } = useLoom()
 
@@ -181,6 +182,10 @@ function GraphView() {
       { label: 'New branch here…', onClick: () => onNewBranchFrom(commit.hash) },
       { label: 'Check out (detached)', onClick: () => onCheckout(commit.hash) },
       { label: 'Cherry-pick onto current', onClick: () => onCherryPick(commit.hash) },
+      {
+        label: 'Interactive rebase from here…',
+        onClick: () => onInteractiveRebase(commit.hash)
+      },
       {
         label: 'Revert & commit',
         onClick: () => onRevert(commit.hash, false)

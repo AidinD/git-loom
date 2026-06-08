@@ -30,6 +30,12 @@ const api = {
     ipcRenderer.invoke('git:rebase', repoPath, source, target),
   rebaseAbort: (repoPath: string): Promise<CheckoutResult> =>
     ipcRenderer.invoke('git:rebaseAbort', repoPath),
+  interactiveRebase: (
+    repoPath: string,
+    baseHash: string,
+    todoLines: string[]
+  ): Promise<MergeResult> =>
+    ipcRenderer.invoke('git:interactiveRebase', repoPath, baseHash, todoLines),
   revert: (
     repoPath: string,
     hash: string,

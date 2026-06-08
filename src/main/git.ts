@@ -1,6 +1,7 @@
 import { spawn } from 'child_process'
 import { existsSync } from 'fs'
-import { readFile, writeFile } from 'fs/promises'
+import { readFile, writeFile, rm } from 'fs/promises'
+import { tmpdir } from 'os'
 import { join } from 'path'
 import type {
   Commit,
@@ -98,6 +99,36 @@ function runGitWithInput(
 
     child.stdin.write(input)
     child.stdin.end()
+  })
+}
+
+/** Like runGit, but with extra environment variables (e.g. editor overrides). */
+function runGitWithEnv(
+  args: string[],
+  cwd: string,
+  env: NodeJS.ProcessEnv
+): Promise<GitOutput> {
+  return new Promise((resolve, reject) => {
+    const child = spawn('git', ['-c', 'advice.detachedHead=false', ...args], {
+      cwd,
+      env
+    })
+
+    let stdout = ''
+    let stderr = ''
+
+    child.stdout.on('data', (chunk) => {
+      stdout += chunk.toString()
+    })
+    child.stderr.on('data', (chunk) => {
+      stderr += chunk.toString()
+    })
+    child.on('error', (err) => {
+      reject(err)
+    })
+    child.on('close', (code) => {
+      resolve({ code: code ?? 1, stdout, stderr })
+    })
   })
 }
 
@@ -362,6 +393,63 @@ export async function rebaseAbort(dir: string): Promise<CheckoutResult> {
   }
 
   return { ok: true, message: 'Rebase aborted' }
+}
+
+/**
+ * Runs an interactive rebase onto `baseHash` with a caller-supplied todo list
+ * (e.g. reordered/squashed/dropped commits). Driven non-interactively by
+ * pointing GIT_SEQUENCE_EDITOR at our todo file and GIT_EDITOR at `true` so
+ * squash/fixup take the default combined message. Conflicts surface like a
+ * normal rebase (resolved via the conflict resolver).
+ */
+export async function interactiveRebase(
+  dir: string,
+  baseHash: string,
+  todoLines: string[]
+): Promise<MergeResult> {
+  let root: string | null
+  try {
+    root = await resolveRepoRoot(dir)
+  } catch (err) {
+    return {
+      ok: false,
+      conflict: false,
+      error: err instanceof Error ? err.message : String(err)
+    }
+  }
+  if (!root) {
+    return { ok: false, conflict: false, error: `Not a Git repository: ${dir}` }
+  }
+
+  const todoPath = join(tmpdir(), `loom-rebase-todo-${process.pid}-${baseHash}.txt`)
+  await writeFile(todoPath, `${todoLines.join('\n')}\n`, 'utf8')
+  // git runs the sequence editor through its shell; forward slashes + cp work
+  // on git-for-windows (MSYS) and POSIX alike.
+  const cpTarget = todoPath.replace(/\\/g, '/')
+  const env: NodeJS.ProcessEnv = {
+    ...process.env,
+    GIT_SEQUENCE_EDITOR: `cp '${cpTarget}'`,
+    GIT_EDITOR: 'true'
+  }
+
+  const result = await runGitWithEnv(['rebase', '-i', baseHash], root, env)
+  try {
+    await rm(todoPath)
+  } catch {
+    // best-effort cleanup
+  }
+
+  if (result.code !== 0) {
+    const output = `${result.stdout}\n${result.stderr}`
+    const conflict = /CONFLICT|could not apply|Resolve all conflicts/i.test(output)
+    return {
+      ok: false,
+      conflict,
+      error: tidy(result.stderr) || tidy(result.stdout) || 'Interactive rebase failed'
+    }
+  }
+
+  return { ok: true, message: tidy(result.stdout) || 'Rebase complete' }
 }
 
 /**

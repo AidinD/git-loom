@@ -9,6 +9,7 @@ import {
   mergeAbort,
   rebase,
   rebaseAbort,
+  interactiveRebase,
   revert,
   revertAbort,
   cherryPick,
@@ -152,6 +153,13 @@ app.whenReady().then(() => {
   ipcMain.handle('git:rebaseAbort', async (_event, repoPath: string) => {
     return rebaseAbort(repoPath)
   })
+
+  ipcMain.handle(
+    'git:interactiveRebase',
+    async (_event, repoPath: string, baseHash: string, todoLines: string[]) => {
+      return interactiveRebase(repoPath, baseHash, todoLines)
+    }
+  )
 
   ipcMain.handle(
     'git:revert',
