@@ -23,8 +23,9 @@ import RebaseModal from './RebaseModal'
 import type { RebaseRow } from './RebaseModal'
 import ContextMenu from './ContextMenu'
 import type { ContextMenuItem } from './ContextMenu'
+import LogPanel from './LogPanel'
 import { LoomContext, useLoom } from './loom-context'
-import type { LoomContextValue, DiffView } from './loom-context'
+import type { LoomContextValue, DiffView, ActivityEntry } from './loom-context'
 
 
 interface ContextMenuState {
@@ -102,13 +103,18 @@ function ReposDockPanel() {
   return <ReposPanel />
 }
 
+function LogDockPanel() {
+  return <LogPanel />
+}
+
 const DOCK_COMPONENTS = {
   changes: ChangesDockPanel,
   graph: GraphDockPanel,
   diff: DiffDockPanel,
   files: FilesDockPanel,
   pr: PrDockPanel,
-  repos: ReposDockPanel
+  repos: ReposDockPanel,
+  log: LogDockPanel
 }
 
 function buildDefaultLayout(api: DockviewApi): void {
@@ -194,6 +200,8 @@ function App() {
   const [lastFetched, setLastFetched] = useState<Date | null>(null)
   const [appVersion, setAppVersion] = useState('')
   const [updateVersion, setUpdateVersion] = useState<string | null>(null)
+  const [activity, setActivity] = useState<ActivityEntry[]>([])
+  const activityId = useRef(0)
   const [changes, setChanges] = useState<FileChange[]>([])
   const [stashes, setStashes] = useState<StashEntry[]>([])
   const [commitSummary, setCommitSummary] = useState('')
@@ -239,6 +247,35 @@ function App() {
     setUndoStack([])
     setRedoStack([])
   }, [repoPath])
+
+  // Mirror info/error messages into the command-history log.
+  useEffect(() => {
+    if (info) {
+      const id = (activityId.current += 1)
+      const time = new Date().toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      })
+      setActivity((list) =>
+        [{ id, time, message: info, kind: 'info' as const }, ...list].slice(0, 200)
+      )
+    }
+  }, [info])
+
+  useEffect(() => {
+    if (error) {
+      const id = (activityId.current += 1)
+      const time = new Date().toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      })
+      setActivity((list) =>
+        [{ id, time, message: error, kind: 'error' as const }, ...list].slice(0, 200)
+      )
+    }
+  }, [error])
 
   useEffect(() => {
     window.api.getVersion().then(setAppVersion)
@@ -395,7 +432,7 @@ function App() {
   }
 
   function showPanel(
-    id: 'graph' | 'changes' | 'diff' | 'files' | 'pr' | 'repos',
+    id: 'graph' | 'changes' | 'diff' | 'files' | 'pr' | 'repos' | 'log',
     title: string
   ): void {
     const api = dockApi.current
@@ -1477,7 +1514,9 @@ function App() {
     onRemoveRepo: handleRemoveRepo,
     onSetRepoGroup: openGroupModal,
     onRenameRepoGroup: openRenameGroup,
-    onReorderRepos: (items) => void handleReorderRepos(items)
+    onReorderRepos: (items) => void handleReorderRepos(items),
+    activity,
+    onClearActivity: () => setActivity([])
   }
 
   return (
@@ -1589,7 +1628,11 @@ function App() {
                 { label: 'Changes', onClick: () => showPanel('changes', 'Changes') },
                 { label: 'Files', onClick: () => showPanel('files', 'Files') },
                 { label: 'Diff', onClick: () => showPanel('diff', 'Diff') },
-                { label: 'Pull requests', onClick: () => showPanel('pr', 'Pull requests') }
+                { label: 'Pull requests', onClick: () => showPanel('pr', 'Pull requests') },
+                {
+                  label: 'Command history',
+                  onClick: () => showPanel('log', 'Command history')
+                }
               ]
             })
           }}

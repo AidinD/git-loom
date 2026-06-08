@@ -2,6 +2,13 @@ import { createContext, useContext } from 'react'
 import type { Commit, FileChange, StashEntry, RepoEntry } from '../../shared/types'
 import type { ContextMenuItem } from './ContextMenu'
 
+export interface ActivityEntry {
+  id: number
+  time: string
+  message: string
+  kind: 'info' | 'error'
+}
+
 export interface DiffView {
   title: string
   subtitle: string
@@ -80,6 +87,10 @@ export interface LoomContextValue {
   onSetRepoGroup: (repo: RepoEntry) => void
   onRenameRepoGroup: (oldName: string) => void
   onReorderRepos: (items: { path: string; group: string }[]) => void
+
+  // Command/activity history
+  activity: ActivityEntry[]
+  onClearActivity: () => void
 }
 
 export const LoomContext = createContext<LoomContextValue | null>(null)
