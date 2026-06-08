@@ -179,7 +179,7 @@ function DiffPanel() {
     sections.find((section) => section.file === selectedDiffFile) ?? sections[0] ?? null
 
   const split = stageable ? splitHunks(diffView.text) : null
-  const stageLabel = diffView.staged ? 'Unstage hunk' : 'Stage hunk'
+  const stageLabel = diffView.staged ? '− Unstage hunk' : '+ Stage hunk'
 
   function renderLines(lines: ReturnType<typeof parseDiff>) {
     return mode === 'unified' ? <UnifiedView lines={lines} /> : <SplitView lines={lines} />
@@ -221,8 +221,9 @@ function DiffPanel() {
           split.hunks.map((hunk, index) => (
             <div key={index} className="diff-hunk">
               <div className="diff-hunk-bar">
+                <span className="diff-hunk-label">Hunk {index + 1}</span>
                 <button
-                  className="hunk-stage-btn"
+                  className={`hunk-stage-btn${diffView.staged ? ' unstage' : ''}`}
                   onClick={() =>
                     onStageHunk(
                       diffView.file!,
