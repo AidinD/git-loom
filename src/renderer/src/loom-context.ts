@@ -61,6 +61,8 @@ export interface LoomContextValue {
   onCommit: () => void
   onShowDiff: (file: string, staged: boolean) => void
   onStageHunk: (file: string, staged: boolean, patch: string) => void
+  onFileHistory: (file: string) => void
+  onBlame: (file: string) => void
   onStash: () => void
   onPopStash: (ref: string) => void
   onDropStash: (ref: string) => void

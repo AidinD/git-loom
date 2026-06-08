@@ -16,7 +16,10 @@ import type {
   BranchesResult,
   AheadBehind,
   ConflictsResult,
-  ConflictFileResult
+  ConflictFileResult,
+  FileHistoryResult,
+  BlameResult,
+  BlameLine
 } from '../shared/types'
 
 const FIELD = '\x1f'
@@ -402,10 +405,17 @@ export async function rebaseAbort(dir: string): Promise<CheckoutResult> {
  * squash/fixup take the default combined message. Conflicts surface like a
  * normal rebase (resolved via the conflict resolver).
  */
+export interface RebaseTodoRow {
+  action: 'pick' | 'reword' | 'squash' | 'fixup' | 'drop'
+  hash: string
+  /** New message, for `reword` rows. */
+  message?: string
+}
+
 export async function interactiveRebase(
   dir: string,
   baseHash: string,
-  todoLines: string[]
+  rows: RebaseTodoRow[]
 ): Promise<MergeResult> {
   let root: string | null
   try {
@@ -421,22 +431,58 @@ export async function interactiveRebase(
     return { ok: false, conflict: false, error: `Not a Git repository: ${dir}` }
   }
 
-  const todoPath = join(tmpdir(), `loom-rebase-todo-${process.pid}-${baseHash}.txt`)
-  await writeFile(todoPath, `${todoLines.join('\n')}\n`, 'utf8')
-  // git runs the sequence editor through its shell; forward slashes + cp work
-  // on git-for-windows (MSYS) and POSIX alike.
-  const cpTarget = todoPath.replace(/\\/g, '/')
+  const stamp = `${process.pid}-${baseHash.slice(0, 7)}`
+  const todoPath = join(tmpdir(), `loom-rebase-todo-${stamp}.txt`)
+  const todo = rows.map((row) => `${row.action} ${row.hash}`).join('\n')
+  await writeFile(todoPath, `${todo}\n`, 'utf8')
+  const fwd = (p: string): string => p.replace(/\\/g, '/')
+
   const env: NodeJS.ProcessEnv = {
     ...process.env,
-    GIT_SEQUENCE_EDITOR: `cp '${cpTarget}'`,
+    GIT_SEQUENCE_EDITOR: `cp '${fwd(todoPath)}'`,
     GIT_EDITOR: 'true'
   }
 
+  // reword/squash open the commit-message editor (in todo order). Build a queue
+  // helper that supplies each reword's message and accepts the default for
+  // squash. fixup/pick/drop never open the editor. Only needed if any reword.
+  const cleanup: string[] = [todoPath]
+  const hasReword = rows.some((row) => row.action === 'reword')
+  if (hasReword) {
+    const editorRows = rows.filter(
+      (row) => row.action === 'reword' || row.action === 'squash'
+    )
+    const typesPath = join(tmpdir(), `loom-rebase-types-${stamp}.txt`)
+    const ctrPath = join(tmpdir(), `loom-rebase-ctr-${stamp}.txt`)
+    const helperPath = join(tmpdir(), `loom-rebase-ed-${stamp}.sh`)
+    await writeFile(typesPath, `${editorRows.map((row) => row.action).join('\n')}\n`, 'utf8')
+    cleanup.push(typesPath, ctrPath, helperPath)
+    for (let i = 0; i < editorRows.length; i++) {
+      if (editorRows[i].action === 'reword') {
+        const msgPath = join(tmpdir(), `loom-rebase-msg-${stamp}-${i}.txt`)
+        await writeFile(msgPath, `${editorRows[i].message ?? ''}\n`, 'utf8')
+        cleanup.push(msgPath)
+      }
+    }
+    const helper = [
+      '#!/bin/sh',
+      `n=$(cat '${fwd(ctrPath)}' 2>/dev/null || echo 0)`,
+      `t=$(sed -n "$((n+1))p" '${fwd(typesPath)}')`,
+      `if [ "$t" = reword ]; then cp '${fwd(tmpdir().replace(/\\/g, '/'))}/loom-rebase-msg-${stamp}-'"$n"'.txt' "$1"; fi`,
+      `echo $((n+1)) > '${fwd(ctrPath)}'`,
+      ''
+    ].join('\n')
+    await writeFile(helperPath, helper, 'utf8')
+    env.GIT_EDITOR = `sh '${fwd(helperPath)}'`
+  }
+
   const result = await runGitWithEnv(['rebase', '-i', baseHash], root, env)
-  try {
-    await rm(todoPath)
-  } catch {
-    // best-effort cleanup
+  for (const path of cleanup) {
+    try {
+      await rm(path)
+    } catch {
+      // best-effort cleanup
+    }
   }
 
   if (result.code !== 0) {
@@ -830,6 +876,81 @@ export async function diff(
   }
 
   return { ok: true, text: result.stdout }
+}
+
+/**
+ * Applies a patch to the index (staging area). Used for hunk/line staging:
+ * the patch is a reconstructed single-hunk diff. `reverse` unstages instead.
+ */
+export async function fileHistory(
+  dir: string,
+  file: string
+): Promise<FileHistoryResult> {
+  let root: string | null
+  try {
+    root = await resolveRepoRoot(dir)
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) }
+  }
+  if (!root) {
+    return { ok: false, error: `Not a Git repository: ${dir}` }
+  }
+
+  const result = await runGit(
+    ['log', '--follow', '--max-count=200', `--pretty=format:${FORMAT}`, '--', file],
+    root
+  )
+  if (result.code !== 0) {
+    return {
+      ok: false,
+      error: result.stderr.trim() || `git exited with code ${result.code}`
+    }
+  }
+  return { ok: true, commits: parseLog(result.stdout) }
+}
+
+/** Per-line authorship (git blame) for a file at HEAD. */
+export async function blame(dir: string, file: string): Promise<BlameResult> {
+  let root: string | null
+  try {
+    root = await resolveRepoRoot(dir)
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) }
+  }
+  if (!root) {
+    return { ok: false, error: `Not a Git repository: ${dir}` }
+  }
+
+  const result = await runGit(['blame', '--porcelain', '--', file], root)
+  if (result.code !== 0) {
+    return {
+      ok: false,
+      error: result.stderr.trim() || `git exited with code ${result.code}`
+    }
+  }
+
+  const lines: BlameLine[] = []
+  const authorByHash = new Map<string, string>()
+  let currentHash = ''
+  for (const raw of result.stdout.split('\n')) {
+    const headerMatch = raw.match(/^([0-9a-f]{40}) \d+ \d+/)
+    if (headerMatch) {
+      currentHash = headerMatch[1]
+      continue
+    }
+    if (raw.startsWith('author ')) {
+      authorByHash.set(currentHash, raw.slice('author '.length))
+      continue
+    }
+    if (raw.startsWith('\t')) {
+      lines.push({
+        hash: currentHash,
+        author: authorByHash.get(currentHash) ?? '',
+        text: raw.slice(1)
+      })
+    }
+  }
+  return { ok: true, lines }
 }
 
 /**

@@ -7,7 +7,8 @@ import type {
   FileChange,
   RepoEntry,
   StashEntry,
-  GithubRepo
+  GithubRepo,
+  BlameLine
 } from '../../shared/types'
 import ChangesPanel from './ChangesPanel'
 import DiffPanel from './DiffPanel'
@@ -70,6 +71,8 @@ function ChangesDockPanel() {
       onStashMany={l.onStashMany}
       onCommit={l.onCommit}
       onShowDiff={l.onShowDiff}
+      onFileHistory={l.onFileHistory}
+      onBlame={l.onBlame}
       onStash={l.onStash}
       onPopStash={l.onPopStash}
       onDropStash={l.onDropStash}
@@ -178,6 +181,14 @@ function App() {
   const [conflictCount, setConflictCount] = useState(0)
   const [rebaseBase, setRebaseBase] = useState<string | null>(null)
   const [rebaseRows, setRebaseRows] = useState<RebaseRow[]>([])
+  const [fileHistoryView, setFileHistoryView] = useState<{
+    file: string
+    commits: Commit[]
+  } | null>(null)
+  const [blameView, setBlameView] = useState<{
+    file: string
+    lines: BlameLine[]
+  } | null>(null)
   const [lastFetched, setLastFetched] = useState<Date | null>(null)
   const [changes, setChanges] = useState<FileChange[]>([])
   const [stashes, setStashes] = useState<StashEntry[]>([])
@@ -255,6 +266,14 @@ function App() {
         setRebaseBase(null)
         return
       }
+      if (fileHistoryView) {
+        setFileHistoryView(null)
+        return
+      }
+      if (blameView) {
+        setBlameView(null)
+        return
+      }
       if (cloneOpen) {
         setCloneOpen(false)
         return
@@ -290,6 +309,8 @@ function App() {
     groupModalRepo,
     groupRenameOld,
     rebaseBase,
+    fileHistoryView,
+    blameView,
     cloneOpen,
     newBranchOpen,
     renameTarget,
@@ -594,8 +615,11 @@ function App() {
     }
     setError(null)
     setInfo(null)
-    const todoLines = rows.map((row) => `${row.action} ${row.hash}`)
-    const result = await window.api.interactiveRebase(repoPath, base, todoLines)
+    const result = await window.api.interactiveRebase(
+      repoPath,
+      base,
+      rows.map((row) => ({ action: row.action, hash: row.hash, message: row.message }))
+    )
     await loadLog(repoPath)
     if (result.ok) {
       setInfo(result.message)
@@ -605,6 +629,32 @@ function App() {
       if (result.conflict) {
         await enterConflict('rebase')
       }
+    }
+  }
+
+  async function openFileHistory(file: string): Promise<void> {
+    if (!repoPath) {
+      return
+    }
+    setError(null)
+    const result = await window.api.fileHistory(repoPath, file)
+    if (result.ok) {
+      setFileHistoryView({ file, commits: result.commits })
+    } else {
+      setError(result.error)
+    }
+  }
+
+  async function openBlame(file: string): Promise<void> {
+    if (!repoPath) {
+      return
+    }
+    setError(null)
+    const result = await window.api.blame(repoPath, file)
+    if (result.ok) {
+      setBlameView({ file, lines: result.lines })
+    } else {
+      setError(result.error)
     }
   }
 
@@ -1305,6 +1355,8 @@ function App() {
     onCommit: handleCommit,
     onShowDiff: handleShowDiff,
     onStageHunk: handleStageHunk,
+    onFileHistory: (file) => void openFileHistory(file),
+    onBlame: (file) => void openBlame(file),
     onStash: handleStash,
     onPopStash: handlePopStash,
     onDropStash: handleDropStash,
@@ -1712,6 +1764,79 @@ function App() {
           onCancel={() => setRebaseBase(null)}
           onStart={(rows) => void doInteractiveRebase(rows)}
         />
+      )}
+
+      {fileHistoryView && (
+        <div className="modal-backdrop" onClick={() => setFileHistoryView(null)}>
+          <div
+            className="modal conflict-modal"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h3 className="conflict-title">File history</h3>
+            <p className="conflict-sub">{fileHistoryView.file}</p>
+            <div className="rebase-list">
+              {fileHistoryView.commits.length === 0 && (
+                <div className="empty">No history for this file.</div>
+              )}
+              {fileHistoryView.commits.map((commit) => (
+                <div
+                  key={commit.hash}
+                  className="fh-row"
+                  title={commit.subject}
+                  onClick={() => {
+                    handleShowCommit(commit.hash, commit.subject)
+                    setFileHistoryView(null)
+                  }}
+                >
+                  <code className="rebase-hash">{commit.hash.slice(0, 7)}</code>
+                  <span className="fh-subject">{commit.subject}</span>
+                  <span className="fh-author">{commit.authorName}</span>
+                </div>
+              ))}
+            </div>
+            <div className="modal-actions">
+              <button className="secondary" onClick={() => setFileHistoryView(null)}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {blameView && (
+        <div className="modal-backdrop" onClick={() => setBlameView(null)}>
+          <div
+            className="modal conflict-modal"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h3 className="conflict-title">Blame</h3>
+            <p className="conflict-sub">{blameView.file}</p>
+            <div className="blame-view">
+              {blameView.lines.map((line, index) => (
+                <div key={index} className="blame-row">
+                  <code
+                    className="blame-hash"
+                    title={`${line.hash.slice(0, 7)} · ${line.author}`}
+                    onClick={() => {
+                      handleShowCommit(line.hash, blameView.file)
+                      setBlameView(null)
+                    }}
+                  >
+                    {line.hash.slice(0, 7)}
+                  </code>
+                  <span className="blame-author">{line.author}</span>
+                  <span className="blame-num">{index + 1}</span>
+                  <span className="blame-text">{line.text || ' '}</span>
+                </div>
+              ))}
+            </div>
+            <div className="modal-actions">
+              <button className="secondary" onClick={() => setBlameView(null)}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {conflictKind && repoPath && showConflict && (

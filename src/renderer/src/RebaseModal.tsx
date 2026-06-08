@@ -1,11 +1,13 @@
 import { useState } from 'react'
 
-export type RebaseAction = 'pick' | 'squash' | 'fixup' | 'drop'
+export type RebaseAction = 'pick' | 'reword' | 'squash' | 'fixup' | 'drop'
 
 export interface RebaseRow {
   hash: string
   subject: string
   action: RebaseAction
+  /** New message for `reword` rows. */
+  message?: string
 }
 
 interface Props {
@@ -17,6 +19,7 @@ interface Props {
 
 const ACTIONS: { value: RebaseAction; label: string; hint: string }[] = [
   { value: 'pick', label: 'Pick', hint: 'Keep this commit' },
+  { value: 'reword', label: 'Reword', hint: 'Keep the commit, edit its message' },
   { value: 'squash', label: 'Squash', hint: 'Merge into the commit above (keep both messages)' },
   { value: 'fixup', label: 'Fixup', hint: 'Merge into the commit above (discard this message)' },
   { value: 'drop', label: 'Drop', hint: 'Remove this commit' }
@@ -43,7 +46,21 @@ function RebaseModal({ baseHash, rows, onCancel, onStart }: Props) {
 
   function setAction(index: number, action: RebaseAction): void {
     setItems((current) =>
-      current.map((row, i) => (i === index ? { ...row, action } : row))
+      current.map((row, i) => {
+        if (i !== index) {
+          return row
+        }
+        // Seed the reword message with the current subject the first time.
+        const message =
+          action === 'reword' && row.message === undefined ? row.subject : row.message
+        return { ...row, action, message }
+      })
+    )
+  }
+
+  function setMessage(index: number, message: string): void {
+    setItems((current) =>
+      current.map((row, i) => (i === index ? { ...row, message } : row))
     )
   }
 
@@ -70,12 +87,6 @@ function RebaseModal({ baseHash, rows, onCancel, onStart }: Props) {
               className={`rebase-row${row.action === 'drop' ? ' dropped' : ''}${
                 dropIndex === index ? ' drop-before' : ''
               }${dragIndex === index ? ' dragging' : ''}`}
-              draggable
-              onDragStart={() => setDragIndex(index)}
-              onDragEnd={() => {
-                setDragIndex(null)
-                setDropIndex(null)
-              }}
               onDragOver={(event) => {
                 event.preventDefault()
                 setDropIndex(index)
@@ -89,7 +100,18 @@ function RebaseModal({ baseHash, rows, onCancel, onStart }: Props) {
                 setDropIndex(null)
               }}
             >
-              <span className="rebase-grip">⠿</span>
+              <span
+                className="rebase-grip"
+                title="Drag to reorder"
+                draggable
+                onDragStart={() => setDragIndex(index)}
+                onDragEnd={() => {
+                  setDragIndex(null)
+                  setDropIndex(null)
+                }}
+              >
+                ⠿
+              </span>
               <select
                 className="rebase-action"
                 value={row.action}
@@ -109,7 +131,17 @@ function RebaseModal({ baseHash, rows, onCancel, onStart }: Props) {
                 ))}
               </select>
               <code className="rebase-hash">{row.hash.slice(0, 7)}</code>
-              <span className="rebase-subject">{row.subject}</span>
+              {row.action === 'reword' ? (
+                <input
+                  className="rebase-message"
+                  value={row.message ?? ''}
+                  placeholder="New commit message"
+                  onChange={(event) => setMessage(index, event.target.value)}
+                  onClick={(event) => event.stopPropagation()}
+                />
+              ) : (
+                <span className="rebase-subject">{row.subject}</span>
+              )}
             </div>
           ))}
         </div>

@@ -10,6 +10,7 @@ import {
   rebase,
   rebaseAbort,
   interactiveRebase,
+  type RebaseTodoRow,
   revert,
   revertAbort,
   cherryPick,
@@ -21,6 +22,8 @@ import {
   stage,
   unstage,
   applyPatch,
+  fileHistory,
+  blame,
   commit,
   showCommit,
   remoteUrl,
@@ -156,8 +159,8 @@ app.whenReady().then(() => {
 
   ipcMain.handle(
     'git:interactiveRebase',
-    async (_event, repoPath: string, baseHash: string, todoLines: string[]) => {
-      return interactiveRebase(repoPath, baseHash, todoLines)
+    async (_event, repoPath: string, baseHash: string, rows: RebaseTodoRow[]) => {
+      return interactiveRebase(repoPath, baseHash, rows)
     }
   )
 
@@ -281,6 +284,14 @@ app.whenReady().then(() => {
       return applyPatch(repoPath, patch, reverse)
     }
   )
+
+  ipcMain.handle('git:fileHistory', async (_event, repoPath: string, file: string) => {
+    return fileHistory(repoPath, file)
+  })
+
+  ipcMain.handle('git:blame', async (_event, repoPath: string, file: string) => {
+    return blame(repoPath, file)
+  })
 
   ipcMain.handle('git:commit', async (_event, repoPath: string, message: string) => {
     return commit(repoPath, message)

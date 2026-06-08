@@ -13,7 +13,9 @@ import type {
   BranchesResult,
   AheadBehind,
   ConflictsResult,
-  ConflictFileResult
+  ConflictFileResult,
+  FileHistoryResult,
+  BlameResult
 } from '../shared/types'
 
 const api = {
@@ -33,9 +35,9 @@ const api = {
   interactiveRebase: (
     repoPath: string,
     baseHash: string,
-    todoLines: string[]
+    rows: { action: string; hash: string; message?: string }[]
   ): Promise<MergeResult> =>
-    ipcRenderer.invoke('git:interactiveRebase', repoPath, baseHash, todoLines),
+    ipcRenderer.invoke('git:interactiveRebase', repoPath, baseHash, rows),
   revert: (
     repoPath: string,
     hash: string,
@@ -102,6 +104,10 @@ const api = {
     patch: string,
     reverse: boolean
   ): Promise<CheckoutResult> => ipcRenderer.invoke('git:applyPatch', repoPath, patch, reverse),
+  fileHistory: (repoPath: string, file: string): Promise<FileHistoryResult> =>
+    ipcRenderer.invoke('git:fileHistory', repoPath, file),
+  blame: (repoPath: string, file: string): Promise<BlameResult> =>
+    ipcRenderer.invoke('git:blame', repoPath, file),
   commit: (repoPath: string, message: string): Promise<CheckoutResult> =>
     ipcRenderer.invoke('git:commit', repoPath, message),
   clone: (url: string, parentDir: string): Promise<CloneResult> =>

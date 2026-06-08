@@ -12,7 +12,9 @@ import type {
   BranchesResult,
   AheadBehind,
   ConflictsResult,
-  ConflictFileResult
+  ConflictFileResult,
+  FileHistoryResult,
+  BlameResult
 } from '../shared/types'
 
 export interface LoomApi {
@@ -26,7 +28,7 @@ export interface LoomApi {
   interactiveRebase: (
     repoPath: string,
     baseHash: string,
-    todoLines: string[]
+    rows: { action: string; hash: string; message?: string }[]
   ) => Promise<MergeResult>
   revert: (repoPath: string, hash: string, noCommit: boolean) => Promise<MergeResult>
   revertAbort: (repoPath: string) => Promise<CheckoutResult>
@@ -69,6 +71,8 @@ export interface LoomApi {
     patch: string,
     reverse: boolean
   ) => Promise<CheckoutResult>
+  fileHistory: (repoPath: string, file: string) => Promise<FileHistoryResult>
+  blame: (repoPath: string, file: string) => Promise<BlameResult>
   commit: (repoPath: string, message: string) => Promise<CheckoutResult>
   clone: (url: string, parentDir: string) => Promise<CloneResult>
   listGithubRepos: () => Promise<GithubReposResult>

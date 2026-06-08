@@ -24,6 +24,8 @@ interface Props {
   onStashMany: (files: string[]) => void
   onCommit: () => void
   onShowDiff: (file: string, staged: boolean) => void
+  onFileHistory: (file: string) => void
+  onBlame: (file: string) => void
   onStash: () => void
   onPopStash: (ref: string) => void
   onDropStash: (ref: string) => void
@@ -93,6 +95,8 @@ function ChangesPanel({
   onStashMany,
   onCommit,
   onShowDiff,
+  onFileHistory,
+  onBlame,
   onStash,
   onPopStash,
   onDropStash,
@@ -207,6 +211,8 @@ function ChangesPanel({
     const items: ContextMenuItem[] = []
     if (count === 1) {
       items.push({ label: 'Show diff', onClick: () => onShowDiff(path, staged) })
+      items.push({ label: 'File history', onClick: () => onFileHistory(path) })
+      items.push({ label: 'Blame', onClick: () => onBlame(path) })
     }
     if (staged) {
       items.push({
@@ -413,7 +419,16 @@ function ChangesPanel({
         </h2>
         <ul className="file-list">
           {unstaged.map((file, index) => renderRow(file, 'unstaged', index, unstaged))}
-          {unstaged.length === 0 && <li className="empty">No changes</li>}
+          {unstaged.length === 0 && staged.length === 0 && (
+            <li className="empty empty-clean">
+              ✓ No local changes — working tree clean.
+              <br />
+              Edit files, or use the ⋯ menu to open the repo.
+            </li>
+          )}
+          {unstaged.length === 0 && staged.length > 0 && (
+            <li className="empty">No unstaged changes</li>
+          )}
         </ul>
       </div>
 
