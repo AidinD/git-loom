@@ -49,6 +49,11 @@ export interface LoomApi {
   stageFiles: (repoPath: string, files: string[]) => Promise<CheckoutResult>
   unstageFiles: (repoPath: string, files: string[]) => Promise<CheckoutResult>
   unstage: (repoPath: string, file: string) => Promise<CheckoutResult>
+  applyPatch: (
+    repoPath: string,
+    patch: string,
+    reverse: boolean
+  ) => Promise<CheckoutResult>
   commit: (repoPath: string, message: string) => Promise<CheckoutResult>
   clone: (url: string, parentDir: string) => Promise<CloneResult>
   listGithubRepos: () => Promise<GithubReposResult>

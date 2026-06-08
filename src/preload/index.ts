@@ -80,6 +80,11 @@ const api = {
     ipcRenderer.invoke('git:unstageFiles', repoPath, files),
   unstage: (repoPath: string, file: string): Promise<CheckoutResult> =>
     ipcRenderer.invoke('git:unstage', repoPath, file),
+  applyPatch: (
+    repoPath: string,
+    patch: string,
+    reverse: boolean
+  ): Promise<CheckoutResult> => ipcRenderer.invoke('git:applyPatch', repoPath, patch, reverse),
   commit: (repoPath: string, message: string): Promise<CheckoutResult> =>
     ipcRenderer.invoke('git:commit', repoPath, message),
   clone: (url: string, parentDir: string): Promise<CloneResult> =>

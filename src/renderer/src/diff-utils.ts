@@ -200,6 +200,50 @@ export function inlineDiff(
   return { left, right }
 }
 
+export interface SplitDiff {
+  /** The `diff --git` / `---` / `+++` header lines, shared by every hunk. */
+  fileHeader: string
+  /** Each hunk's raw text, starting at its `@@` line. */
+  hunks: string[]
+}
+
+/**
+ * Splits a single file's raw diff into its shared header and individual hunks,
+ * so a one-hunk patch can be reconstructed for `git apply --cached`.
+ */
+export function splitHunks(rawDiff: string): SplitDiff {
+  const lines = rawDiff.split('\n')
+  const headerLines: string[] = []
+  const hunks: string[] = []
+  let current: string[] | null = null
+
+  for (const line of lines) {
+    if (line.startsWith('@@')) {
+      if (current) {
+        hunks.push(current.join('\n'))
+      }
+      current = [line]
+      continue
+    }
+    if (current) {
+      current.push(line)
+    } else {
+      headerLines.push(line)
+    }
+  }
+  if (current) {
+    hunks.push(current.join('\n'))
+  }
+
+  return { fileHeader: headerLines.join('\n'), hunks }
+}
+
+/** Builds a `git apply` patch for a single hunk from a SplitDiff. */
+export function hunkPatch(split: SplitDiff, hunk: string): string {
+  // Trailing newline matters: git apply rejects a patch without it.
+  return `${split.fileHeader}\n${hunk}\n`
+}
+
 export function countChanges(lines: DiffLine[]): { add: number; del: number } {
   let add = 0
   let del = 0

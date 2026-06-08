@@ -69,6 +69,38 @@ function runGit(args: string[], cwd: string): Promise<GitOutput> {
   })
 }
 
+/** Like runGit, but writes `input` to git's stdin (e.g. a patch for apply). */
+function runGitWithInput(
+  args: string[],
+  cwd: string,
+  input: string
+): Promise<GitOutput> {
+  return new Promise((resolve, reject) => {
+    const child = spawn('git', ['-c', 'advice.detachedHead=false', ...args], {
+      cwd
+    })
+
+    let stdout = ''
+    let stderr = ''
+
+    child.stdout.on('data', (chunk) => {
+      stdout += chunk.toString()
+    })
+    child.stderr.on('data', (chunk) => {
+      stderr += chunk.toString()
+    })
+    child.on('error', (err) => {
+      reject(err)
+    })
+    child.on('close', (code) => {
+      resolve({ code: code ?? 1, stdout, stderr })
+    })
+
+    child.stdin.write(input)
+    child.stdin.end()
+  })
+}
+
 /**
  * Resolves the repository root for a directory, or null when the directory is
  * not inside a git work tree. Lets us accept any subdirectory of a repo and
@@ -648,6 +680,41 @@ export async function diff(
   }
 
   return { ok: true, text: result.stdout }
+}
+
+/**
+ * Applies a patch to the index (staging area). Used for hunk/line staging:
+ * the patch is a reconstructed single-hunk diff. `reverse` unstages instead.
+ */
+export async function applyPatch(
+  dir: string,
+  patch: string,
+  reverse: boolean
+): Promise<CheckoutResult> {
+  let root: string | null
+  try {
+    root = await resolveRepoRoot(dir)
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) }
+  }
+
+  if (!root) {
+    return { ok: false, error: `Not a Git repository: ${dir}` }
+  }
+
+  const args = ['apply', '--cached', '--whitespace=nowarn']
+  if (reverse) {
+    args.push('--reverse')
+  }
+  const result = await runGitWithInput(args, root, patch)
+  if (result.code !== 0) {
+    return {
+      ok: false,
+      error: tidy(result.stderr) || `git apply failed (code ${result.code})`
+    }
+  }
+
+  return { ok: true, message: reverse ? 'Unstaged' : 'Staged' }
 }
 
 /** Lists local branches and the current branch ("" when detached). */

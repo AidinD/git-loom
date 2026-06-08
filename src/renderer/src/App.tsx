@@ -823,13 +823,35 @@ function App() {
       setDiffView({
         title: file,
         subtitle: staged ? 'staged' : 'unstaged',
-        text: result.text
+        text: result.text,
+        file,
+        staged
       })
       setSelectedDiffFile(null)
       showPanel('diff', 'Diff')
     } else {
       setError(result.error)
     }
+  }
+
+  /** Stages or unstages a single hunk by applying its reconstructed patch. */
+  async function handleStageHunk(
+    file: string,
+    staged: boolean,
+    patch: string
+  ): Promise<void> {
+    if (!repoPath) {
+      return
+    }
+    // Staged diffs are unstaged (reverse); unstaged diffs are staged.
+    const result = await window.api.applyPatch(repoPath, patch, staged)
+    if (!result.ok) {
+      setError(result.error)
+      return
+    }
+    await loadStatus(repoPath)
+    // Refresh the same diff so the applied hunk disappears from the view.
+    await handleShowDiff(file, staged)
   }
 
   async function handleCheckoutPr(number: number): Promise<void> {
@@ -1102,6 +1124,7 @@ function App() {
     onUnstageAll: handleUnstageAll,
     onCommit: handleCommit,
     onShowDiff: handleShowDiff,
+    onStageHunk: handleStageHunk,
     onStash: handleStash,
     onPopStash: handlePopStash,
     onDropStash: handleDropStash,

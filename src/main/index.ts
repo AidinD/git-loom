@@ -15,6 +15,7 @@ import {
   diff,
   stage,
   unstage,
+  applyPatch,
   commit,
   showCommit,
   remoteUrl,
@@ -237,6 +238,13 @@ app.whenReady().then(() => {
   ipcMain.handle('git:unstage', async (_event, repoPath: string, file: string) => {
     return unstage(repoPath, file)
   })
+
+  ipcMain.handle(
+    'git:applyPatch',
+    async (_event, repoPath: string, patch: string, reverse: boolean) => {
+      return applyPatch(repoPath, patch, reverse)
+    }
+  )
 
   ipcMain.handle('git:commit', async (_event, repoPath: string, message: string) => {
     return commit(repoPath, message)

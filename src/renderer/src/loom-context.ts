@@ -6,6 +6,9 @@ export interface DiffView {
   title: string
   subtitle: string
   text: string
+  /** Set for working-tree diffs that support hunk staging. */
+  file?: string
+  staged?: boolean
 }
 
 /**
@@ -54,6 +57,7 @@ export interface LoomContextValue {
   onStashMany: (files: string[]) => void
   onCommit: () => void
   onShowDiff: (file: string, staged: boolean) => void
+  onStageHunk: (file: string, staged: boolean, patch: string) => void
   onStash: () => void
   onPopStash: (ref: string) => void
   onDropStash: (ref: string) => void

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useLoom } from './loom-context'
-import { parseDiff, groupByFile, toSplit, inlineDiff } from './diff-utils'
+import { parseDiff, groupByFile, toSplit, inlineDiff, splitHunks, hunkPatch } from './diff-utils'
 import type { DiffLine, InlineSeg } from './diff-utils'
 
 /** Renders inline word-diff segments, or plain text when no segments exist. */
@@ -156,7 +156,7 @@ function SplitView({ lines }: { lines: DiffLine[] }) {
 }
 
 function DiffPanel() {
-  const { diffView, selectedDiffFile } = useLoom()
+  const { diffView, selectedDiffFile, onStageHunk } = useLoom()
   const [mode, setMode] = useState<'unified' | 'split'>(
     () => (localStorage.getItem('loom.diffMode') as 'unified' | 'split') || 'split'
   )
@@ -171,9 +171,19 @@ function DiffPanel() {
   }
 
   const hasContent = diffView.text.trim().length > 0
+  // Working-tree diffs (a single file with staged/unstaged scope) support
+  // per-hunk staging; commit diffs do not.
+  const stageable = !!diffView.file && diffView.staged !== undefined && hasContent
   const sections = hasContent ? groupByFile(parseDiff(diffView.text)) : []
   const active =
     sections.find((section) => section.file === selectedDiffFile) ?? sections[0] ?? null
+
+  const split = stageable ? splitHunks(diffView.text) : null
+  const stageLabel = diffView.staged ? 'Unstage hunk' : 'Stage hunk'
+
+  function renderLines(lines: ReturnType<typeof parseDiff>) {
+    return mode === 'unified' ? <UnifiedView lines={lines} /> : <SplitView lines={lines} />
+  }
 
   return (
     <div className="diff-pane">
@@ -204,12 +214,31 @@ function DiffPanel() {
             No textual diff (binary, untracked, or no changes).
           </div>
         )}
+
         {active &&
-          (mode === 'unified' ? (
-            <UnifiedView lines={active.lines} />
-          ) : (
-            <SplitView lines={active.lines} />
+          stageable &&
+          split &&
+          split.hunks.map((hunk, index) => (
+            <div key={index} className="diff-hunk">
+              <div className="diff-hunk-bar">
+                <button
+                  className="hunk-stage-btn"
+                  onClick={() =>
+                    onStageHunk(
+                      diffView.file!,
+                      diffView.staged!,
+                      hunkPatch(split, hunk)
+                    )
+                  }
+                >
+                  {stageLabel}
+                </button>
+              </div>
+              {renderLines(parseDiff(hunk))}
+            </div>
           ))}
+
+        {active && !stageable && renderLines(active.lines)}
       </div>
     </div>
   )
