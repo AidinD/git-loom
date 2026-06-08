@@ -117,6 +117,78 @@ function ChangesPanel({
   const [dragFrom, setDragFrom] = useState<Section | null>(null)
   const [dragStashRef, setDragStashRef] = useState<string | null>(null)
   const [dragZone, setDragZone] = useState<'staged' | 'unstaged' | 'stash' | null>(null)
+  // Marquee (rubber-band) selection, started in a list's empty area.
+  const [marqueeStart, setMarqueeStart] = useState<{
+    section: Section
+    x0: number
+    y0: number
+    ul: HTMLUListElement
+  } | null>(null)
+  const [marqueeRect, setMarqueeRect] = useState<{
+    left: number
+    top: number
+    width: number
+    height: number
+  } | null>(null)
+
+  useEffect(() => {
+    if (!marqueeStart) {
+      return
+    }
+    function onMove(event: MouseEvent): void {
+      const start = marqueeStart!
+      const top = Math.min(start.y0, event.clientY)
+      const bottom = Math.max(start.y0, event.clientY)
+      setMarqueeRect({
+        left: Math.min(start.x0, event.clientX),
+        top,
+        width: Math.abs(event.clientX - start.x0),
+        height: bottom - top
+      })
+      const paths: string[] = []
+      start.ul.querySelectorAll('[data-path]').forEach((el) => {
+        const r = el.getBoundingClientRect()
+        if (r.bottom >= top && r.top <= bottom) {
+          const path = el.getAttribute('data-path')
+          if (path) {
+            paths.push(path)
+          }
+        }
+      })
+      setSelected(paths)
+      setSection(start.section)
+      setAnchor(null)
+    }
+    function onUp(): void {
+      setMarqueeStart(null)
+      setMarqueeRect(null)
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+    return () => {
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+  }, [marqueeStart])
+
+  function startMarquee(
+    event: ReactMouseEvent<HTMLUListElement>,
+    sectionName: Section
+  ): void {
+    // Only when pressing the empty list area, not a row, with the left button.
+    if (event.target !== event.currentTarget || event.button !== 0) {
+      return
+    }
+    event.preventDefault()
+    setMarqueeStart({
+      section: sectionName,
+      x0: event.clientX,
+      y0: event.clientY,
+      ul: event.currentTarget
+    })
+    setSelected([])
+    setSection(sectionName)
+  }
 
   useEffect(() => {
     localStorage.setItem('loom.stagedHeight', String(stagedHeight))
@@ -292,6 +364,7 @@ function ChangesPanel({
     return (
       <li
         key={`${sectionName}-${file.path}`}
+        data-path={file.path}
         className={`file${isSelected(sectionName, file.path) ? ' selected' : ''}`}
         draggable
         onDragStart={(event) => {
@@ -374,6 +447,17 @@ function ChangesPanel({
 
   return (
     <aside className="sidebar">
+      {marqueeRect && (
+        <div
+          className="marquee"
+          style={{
+            left: marqueeRect.left,
+            top: marqueeRect.top,
+            width: marqueeRect.width,
+            height: marqueeRect.height
+          }}
+        />
+      )}
       <div
         className={`sidebar-section sized${dragZone === 'staged' ? ' drag-zone' : ''}`}
         style={{ height: stagedHeight }}
@@ -390,7 +474,10 @@ function ChangesPanel({
             </button>
           )}
         </h2>
-        <ul className="file-list">
+        <ul
+          className="file-list"
+          onMouseDown={(event) => startMarquee(event, 'staged')}
+        >
           {staged.map((file, index) => renderRow(file, 'staged', index, staged))}
           {staged.length === 0 && <li className="empty">Nothing staged</li>}
         </ul>
@@ -417,7 +504,10 @@ function ChangesPanel({
             </button>
           )}
         </h2>
-        <ul className="file-list">
+        <ul
+          className="file-list"
+          onMouseDown={(event) => startMarquee(event, 'unstaged')}
+        >
           {unstaged.map((file, index) => renderRow(file, 'unstaged', index, unstaged))}
           {unstaged.length === 0 && staged.length === 0 && (
             <li className="empty empty-clean">

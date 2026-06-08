@@ -2077,6 +2077,15 @@ body {
   padding: 24px;
 }
 
+.marquee {
+  position: fixed;
+  z-index: 50;
+  background: rgba(240, 168, 104, 0.15);
+  border: 1px solid var(--accent);
+  border-radius: 2px;
+  pointer-events: none;
+}
+
 .conflict-title {
   margin: 0 0 2px;
   font-size: 15px;
