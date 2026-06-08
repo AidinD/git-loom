@@ -238,6 +238,15 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Info toasts auto-dismiss; errors stay until the user closes them.
+  useEffect(() => {
+    if (info && !error) {
+      const id = setTimeout(() => setInfo(null), 4500)
+      return () => clearTimeout(id)
+    }
+    return undefined
+  }, [info, error])
+
   // Escape closes the topmost open modal/overlay.
   useEffect(() => {
     function onKey(event: KeyboardEvent): void {
@@ -1523,10 +1532,15 @@ function App() {
       </LoomContext.Provider>
 
       {(error || info) && (
-        <footer className={`statusbar ${error ? 'statusbar-error' : 'statusbar-info'}`}>
-          <span className="statusbar-text">{error || info}</span>
+        <div className={`toast ${error ? 'toast-error' : 'toast-info'}`} role="alert">
+          <span className="toast-icon">{error ? '⚠' : '✓'}</span>
+          <div className="toast-body">
+            <div className="toast-title">{error ? 'Something went wrong' : 'Done'}</div>
+            <div className="toast-message">{error || info}</div>
+          </div>
           <button
-            className="statusbar-close"
+            className="toast-close"
+            title="Dismiss"
             onClick={() => {
               setError(null)
               setInfo(null)
@@ -1534,7 +1548,7 @@ function App() {
           >
             ×
           </button>
-        </footer>
+        </div>
       )}
 
       {loading && <div className="loading-tag">Loading…</div>}
