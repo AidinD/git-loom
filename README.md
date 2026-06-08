@@ -1,26 +1,102 @@
 # Loom
 
-A visual Git client with a direct-manipulation commit graph — drag a branch
-onto another to merge, double-click to checkout, multiple named stashes.
+A visual, direct-manipulation Git client — drag a branch onto another to merge or
+rebase, drag commits to reorder them, stage by the hunk or line, and resolve conflicts
+in-app. Built because GitKraken felt intuitive but the alternatives didn't.
 
-Working name; easy to rename later.
+> Personal project, 100% AI-coded. Windows desktop app (Electron).
+
+## Install
+
+Download the latest **`Loom-x.y.z-setup.exe`** from
+[Releases](https://github.com/AidinD/git-loom/releases) and run it. The app
+**auto-updates** itself from future releases.
+
+The installer is unsigned, so Windows SmartScreen shows an "unknown publisher"
+warning — click **More info → Run anyway**.
+
+## Features
+
+**Visual commit graph**
+- Direct-manipulation commit graph with GitKraken-style lanes, rendered on a
+  virtualized canvas (stays crisp at any history size)
+- Incremental history loading (loads more as you scroll)
+- Branch & tag chips in a dedicated column; author avatars; per-commit changed-files
+  list with A/M/D/R status
+- Commit search — highlight and jump between matches by message, author, or hash
+
+**Direct manipulation**
+- Drag a branch onto another to **merge** or **rebase** (labelled choice)
+- Drag commits to **reorder** them (interactive rebase by drag)
+- Double-click a branch, tag, or commit to check it out
+
+**Staging & committing**
+- Stage/unstage files (click, double-click, multi-select, or marquee drag-select)
+- **Hunk- and line-level staging** straight in the diff
+- Commit with summary + description + co-authors
+- **SSH commit signing** toggle
+
+**Diff viewer**
+- Side-by-side (split) or unified diff with **word-level intra-line highlighting**
+- **Image before/after** preview for binary image files
+- Per-file +/- line counts and status
+
+**History rewriting**
+- **Interactive rebase** (reorder / squash / fixup / drop / reword) — visual editor and
+  drag-to-reorder
+- Cherry-pick, revert, reset (soft/mixed/hard), undo last commit
+- **Undo/redo** for branch-moving operations
+
+**Conflict resolution**
+- In-app **per-block conflict resolver**: Current vs Incoming (+ base in diff3), accept
+  ours/theirs/both, plus an editable merged result
+- Handles merge, rebase, revert, and cherry-pick — with autostash, skip-empty-commit,
+  continue/abort, a toolbar badge, and jump-to-next-conflict
+
+**Branches, remotes & repos**
+- Create / rename / delete (and force-delete) branches; branch picker with last-commit
+  time and one-click merge
+- Fetch / pull / push with ahead/behind badges and quiet auto-fetch
+- Multi-repo switcher + dockable **Repositories** panel with drag-and-drop grouping
+  (reorder, collapse, rename groups)
+- Clone browser (lists your accessible GitHub repos via `gh`); graceful missing-repo
+  handling
+
+**Stashes**
+- Multiple named stashes; stash individual files; drag a stash back onto the working
+  tree to apply
+
+**Workspace & UX**
+- Dockable, resizable panels (dockview) with save/load **named layouts**
+- **Command history** panel + floating toast notifications
+- Dark theme with amber accent; Enter-to-confirm / Esc-to-close everywhere
+- Open repo in editor / file explorer / on GitHub
 
 ## Stack
 
 - **Electron** (app shell) + **Vite** (`electron-vite`) for fast HMR
 - **React + TypeScript** in the renderer
-- Real `git` binary spawned from the main process (no library linking)
+- Real `git` binary spawned from the main process (no library linking — correct on
+  real-world repos)
 - Commit graph rendered on `<canvas>` (kept as a shell-independent component)
+- Packaged with **electron-builder**, auto-update via **electron-updater**
 
-## Status
-
-Phase 1 — skeleton: open a repository, run `git log`, list commits.
-
-## Scripts
+## Development
 
 ```bash
 npm install      # install dependencies
 npm run dev      # launch with hot reload
 npm run build    # production build
 npm run typecheck
+npm run dist     # build the installer locally (no publish)
+```
+
+## Releasing
+
+Tag a version and push it — GitHub Actions builds the Windows installer and publishes
+it to GitHub Releases:
+
+```bash
+git tag v1.2.3
+git push origin v1.2.3
 ```
