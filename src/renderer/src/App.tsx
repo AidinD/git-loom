@@ -181,6 +181,8 @@ function App() {
   const [conflictCount, setConflictCount] = useState(0)
   const [rebaseBase, setRebaseBase] = useState<string | null>(null)
   const [rebaseRows, setRebaseRows] = useState<RebaseRow[]>([])
+  const [undoStack, setUndoStack] = useState<{ label: string; sha: string }[]>([])
+  const [redoStack, setRedoStack] = useState<{ label: string; sha: string }[]>([])
   const [fileHistoryView, setFileHistoryView] = useState<{
     file: string
     commits: Commit[]
@@ -231,6 +233,12 @@ function App() {
   useEffect(() => {
     return window.api.onUpdateReady((version) => setUpdateVersion(version))
   }, [])
+
+  // The undo/redo history is per-repo; clear it when switching repos.
+  useEffect(() => {
+    setUndoStack([])
+    setRedoStack([])
+  }, [repoPath])
 
   useEffect(() => {
     window.api.getVersion().then(setAppVersion)
@@ -523,6 +531,8 @@ function App() {
     }
     setError(null)
     setInfo(null)
+    // Checkout is deliberately NOT on the undo stack: undo uses reset, which
+    // would rewrite the now-current branch instead of switching back.
     const result = await window.api.checkout(repoPath, target)
     if (!result.ok) {
       setError(result.error)
@@ -555,11 +565,13 @@ function App() {
     }
     setError(null)
     setInfo(null)
+    const before = await captureHead()
     const result = await window.api.merge(repoPath, source, target)
     await loadLog(repoPath)
     if (result.ok) {
       setInfo(result.message)
       setConflictKind(null)
+      pushUndo('merge', before)
     } else {
       setError(result.error)
       if (result.conflict) {
@@ -574,11 +586,13 @@ function App() {
     }
     setError(null)
     setInfo(null)
+    const before = await captureHead()
     const result = await window.api.rebase(repoPath, source, target)
     await loadLog(repoPath)
     if (result.ok) {
       setInfo(result.message)
       setConflictKind(null)
+      pushUndo('rebase', before)
     } else {
       setError(result.error)
       if (result.conflict) {
@@ -631,6 +645,7 @@ function App() {
     }
     setError(null)
     setInfo(null)
+    const before = await captureHead()
     const result = await window.api.interactiveRebase(
       repoPath,
       base,
@@ -640,12 +655,69 @@ function App() {
     if (result.ok) {
       setInfo(result.message)
       setConflictKind(null)
+      pushUndo('interactive rebase', before)
     } else {
       setError(result.error)
       if (result.conflict) {
         await enterConflict('rebase')
       }
     }
+  }
+
+  /** HEAD before a history-moving op, so undo can restore it. */
+  async function captureHead(): Promise<string | null> {
+    if (!repoPath) {
+      return null
+    }
+    return window.api.getHead(repoPath)
+  }
+
+  function pushUndo(label: string, sha: string | null): void {
+    if (!sha) {
+      return
+    }
+    setUndoStack((stack) => [...stack, { label, sha }])
+    setRedoStack([])
+  }
+
+  async function doUndo(): Promise<void> {
+    if (!repoPath || undoStack.length === 0) {
+      return
+    }
+    const entry = undoStack[undoStack.length - 1]
+    const current = await window.api.getHead(repoPath)
+    const result = await window.api.resetTo(repoPath, entry.sha, 'keep')
+    if (!result.ok) {
+      setError(result.error)
+      return
+    }
+    setUndoStack((stack) => stack.slice(0, -1))
+    if (current) {
+      setRedoStack((stack) => [...stack, { label: entry.label, sha: current }])
+    }
+    setError(null)
+    setInfo(`Undid ${entry.label}`)
+    await loadLog(repoPath)
+  }
+
+  async function doRedo(): Promise<void> {
+    if (!repoPath || redoStack.length === 0) {
+      return
+    }
+    const entry = redoStack[redoStack.length - 1]
+    const current = await window.api.getHead(repoPath)
+    const result = await window.api.resetTo(repoPath, entry.sha, 'keep')
+    if (!result.ok) {
+      setError(result.error)
+      return
+    }
+    setRedoStack((stack) => stack.slice(0, -1))
+    if (current) {
+      setUndoStack((stack) => [...stack, { label: entry.label, sha: current }])
+    }
+    setError(null)
+    setInfo(`Redid ${entry.label}`)
+    await loadLog(repoPath)
   }
 
   async function openFileHistory(file: string): Promise<void> {
@@ -680,11 +752,15 @@ function App() {
     }
     setError(null)
     setInfo(null)
+    const before = await captureHead()
     const result = await window.api.revert(repoPath, hash, noCommit)
     await loadLog(repoPath)
     if (result.ok) {
       setInfo(result.message)
       setConflictKind(null)
+      if (!noCommit) {
+        pushUndo('revert', before)
+      }
     } else {
       setError(result.error)
       if (result.conflict) {
@@ -699,11 +775,13 @@ function App() {
     }
     setError(null)
     setInfo(null)
+    const before = await captureHead()
     const result = await window.api.cherryPick(repoPath, hash)
     await loadLog(repoPath)
     if (result.ok) {
       setInfo(result.message)
       setConflictKind(null)
+      pushUndo('cherry-pick', before)
     } else {
       setError(result.error)
       if (result.conflict) {
@@ -718,12 +796,14 @@ function App() {
     }
     setError(null)
     setInfo(null)
+    const before = await captureHead()
     const result = await window.api.resetTo(repoPath, hash, mode)
     if (!result.ok) {
       setError(result.error)
       return
     }
     setInfo(result.message)
+    pushUndo('reset', before)
     await loadLog(repoPath)
   }
 
@@ -733,12 +813,14 @@ function App() {
     }
     setError(null)
     setInfo(null)
+    const before = await captureHead()
     const result = await window.api.undoLastCommit(repoPath)
     if (!result.ok) {
       setError(result.error)
       return
     }
     setInfo(result.message)
+    pushUndo('undo last commit', before)
     await loadLog(repoPath)
   }
 
@@ -1032,6 +1114,7 @@ function App() {
     }
     setError(null)
     setInfo(null)
+    const before = await captureHead()
     const result = await window.api.commit(repoPath, message)
     if (!result.ok) {
       setError(result.error)
@@ -1041,6 +1124,7 @@ function App() {
     setCommitSummary('')
     setCommitDescription('')
     setCommitCoauthors('')
+    pushUndo('commit', before)
     await loadLog(repoPath)
   }
 
@@ -1437,6 +1521,32 @@ function App() {
               >
                 Push
                 {ahead > 0 && <span className="badge-count">{ahead}</span>}
+              </button>
+            </div>
+            <div className="toolbar-group">
+              <button
+                className="secondary"
+                disabled={undoStack.length === 0}
+                title={
+                  undoStack.length > 0
+                    ? `Undo ${undoStack[undoStack.length - 1].label}`
+                    : 'Nothing to undo'
+                }
+                onClick={() => void doUndo()}
+              >
+                ↶
+              </button>
+              <button
+                className="secondary"
+                disabled={redoStack.length === 0}
+                title={
+                  redoStack.length > 0
+                    ? `Redo ${redoStack[redoStack.length - 1].label}`
+                    : 'Nothing to redo'
+                }
+                onClick={() => void doRedo()}
+              >
+                ↷
               </button>
             </div>
           </>

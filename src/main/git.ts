@@ -799,17 +799,34 @@ export async function cherryPickAbort(dir: string): Promise<CheckoutResult> {
   return runSimple(dir, ['cherry-pick', '--abort'], 'Cherry-pick aborted')
 }
 
-/** Moves the current branch to `hash`. mode: soft | mixed | hard. */
+/** The current HEAD commit SHA, or null. Used to snapshot undo/redo state. */
+export async function getHead(dir: string): Promise<string | null> {
+  let root: string | null
+  try {
+    root = await resolveRepoRoot(dir)
+  } catch {
+    return null
+  }
+  if (!root) {
+    return null
+  }
+  const result = await runGit(['rev-parse', 'HEAD'], root)
+  return result.code === 0 ? result.stdout.trim() : null
+}
+
+/** Moves the current branch to `hash`. mode: soft | mixed | hard | keep. */
 export async function resetTo(
   dir: string,
   hash: string,
-  mode: 'soft' | 'mixed' | 'hard'
+  mode: 'soft' | 'mixed' | 'hard' | 'keep'
 ): Promise<CheckoutResult> {
   let flag = '--mixed'
   if (mode === 'soft') {
     flag = '--soft'
   } else if (mode === 'hard') {
     flag = '--hard'
+  } else if (mode === 'keep') {
+    flag = '--keep'
   }
   return runSimple(dir, ['reset', flag, hash], `Reset to ${hash.slice(0, 7)} (${mode})`)
 }

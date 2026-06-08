@@ -60,8 +60,10 @@ const api = {
   resetTo: (
     repoPath: string,
     hash: string,
-    mode: 'soft' | 'mixed' | 'hard'
+    mode: 'soft' | 'mixed' | 'hard' | 'keep'
   ): Promise<CheckoutResult> => ipcRenderer.invoke('git:resetTo', repoPath, hash, mode),
+  getHead: (repoPath: string): Promise<string | null> =>
+    ipcRenderer.invoke('git:getHead', repoPath),
   undoLastCommit: (repoPath: string): Promise<CheckoutResult> =>
     ipcRenderer.invoke('git:undoLastCommit', repoPath),
   conflictState: (

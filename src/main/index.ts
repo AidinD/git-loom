@@ -17,6 +17,7 @@ import {
   cherryPick,
   cherryPickAbort,
   resetTo,
+  getHead,
   undoLastCommit,
   status,
   diff,
@@ -216,10 +217,19 @@ app.whenReady().then(() => {
 
   ipcMain.handle(
     'git:resetTo',
-    async (_event, repoPath: string, hash: string, mode: 'soft' | 'mixed' | 'hard') => {
+    async (
+      _event,
+      repoPath: string,
+      hash: string,
+      mode: 'soft' | 'mixed' | 'hard' | 'keep'
+    ) => {
       return resetTo(repoPath, hash, mode)
     }
   )
+
+  ipcMain.handle('git:getHead', async (_event, repoPath: string) => {
+    return getHead(repoPath)
+  })
 
   ipcMain.handle('git:undoLastCommit', async (_event, repoPath: string) => {
     return undoLastCommit(repoPath)

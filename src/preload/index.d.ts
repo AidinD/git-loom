@@ -41,8 +41,9 @@ export interface LoomApi {
   resetTo: (
     repoPath: string,
     hash: string,
-    mode: 'soft' | 'mixed' | 'hard'
+    mode: 'soft' | 'mixed' | 'hard' | 'keep'
   ) => Promise<CheckoutResult>
+  getHead: (repoPath: string) => Promise<string | null>
   undoLastCommit: (repoPath: string) => Promise<CheckoutResult>
   listConflicts: (repoPath: string) => Promise<ConflictsResult>
   useOurs: (repoPath: string, file: string) => Promise<CheckoutResult>
