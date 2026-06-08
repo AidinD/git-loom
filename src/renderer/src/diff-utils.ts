@@ -244,6 +244,61 @@ export function hunkPatch(split: SplitDiff, hunk: string): string {
   return `${split.fileHeader}\n${hunk}\n`
 }
 
+/** Indices (within a hunk's body) of lines that can be individually selected. */
+export function selectableLineIndices(hunk: string): number[] {
+  const body = hunk.split('\n').slice(1)
+  const out: number[] = []
+  body.forEach((line, i) => {
+    if (line.startsWith('+') || line.startsWith('-')) {
+      out.push(i)
+    }
+  })
+  return out
+}
+
+/**
+ * Builds a patch staging only the selected change lines of a hunk. Unselected
+ * additions are dropped; unselected deletions become context. Applied with
+ * `git apply --cached --recount`, which recomputes the @@ counts.
+ */
+export function linePatch(
+  split: SplitDiff,
+  hunk: string,
+  selected: Set<number>
+): string {
+  const lines = hunk.split('\n')
+  const header = lines[0]
+  const body = lines.slice(1)
+  const out: string[] = []
+
+  body.forEach((line, i) => {
+    if (line.length === 0) {
+      return
+    }
+    const sign = line[0]
+    if (sign === '+') {
+      if (selected.has(i)) {
+        out.push(line)
+      }
+      // unselected addition: drop it from the patch
+      return
+    }
+    if (sign === '-') {
+      if (selected.has(i)) {
+        out.push(line)
+      } else {
+        // unselected deletion: keep it as context so the patch still applies
+        out.push(` ${line.slice(1)}`)
+      }
+      return
+    }
+    // context or "\ No newline" markers pass through unchanged
+    out.push(line)
+  })
+
+  return `${split.fileHeader}\n${header}\n${out.join('\n')}\n`
+}
+
 export function countChanges(lines: DiffLine[]): { add: number; del: number } {
   let add = 0
   let del = 0

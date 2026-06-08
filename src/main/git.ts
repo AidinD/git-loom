@@ -702,7 +702,9 @@ export async function applyPatch(
     return { ok: false, error: `Not a Git repository: ${dir}` }
   }
 
-  const args = ['apply', '--cached', '--whitespace=nowarn']
+  // --recount lets git recompute the @@ line counts from the (possibly
+  // line-edited) hunk body, so partial-line patches apply cleanly.
+  const args = ['apply', '--cached', '--whitespace=nowarn', '--recount']
   if (reverse) {
     args.push('--reverse')
   }

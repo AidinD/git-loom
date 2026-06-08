@@ -1,6 +1,14 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useLoom } from './loom-context'
-import { parseDiff, groupByFile, toSplit, inlineDiff, splitHunks, hunkPatch } from './diff-utils'
+import {
+  parseDiff,
+  groupByFile,
+  toSplit,
+  inlineDiff,
+  splitHunks,
+  hunkPatch,
+  linePatch
+} from './diff-utils'
 import type { DiffLine, InlineSeg } from './diff-utils'
 
 /** Renders inline word-diff segments, or plain text when no segments exist. */
@@ -60,7 +68,15 @@ function annotateInline(lines: DiffLine[]): (DiffLine & { segs?: InlineSeg[] })[
   return out
 }
 
-function UnifiedView({ lines }: { lines: DiffLine[] }) {
+interface UnifiedProps {
+  lines: DiffLine[]
+  /** When set, add/del lines are clickable for line-level staging. */
+  selectable?: boolean
+  selected?: Set<number>
+  onToggleLine?: (bodyIndex: number) => void
+}
+
+function UnifiedView({ lines, selectable, selected, onToggleLine }: UnifiedProps) {
   const annotated = annotateInline(lines)
   return (
     <>
@@ -80,8 +96,21 @@ function UnifiedView({ lines }: { lines: DiffLine[] }) {
           )
         }
         const side = line.type === 'add' ? 'add' : 'del'
+        // The first rendered line is the @@ header, so body index = index - 1.
+        const bodyIndex = index - 1
+        const canSelect = selectable && (line.type === 'add' || line.type === 'del')
+        const isSelected = canSelect && selected?.has(bodyIndex)
         return (
-          <div key={index} className={`dl dl-${line.type}`}>
+          <div
+            key={index}
+            className={`dl dl-${line.type}${canSelect ? ' selectable' : ''}${
+              isSelected ? ' line-selected' : ''
+            }`}
+            onClick={canSelect ? () => onToggleLine?.(bodyIndex) : undefined}
+          >
+            {selectable && (
+              <span className="dl-check">{isSelected ? '☑' : '☐'}</span>
+            )}
             <span className="dl-num">{line.oldNo ?? ''}</span>
             <span className="dl-num">{line.newNo ?? ''}</span>
             <span className="dl-sign">
@@ -160,10 +189,27 @@ function DiffPanel() {
   const [mode, setMode] = useState<'unified' | 'split'>(
     () => (localStorage.getItem('loom.diffMode') as 'unified' | 'split') || 'split'
   )
+  // Per-hunk sets of selected body-line indices for line-level staging.
+  const [selected, setSelected] = useState<Record<number, number[]>>({})
+
+  // Clear line selection whenever the diff content changes (e.g. after staging).
+  useEffect(() => {
+    setSelected({})
+  }, [diffView?.text])
 
   function setDiffMode(next: 'unified' | 'split'): void {
     setMode(next)
     localStorage.setItem('loom.diffMode', next)
+  }
+
+  function toggleLine(hunkIndex: number, bodyIndex: number): void {
+    setSelected((current) => {
+      const existing = current[hunkIndex] ?? []
+      const next = existing.includes(bodyIndex)
+        ? existing.filter((value) => value !== bodyIndex)
+        : [...existing, bodyIndex]
+      return { ...current, [hunkIndex]: next }
+    })
   }
 
   if (!diffView) {
@@ -179,11 +225,9 @@ function DiffPanel() {
     sections.find((section) => section.file === selectedDiffFile) ?? sections[0] ?? null
 
   const split = stageable ? splitHunks(diffView.text) : null
-  const stageLabel = diffView.staged ? '− Unstage hunk' : '+ Stage hunk'
-
-  function renderLines(lines: ReturnType<typeof parseDiff>) {
-    return mode === 'unified' ? <UnifiedView lines={lines} /> : <SplitView lines={lines} />
-  }
+  const isStaged = !!diffView.staged
+  const hunkLabel = isStaged ? '− Unstage hunk' : '+ Stage hunk'
+  const lineSelectable = stageable && mode === 'unified'
 
   return (
     <div className="diff-pane">
@@ -218,28 +262,60 @@ function DiffPanel() {
         {active &&
           stageable &&
           split &&
-          split.hunks.map((hunk, index) => (
-            <div key={index} className="diff-hunk">
-              <div className="diff-hunk-bar">
-                <span className="diff-hunk-label">Hunk {index + 1}</span>
-                <button
-                  className={`hunk-stage-btn${diffView.staged ? ' unstage' : ''}`}
-                  onClick={() =>
-                    onStageHunk(
-                      diffView.file!,
-                      diffView.staged!,
-                      hunkPatch(split, hunk)
-                    )
-                  }
-                >
-                  {stageLabel}
-                </button>
+          split.hunks.map((hunk, index) => {
+            const picked = selected[index] ?? []
+            const pickedSet = new Set(picked)
+            return (
+              <div key={index} className="diff-hunk">
+                <div className="diff-hunk-bar">
+                  <span className="diff-hunk-label">Hunk {index + 1}</span>
+                  {picked.length > 0 && (
+                    <button
+                      className={`hunk-stage-btn${isStaged ? ' unstage' : ''}`}
+                      onClick={() =>
+                        onStageHunk(
+                          diffView.file!,
+                          diffView.staged!,
+                          linePatch(split, hunk, pickedSet)
+                        )
+                      }
+                    >
+                      {isStaged ? '−' : '+'} {isStaged ? 'Unstage' : 'Stage'}{' '}
+                      {picked.length} line{picked.length === 1 ? '' : 's'}
+                    </button>
+                  )}
+                  <button
+                    className={`hunk-stage-btn${isStaged ? ' unstage' : ''}`}
+                    onClick={() =>
+                      onStageHunk(diffView.file!, diffView.staged!, hunkPatch(split, hunk))
+                    }
+                  >
+                    {hunkLabel}
+                  </button>
+                </div>
+                {mode === 'unified' ? (
+                  <UnifiedView
+                    lines={parseDiff(hunk)}
+                    selectable={lineSelectable}
+                    selected={pickedSet}
+                    onToggleLine={(bodyIndex) => toggleLine(index, bodyIndex)}
+                  />
+                ) : (
+                  <SplitView lines={parseDiff(hunk)} />
+                )}
               </div>
-              {renderLines(parseDiff(hunk))}
-            </div>
-          ))}
+            )
+          })}
 
-        {active && !stageable && renderLines(active.lines)}
+        {active && !stageable && (
+          <>
+            {mode === 'unified' ? (
+              <UnifiedView lines={active.lines} />
+            ) : (
+              <SplitView lines={active.lines} />
+            )}
+          </>
+        )}
       </div>
     </div>
   )

@@ -676,9 +676,33 @@ body {
   user-select: none;
 }
 
-.dl-num:nth-of-type(2) {
+.dl-num + .dl-num {
   border-right: 1px solid var(--border);
   margin-right: 4px;
+}
+
+.dl-check {
+  flex: none;
+  width: 18px;
+  text-align: center;
+  color: var(--text-dim);
+  user-select: none;
+}
+
+.dl.selectable {
+  cursor: pointer;
+}
+
+.dl.selectable:hover {
+  filter: brightness(1.15);
+}
+
+.dl.line-selected {
+  box-shadow: inset 2px 0 0 0 var(--accent);
+}
+
+.dl.line-selected .dl-check {
+  color: var(--accent);
 }
 
 .dl-sign {
