@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { MouseEvent as ReactMouseEvent } from 'react'
 import GitGraph from './graph/GitGraph'
 import { useLoom } from './loom-context'
@@ -97,6 +97,8 @@ function GraphView() {
     onDeleteBranch,
     onNewBranchFrom,
     onRevert,
+    onCherryPick,
+    onResetTo,
     onLoadMore
   } = useLoom()
 
@@ -104,6 +106,8 @@ function GraphView() {
   const onLoadMoreRef = useRef(onLoadMore)
   onLoadMoreRef.current = onLoadMore
   const hasCommits = commits.length > 0
+  const [query, setQuery] = useState('')
+  const [matchPos, setMatchPos] = useState(0)
 
   useEffect(() => {
     const el = mainRef.current
@@ -140,6 +144,32 @@ function GraphView() {
     )
   }
 
+  const needle = query.trim().toLowerCase()
+  const matchHashes = new Set<string>()
+  const matchIndices: number[] = []
+  if (needle.length > 0) {
+    commits.forEach((commit, index) => {
+      if (
+        commit.subject.toLowerCase().includes(needle) ||
+        commit.authorName.toLowerCase().includes(needle) ||
+        commit.hash.toLowerCase().startsWith(needle)
+      ) {
+        matchHashes.add(commit.hash)
+        matchIndices.push(index)
+      }
+    })
+  }
+
+  function jumpToMatch(pos: number): void {
+    if (matchIndices.length === 0 || !mainRef.current) {
+      return
+    }
+    const wrapped = (pos + matchIndices.length) % matchIndices.length
+    setMatchPos(wrapped)
+    const row = matchIndices[wrapped]
+    mainRef.current.scrollTo({ top: Math.max(0, row * ROW_HEIGHT - 100) })
+  }
+
   function selectRow(commit: Commit): void {
     setSelected(commit.hash)
     onShowCommit(commit.hash, commit.subject)
@@ -150,6 +180,20 @@ function GraphView() {
     openContextMenu(event.clientX, event.clientY, [
       { label: 'New branch here…', onClick: () => onNewBranchFrom(commit.hash) },
       { label: 'Check out (detached)', onClick: () => onCheckout(commit.hash) },
+      { label: 'Cherry-pick onto current', onClick: () => onCherryPick(commit.hash) },
+      {
+        label: 'Reset current branch here (soft)',
+        onClick: () => onResetTo(commit.hash, 'soft')
+      },
+      {
+        label: 'Reset current branch here (mixed)',
+        onClick: () => onResetTo(commit.hash, 'mixed')
+      },
+      {
+        label: 'Reset current branch here (hard)',
+        danger: true,
+        onClick: () => onResetTo(commit.hash, 'hard')
+      },
       {
         label: 'Revert & commit',
         danger: true,
@@ -263,35 +307,81 @@ function GraphView() {
   }
 
   return (
-    <div className="main" ref={mainRef}>
-      <ul className="refs-col">
-        {commits.map((commit) => (
-          <li
-            key={commit.hash}
-            className={`refs-row${selected === commit.hash ? ' selected' : ''}`}
-            style={{ height: ROW_HEIGHT }}
-            onClick={() => selectRow(commit)}
-            onDoubleClick={() => onCheckout(commit.hash)}
-            onContextMenu={(event) => commitMenu(event, commit)}
-          >
-            {sortRefsByPriority(commit.refs, remotes).map((ref) => renderChip(ref))}
-          </li>
-        ))}
-      </ul>
+    <div className="history">
+      <div className="history-search">
+        <input
+          className="repo-filter"
+          placeholder="Search commits (message, author, hash)"
+          value={query}
+          onChange={(event) => {
+            setQuery(event.target.value)
+            setMatchPos(0)
+          }}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              event.preventDefault()
+              jumpToMatch(event.shiftKey ? matchPos - 1 : matchPos + 1)
+            }
+          }}
+        />
+        {needle.length > 0 && (
+          <span className="history-search-count">
+            {matchIndices.length === 0
+              ? 'No matches'
+              : `${matchPos + 1}/${matchIndices.length}`}
+          </span>
+        )}
+        <button
+          className="secondary"
+          disabled={matchIndices.length === 0}
+          title="Previous match"
+          onClick={() => jumpToMatch(matchPos - 1)}
+        >
+          ↑
+        </button>
+        <button
+          className="secondary"
+          disabled={matchIndices.length === 0}
+          title="Next match"
+          onClick={() => jumpToMatch(matchPos + 1)}
+        >
+          ↓
+        </button>
+      </div>
 
-      <GitGraph commits={commits} rowHeight={ROW_HEIGHT} selectedHash={selected} />
+      <div className="main" ref={mainRef}>
+        <ul className="refs-col">
+          {commits.map((commit) => (
+            <li
+              key={commit.hash}
+              className={`refs-row${selected === commit.hash ? ' selected' : ''}${
+                matchHashes.has(commit.hash) ? ' search-match' : ''
+              }`}
+              style={{ height: ROW_HEIGHT }}
+              onClick={() => selectRow(commit)}
+              onDoubleClick={() => onCheckout(commit.hash)}
+              onContextMenu={(event) => commitMenu(event, commit)}
+            >
+              {sortRefsByPriority(commit.refs, remotes).map((ref) => renderChip(ref))}
+            </li>
+          ))}
+        </ul>
 
-      <ul className="commit-list">
-        {commits.map((commit) => (
-          <li
-            key={commit.hash}
-            className={`commit${selected === commit.hash ? ' selected' : ''}`}
-            style={{ height: ROW_HEIGHT }}
-            onClick={() => selectRow(commit)}
-            onDoubleClick={() => onCheckout(commit.hash)}
-            onContextMenu={(event) => commitMenu(event, commit)}
-            title={commit.subject}
-          >
+        <GitGraph commits={commits} rowHeight={ROW_HEIGHT} selectedHash={selected} />
+
+        <ul className="commit-list">
+          {commits.map((commit) => (
+            <li
+              key={commit.hash}
+              className={`commit${selected === commit.hash ? ' selected' : ''}${
+                matchHashes.has(commit.hash) ? ' search-match' : ''
+              }`}
+              style={{ height: ROW_HEIGHT }}
+              onClick={() => selectRow(commit)}
+              onDoubleClick={() => onCheckout(commit.hash)}
+              onContextMenu={(event) => commitMenu(event, commit)}
+              title={commit.subject}
+            >
             <code className="hash">{commit.hash.slice(0, 7)}</code>
             <span className="subject">{commit.subject}</span>
             <span
@@ -302,9 +392,10 @@ function GraphView() {
               {initialsFor(commit.authorName)}
             </span>
             <span className="author">{commit.authorName}</span>
-          </li>
-        ))}
-      </ul>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   )
 }

@@ -436,7 +436,7 @@ export async function revertAbort(dir: string): Promise<CheckoutResult> {
  */
 export async function conflictState(
   dir: string
-): Promise<'merge' | 'rebase' | 'revert' | null> {
+): Promise<'merge' | 'rebase' | 'revert' | 'cherry-pick' | null> {
   let root: string | null
   try {
     root = await resolveRepoRoot(dir)
@@ -464,6 +464,9 @@ export async function conflictState(
   }
   if (existsSync(join(gitDir, 'REVERT_HEAD'))) {
     return 'revert'
+  }
+  if (existsSync(join(gitDir, 'CHERRY_PICK_HEAD'))) {
+    return 'cherry-pick'
   }
   if (existsSync(join(gitDir, 'MERGE_HEAD'))) {
     return 'merge'
@@ -587,13 +590,15 @@ export async function resolveConflictFile(
  */
 export async function continueConflict(
   dir: string,
-  kind: 'merge' | 'rebase' | 'revert'
+  kind: 'merge' | 'rebase' | 'revert' | 'cherry-pick'
 ): Promise<MergeResult> {
   let args: string[]
   if (kind === 'rebase') {
     args = ['-c', 'core.editor=true', 'rebase', '--continue']
   } else if (kind === 'revert') {
     args = ['-c', 'core.editor=true', 'revert', '--continue']
+  } else if (kind === 'cherry-pick') {
+    args = ['-c', 'core.editor=true', 'cherry-pick', '--continue']
   } else {
     args = ['commit', '--no-edit']
   }
@@ -604,6 +609,63 @@ export async function continueConflict(
   }
   // A non-zero exit here usually means conflicts still remain.
   return { ok: false, conflict: true, error: result.error }
+}
+
+/** Applies an existing commit onto the current branch (cherry-pick). */
+export async function cherryPick(dir: string, hash: string): Promise<MergeResult> {
+  let root: string | null
+  try {
+    root = await resolveRepoRoot(dir)
+  } catch (err) {
+    return {
+      ok: false,
+      conflict: false,
+      error: err instanceof Error ? err.message : String(err)
+    }
+  }
+  if (!root) {
+    return { ok: false, conflict: false, error: `Not a Git repository: ${dir}` }
+  }
+
+  const result = await runGit(['cherry-pick', hash], root)
+  if (result.code !== 0) {
+    const conflict =
+      /conflict/i.test(result.stderr) || /conflict/i.test(result.stdout)
+    return {
+      ok: false,
+      conflict,
+      error: tidy(result.stderr) || tidy(result.stdout) || 'cherry-pick failed'
+    }
+  }
+  return { ok: true, message: tidy(result.stdout) || `Cherry-picked ${hash.slice(0, 7)}` }
+}
+
+export async function cherryPickAbort(dir: string): Promise<CheckoutResult> {
+  return runSimple(dir, ['cherry-pick', '--abort'], 'Cherry-pick aborted')
+}
+
+/** Moves the current branch to `hash`. mode: soft | mixed | hard. */
+export async function resetTo(
+  dir: string,
+  hash: string,
+  mode: 'soft' | 'mixed' | 'hard'
+): Promise<CheckoutResult> {
+  let flag = '--mixed'
+  if (mode === 'soft') {
+    flag = '--soft'
+  } else if (mode === 'hard') {
+    flag = '--hard'
+  }
+  return runSimple(dir, ['reset', flag, hash], `Reset to ${hash.slice(0, 7)} (${mode})`)
+}
+
+/** Undoes the last commit but keeps its changes staged (soft reset). */
+export async function undoLastCommit(dir: string): Promise<CheckoutResult> {
+  return runSimple(
+    dir,
+    ['reset', '--soft', 'HEAD~1'],
+    'Undid last commit — its changes are staged'
+  )
 }
 
 /** Returns the working-tree changes (staged + unstaged + untracked). */

@@ -11,6 +11,10 @@ import {
   rebaseAbort,
   revert,
   revertAbort,
+  cherryPick,
+  cherryPickAbort,
+  resetTo,
+  undoLastCommit,
   status,
   diff,
   stage,
@@ -159,6 +163,25 @@ app.whenReady().then(() => {
     return revertAbort(repoPath)
   })
 
+  ipcMain.handle('git:cherryPick', async (_event, repoPath: string, hash: string) => {
+    return cherryPick(repoPath, hash)
+  })
+
+  ipcMain.handle('git:cherryPickAbort', async (_event, repoPath: string) => {
+    return cherryPickAbort(repoPath)
+  })
+
+  ipcMain.handle(
+    'git:resetTo',
+    async (_event, repoPath: string, hash: string, mode: 'soft' | 'mixed' | 'hard') => {
+      return resetTo(repoPath, hash, mode)
+    }
+  )
+
+  ipcMain.handle('git:undoLastCommit', async (_event, repoPath: string) => {
+    return undoLastCommit(repoPath)
+  })
+
   ipcMain.handle('git:conflictState', async (_event, repoPath: string) => {
     return conflictState(repoPath)
   })
@@ -181,7 +204,11 @@ app.whenReady().then(() => {
 
   ipcMain.handle(
     'git:continueConflict',
-    async (_event, repoPath: string, kind: 'merge' | 'rebase' | 'revert') => {
+    async (
+      _event,
+      repoPath: string,
+      kind: 'merge' | 'rebase' | 'revert' | 'cherry-pick'
+    ) => {
       return continueConflict(repoPath, kind)
     }
   )

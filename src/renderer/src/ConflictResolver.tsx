@@ -11,7 +11,7 @@ import {
 
 interface Props {
   repoPath: string
-  kind: 'merge' | 'rebase' | 'revert'
+  kind: 'merge' | 'rebase' | 'revert' | 'cherry-pick'
   onResolved: () => void
   onAbort: () => void
   onClose: () => void
@@ -167,6 +167,8 @@ function ConflictResolver({ repoPath, kind, onResolved, onAbort, onClose }: Prop
   let helpText: string
   if (kind === 'rebase') {
     helpText = `⚠ During a rebase the sides are inverted: Current (${oursLabel}) is the branch you're rebasing onto; Incoming (${theirsLabel}) is your own commits being replayed.`
+  } else if (kind === 'cherry-pick') {
+    helpText = `Current (${oursLabel}) is your branch; Incoming (${theirsLabel}) is the commit being cherry-picked in.`
   } else if (kind === 'revert') {
     helpText = `Current (${oursLabel}) is your working state; Incoming (${theirsLabel}) is the change introduced by the revert.`
   } else {

@@ -26,6 +26,8 @@ export interface LoomContextValue {
   onCheckout: (target: string | null) => void
   onShowCommit: (hash: string, subject: string) => void
   onRevert: (hash: string, noCommit: boolean) => void
+  onCherryPick: (hash: string) => void
+  onResetTo: (hash: string, mode: 'soft' | 'mixed' | 'hard') => void
   onCheckoutPr: (number: number) => void
   dragSource: string | null
   setDragSource: (value: string | null) => void

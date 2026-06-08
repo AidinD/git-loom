@@ -25,15 +25,25 @@ export interface LoomApi {
   rebaseAbort: (repoPath: string) => Promise<CheckoutResult>
   revert: (repoPath: string, hash: string, noCommit: boolean) => Promise<MergeResult>
   revertAbort: (repoPath: string) => Promise<CheckoutResult>
-  conflictState: (repoPath: string) => Promise<'merge' | 'rebase' | 'revert' | null>
+  cherryPick: (repoPath: string, hash: string) => Promise<MergeResult>
+  cherryPickAbort: (repoPath: string) => Promise<CheckoutResult>
+  resetTo: (
+    repoPath: string,
+    hash: string,
+    mode: 'soft' | 'mixed' | 'hard'
+  ) => Promise<CheckoutResult>
+  undoLastCommit: (repoPath: string) => Promise<CheckoutResult>
   listConflicts: (repoPath: string) => Promise<ConflictsResult>
   useOurs: (repoPath: string, file: string) => Promise<CheckoutResult>
   useTheirs: (repoPath: string, file: string) => Promise<CheckoutResult>
   markResolved: (repoPath: string, file: string) => Promise<CheckoutResult>
   continueConflict: (
     repoPath: string,
-    kind: 'merge' | 'rebase' | 'revert'
+    kind: 'merge' | 'rebase' | 'revert' | 'cherry-pick'
   ) => Promise<MergeResult>
+  conflictState: (
+    repoPath: string
+  ) => Promise<'merge' | 'rebase' | 'revert' | 'cherry-pick' | null>
   readConflictFile: (repoPath: string, file: string) => Promise<ConflictFileResult>
   resolveConflictFile: (
     repoPath: string,

@@ -37,9 +37,20 @@ const api = {
   ): Promise<MergeResult> => ipcRenderer.invoke('git:revert', repoPath, hash, noCommit),
   revertAbort: (repoPath: string): Promise<CheckoutResult> =>
     ipcRenderer.invoke('git:revertAbort', repoPath),
+  cherryPick: (repoPath: string, hash: string): Promise<MergeResult> =>
+    ipcRenderer.invoke('git:cherryPick', repoPath, hash),
+  cherryPickAbort: (repoPath: string): Promise<CheckoutResult> =>
+    ipcRenderer.invoke('git:cherryPickAbort', repoPath),
+  resetTo: (
+    repoPath: string,
+    hash: string,
+    mode: 'soft' | 'mixed' | 'hard'
+  ): Promise<CheckoutResult> => ipcRenderer.invoke('git:resetTo', repoPath, hash, mode),
+  undoLastCommit: (repoPath: string): Promise<CheckoutResult> =>
+    ipcRenderer.invoke('git:undoLastCommit', repoPath),
   conflictState: (
     repoPath: string
-  ): Promise<'merge' | 'rebase' | 'revert' | null> =>
+  ): Promise<'merge' | 'rebase' | 'revert' | 'cherry-pick' | null> =>
     ipcRenderer.invoke('git:conflictState', repoPath),
   listConflicts: (repoPath: string): Promise<ConflictsResult> =>
     ipcRenderer.invoke('git:listConflicts', repoPath),
@@ -51,7 +62,7 @@ const api = {
     ipcRenderer.invoke('git:markResolved', repoPath, file),
   continueConflict: (
     repoPath: string,
-    kind: 'merge' | 'rebase' | 'revert'
+    kind: 'merge' | 'rebase' | 'revert' | 'cherry-pick'
   ): Promise<MergeResult> =>
     ipcRenderer.invoke('git:continueConflict', repoPath, kind),
   readConflictFile: (repoPath: string, file: string): Promise<ConflictFileResult> =>

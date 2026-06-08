@@ -303,8 +303,15 @@ function ChangesPanel({
           setDragZone(null)
         }}
         onClick={(event) => handleRowClick(event, sectionName, index, list)}
+        onDoubleClick={() => {
+          if (staged) {
+            onUnstage(file.path)
+          } else {
+            onStage(file.path)
+          }
+        }}
         onContextMenu={(event) => handleRowMenu(event, sectionName, file.path)}
-        title={file.path}
+        title={`${file.path} — double-click to ${staged ? 'unstage' : 'stage'}`}
       >
         <span className={`badge ${badge.cls}`}>{badge.text}</span>
         <span className="file-path">{file.path}</span>

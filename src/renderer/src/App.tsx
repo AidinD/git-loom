@@ -170,7 +170,7 @@ function App() {
   const [dragSource, setDragSource] = useState<string | null>(null)
   const [dragOver, setDragOver] = useState<string | null>(null)
   const [conflictKind, setConflictKind] = useState<
-    'merge' | 'rebase' | 'revert' | null
+    'merge' | 'rebase' | 'revert' | 'cherry-pick' | null
   >(null)
   const [showConflict, setShowConflict] = useState(false)
   const [conflictCount, setConflictCount] = useState(0)
@@ -488,7 +488,9 @@ function App() {
   }
 
   /** Enters conflict mode: records the kind, counts files, opens the resolver. */
-  async function enterConflict(kind: 'merge' | 'rebase' | 'revert'): Promise<void> {
+  async function enterConflict(
+    kind: 'merge' | 'rebase' | 'revert' | 'cherry-pick'
+  ): Promise<void> {
     setConflictKind(kind)
     setShowConflict(true)
     await refreshConflictCount()
@@ -551,6 +553,66 @@ function App() {
     }
   }
 
+  async function doCherryPick(hash: string): Promise<void> {
+    if (!repoPath) {
+      return
+    }
+    setError(null)
+    setInfo(null)
+    const result = await window.api.cherryPick(repoPath, hash)
+    await loadLog(repoPath)
+    if (result.ok) {
+      setInfo(result.message)
+      setConflictKind(null)
+    } else {
+      setError(result.error)
+      if (result.conflict) {
+        await enterConflict('cherry-pick')
+      }
+    }
+  }
+
+  async function doReset(hash: string, mode: 'soft' | 'mixed' | 'hard'): Promise<void> {
+    if (!repoPath) {
+      return
+    }
+    setError(null)
+    setInfo(null)
+    const result = await window.api.resetTo(repoPath, hash, mode)
+    if (!result.ok) {
+      setError(result.error)
+      return
+    }
+    setInfo(result.message)
+    await loadLog(repoPath)
+  }
+
+  async function doUndoLastCommit(): Promise<void> {
+    if (!repoPath) {
+      return
+    }
+    setError(null)
+    setInfo(null)
+    const result = await window.api.undoLastCommit(repoPath)
+    if (!result.ok) {
+      setError(result.error)
+      return
+    }
+    setInfo(result.message)
+    await loadLog(repoPath)
+  }
+
+  function requestReset(hash: string, mode: 'soft' | 'mixed' | 'hard'): void {
+    setConfirm({
+      message: `Reset current branch to ${hash.slice(0, 7)} (${mode})?${
+        mode === 'hard' ? ' Uncommitted changes will be lost.' : ''
+      }`,
+      action: () => {
+        void doReset(hash, mode)
+      }
+    })
+  }
+
   async function handleAbort(): Promise<void> {
     if (!repoPath) {
       return
@@ -560,6 +622,8 @@ function App() {
       result = await window.api.rebaseAbort(repoPath)
     } else if (conflictKind === 'revert') {
       result = await window.api.revertAbort(repoPath)
+    } else if (conflictKind === 'cherry-pick') {
+      result = await window.api.cherryPickAbort(repoPath)
     } else {
       result = await window.api.mergeAbort(repoPath)
     }
@@ -1099,6 +1163,8 @@ function App() {
     onCheckout: handleCheckout,
     onShowCommit: handleShowCommit,
     onRevert: doRevert,
+    onCherryPick: doCherryPick,
+    onResetTo: requestReset,
     onCheckoutPr: handleCheckoutPr,
     dragSource,
     setDragSource,
@@ -1242,6 +1308,10 @@ function App() {
             const items: ContextMenuItem[] = []
             if (repoPath) {
               items.push({ label: 'Refresh', onClick: () => loadLog(repoPath) })
+              items.push({
+                label: 'Undo last commit (keep changes)',
+                onClick: () => void doUndoLastCommit()
+              })
               items.push({
                 label: 'Open in file explorer',
                 onClick: () => window.api.revealRepo(repoPath)
