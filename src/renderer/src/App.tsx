@@ -753,6 +753,7 @@ function App() {
       return
     }
     await loadStatus(repoPath)
+    await refreshShownDiff([file], true)
   }
 
   async function handleUnstage(file: string): Promise<void> {
@@ -765,6 +766,7 @@ function App() {
       return
     }
     await loadStatus(repoPath)
+    await refreshShownDiff([file], false)
   }
 
   async function handleStageAll(): Promise<void> {
@@ -777,6 +779,7 @@ function App() {
       return
     }
     await loadStatus(repoPath)
+    await refreshShownDiff(null, true)
   }
 
   async function handleUnstageAll(): Promise<void> {
@@ -789,6 +792,7 @@ function App() {
       return
     }
     await loadStatus(repoPath)
+    await refreshShownDiff(null, false)
   }
 
   async function handleStageMany(files: string[]): Promise<void> {
@@ -801,6 +805,7 @@ function App() {
       return
     }
     await loadStatus(repoPath)
+    await refreshShownDiff(files, true)
   }
 
   async function handleUnstageMany(files: string[]): Promise<void> {
@@ -813,6 +818,27 @@ function App() {
       return
     }
     await loadStatus(repoPath)
+    await refreshShownDiff(files, false)
+  }
+
+  /**
+   * Re-fetches the diff currently shown in the Diff panel after a staging
+   * change, so it follows the file to its new (staged/unstaged) scope instead
+   * of showing a stale diff with the wrong Stage/Unstage buttons. `files = null`
+   * means "any shown working-tree file" (used by stage-all / unstage-all).
+   */
+  async function refreshShownDiff(
+    files: string[] | null,
+    nowStaged: boolean
+  ): Promise<void> {
+    const shown = diffView?.file
+    if (!shown) {
+      return
+    }
+    if (files !== null && !files.includes(shown)) {
+      return
+    }
+    await handleShowDiff(shown, nowStaged)
   }
 
   function handleStashMany(files: string[]): void {
