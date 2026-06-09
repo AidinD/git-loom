@@ -889,7 +889,12 @@ export async function status(dir: string): Promise<StatusResult> {
     return { ok: false, error: `Not a Git repository: ${dir}` }
   }
 
-  const result = await runGit(['status', '--porcelain=v1', '-z'], root)
+  // --untracked-files=all lists each untracked file individually instead of
+  // collapsing a new directory into a single entry (still honours .gitignore).
+  const result = await runGit(
+    ['status', '--porcelain=v1', '-z', '--untracked-files=all'],
+    root
+  )
   if (result.code !== 0) {
     return {
       ok: false,
