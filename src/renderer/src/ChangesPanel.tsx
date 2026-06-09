@@ -38,24 +38,29 @@ interface Props {
 interface Badge {
   text: string
   cls: string
+  label: string
 }
 
 function badgeFor(char: string): Badge {
   switch (char) {
     case 'M':
-      return { text: 'M', cls: 'mod' }
+      return { text: 'M', cls: 'mod', label: 'Modified' }
     case 'A':
-      return { text: 'A', cls: 'add' }
+      return { text: 'A', cls: 'add', label: 'Added' }
     case 'D':
-      return { text: 'D', cls: 'del' }
+      return { text: 'D', cls: 'del', label: 'Deleted' }
     case 'R':
-      return { text: 'R', cls: 'mod' }
+      return { text: 'R', cls: 'mod', label: 'Renamed' }
     case 'C':
-      return { text: 'C', cls: 'mod' }
+      return { text: 'C', cls: 'mod', label: 'Copied' }
+    case 'T':
+      return { text: 'T', cls: 'mod', label: 'Type changed' }
+    case 'U':
+      return { text: '!', cls: 'cfl', label: 'Conflict' }
     case '?':
-      return { text: 'U', cls: 'new' }
+      return { text: 'N', cls: 'new', label: 'New (untracked)' }
     default:
-      return { text: char, cls: 'mod' }
+      return { text: char, cls: 'mod', label: 'Changed' }
   }
 }
 
@@ -396,7 +401,9 @@ function ChangesPanel({
         onContextMenu={(event) => handleRowMenu(event, sectionName, file.path)}
         title={`${file.path} — double-click to ${staged ? 'unstage' : 'stage'}`}
       >
-        <span className={`badge ${badge.cls}`}>{badge.text}</span>
+        <span className={`badge ${badge.cls}`} title={badge.label}>
+          {badge.text}
+        </span>
         <span className="file-path">{file.path}</span>
         {!staged && (
           <button

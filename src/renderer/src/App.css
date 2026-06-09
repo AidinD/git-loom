@@ -367,6 +367,10 @@ body {
   background: #73daca;
 }
 
+.badge.cfl {
+  background: #bb9af7;
+}
+
 .file-path {
   flex: 1;
   overflow: hidden;
