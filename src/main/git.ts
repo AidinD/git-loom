@@ -1524,6 +1524,51 @@ export async function discardFile(
   )
 }
 
+/**
+ * Discards changes in many files at once. Untracked files are removed with a
+ * single `git clean` and tracked files are reset to HEAD with a single `git
+ * restore` — at most two git invocations regardless of file count, instead of
+ * one per file.
+ */
+export async function discardFiles(
+  dir: string,
+  tracked: string[],
+  untracked: string[]
+): Promise<CheckoutResult> {
+  let root: string | null
+  try {
+    root = await resolveRepoRoot(dir)
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) }
+  }
+  if (!root) {
+    return { ok: false, error: `Not a Git repository: ${dir}` }
+  }
+  if (untracked.length > 0) {
+    const result = await runGit(['clean', '-f', '--', ...untracked], root)
+    if (result.code !== 0) {
+      return {
+        ok: false,
+        error: tidy(result.stderr) || tidy(result.stdout) || `git exited with code ${result.code}`
+      }
+    }
+  }
+  if (tracked.length > 0) {
+    const result = await runGit(
+      ['restore', '--staged', '--worktree', '--source=HEAD', '--', ...tracked],
+      root
+    )
+    if (result.code !== 0) {
+      return {
+        ok: false,
+        error: tidy(result.stderr) || tidy(result.stdout) || `git exited with code ${result.code}`
+      }
+    }
+  }
+  const total = tracked.length + untracked.length
+  return { ok: true, message: `Discarded changes in ${total} file${total === 1 ? '' : 's'}` }
+}
+
 const STASH_FIELD = '\x1f'
 
 /** Lists the stash stack, newest first. */

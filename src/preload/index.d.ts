@@ -156,6 +156,11 @@ export interface LoomApi {
     file: string,
     untracked: boolean
   ) => Promise<CheckoutResult>
+  discardFiles: (
+    repoPath: string,
+    tracked: string[],
+    untracked: string[]
+  ) => Promise<CheckoutResult>
 }
 
 declare global {

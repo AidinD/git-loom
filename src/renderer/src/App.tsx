@@ -1215,14 +1215,23 @@ function App() {
       message: `Discard changes in ${files.length} files? This cannot be undone.`,
       action: () => {
         void (async () => {
+          const tracked: string[] = []
+          const untracked: string[] = []
           for (const file of files) {
             const change = changes.find((entry) => entry.path === file)
-            const untracked = change ? change.worktree === '?' : false
-            const result = await window.api.discardFile(repoPath, file, untracked)
-            if (!result.ok) {
-              setError(result.error)
-              break
+            if (change && change.worktree === '?') {
+              untracked.push(file)
+            } else {
+              tracked.push(file)
             }
+          }
+          setError(null)
+          setInfo(null)
+          const result = await window.api.discardFiles(repoPath, tracked, untracked)
+          if (!result.ok) {
+            setError(result.error)
+          } else {
+            setInfo(result.message)
           }
           await loadStatus(repoPath)
         })()

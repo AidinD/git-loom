@@ -229,7 +229,13 @@ const api = {
     file: string,
     untracked: boolean
   ): Promise<CheckoutResult> =>
-    ipcRenderer.invoke('git:discardFile', repoPath, file, untracked)
+    ipcRenderer.invoke('git:discardFile', repoPath, file, untracked),
+  discardFiles: (
+    repoPath: string,
+    tracked: string[],
+    untracked: string[]
+  ): Promise<CheckoutResult> =>
+    ipcRenderer.invoke('git:discardFiles', repoPath, tracked, untracked)
 }
 
 if (process.contextIsolated) {

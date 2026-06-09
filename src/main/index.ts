@@ -49,6 +49,7 @@ import {
   getUpstream,
   renameBranch,
   discardFile,
+  discardFiles,
   stageAll,
   unstageAll,
   stageFiles,
@@ -497,6 +498,13 @@ app.whenReady().then(() => {
     'git:discardFile',
     async (_event, repoPath: string, file: string, untracked: boolean) => {
       return discardFile(repoPath, file, untracked)
+    }
+  )
+
+  ipcMain.handle(
+    'git:discardFiles',
+    async (_event, repoPath: string, tracked: string[], untracked: string[]) => {
+      return discardFiles(repoPath, tracked, untracked)
     }
   )
 
