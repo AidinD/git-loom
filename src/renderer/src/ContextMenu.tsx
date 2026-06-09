@@ -2,6 +2,8 @@ export interface ContextMenuItem {
   label: string
   onClick: () => void
   danger?: boolean
+  /** When defined, renders a checkmark column (✓ when true) — e.g. open views. */
+  checked?: boolean
 }
 
 interface Props {
@@ -35,6 +37,9 @@ function ContextMenu({ x, y, items, onClose }: Props) {
               onClose()
             }}
           >
+            {item.checked !== undefined && (
+              <span className="ctx-check">{item.checked ? '✓' : ''}</span>
+            )}
             {item.label}
           </button>
         ))}

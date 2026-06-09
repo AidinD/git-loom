@@ -210,7 +210,7 @@ function App() {
   const [stashes, setStashes] = useState<StashEntry[]>([])
   const [commitSummary, setCommitSummary] = useState('')
   const [commitSign, setCommitSign] = useState(
-    () => localStorage.getItem('loom.signCommits') !== 'false'
+    () => localStorage.getItem('loom.signCommits') === 'true'
   )
   const [commitDescription, setCommitDescription] = useState('')
   const [commitCoauthors, setCommitCoauthors] = useState('')
@@ -1787,21 +1787,44 @@ function App() {
           title="Show / hide panels"
           onClick={(event) => {
             const rect = event.currentTarget.getBoundingClientRect()
+            const isOpen = (id: string): boolean => !!dockApi.current?.getPanel(id)
             setContextMenu({
               x: rect.left,
               y: rect.bottom + 4,
               items: [
                 {
                   label: 'Repositories',
+                  checked: isOpen('repos'),
                   onClick: () => showPanel('repos', 'Repositories')
                 },
-                { label: 'History', onClick: () => showPanel('graph', 'History') },
-                { label: 'Changes', onClick: () => showPanel('changes', 'Changes') },
-                { label: 'Files', onClick: () => showPanel('files', 'Files') },
-                { label: 'Diff', onClick: () => showPanel('diff', 'Diff') },
-                { label: 'Pull requests', onClick: () => showPanel('pr', 'Pull requests') },
+                {
+                  label: 'History',
+                  checked: isOpen('graph'),
+                  onClick: () => showPanel('graph', 'History')
+                },
+                {
+                  label: 'Changes',
+                  checked: isOpen('changes'),
+                  onClick: () => showPanel('changes', 'Changes')
+                },
+                {
+                  label: 'Files',
+                  checked: isOpen('files'),
+                  onClick: () => showPanel('files', 'Files')
+                },
+                {
+                  label: 'Diff',
+                  checked: isOpen('diff'),
+                  onClick: () => showPanel('diff', 'Diff')
+                },
+                {
+                  label: 'Pull requests',
+                  checked: isOpen('pr'),
+                  onClick: () => showPanel('pr', 'Pull requests')
+                },
                 {
                   label: 'Command history',
+                  checked: isOpen('log'),
                   onClick: () => showPanel('log', 'Command history')
                 }
               ]

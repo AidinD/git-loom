@@ -1509,6 +1509,14 @@ body {
   color: #ff9aa2;
 }
 
+.ctx-check {
+  display: inline-block;
+  width: 14px;
+  margin-right: 4px;
+  color: var(--accent);
+  text-align: center;
+}
+
 .git-graph-col {
   flex: none;
   align-self: stretch;
