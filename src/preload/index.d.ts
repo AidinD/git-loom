@@ -70,7 +70,12 @@ export interface LoomApi {
     content: string
   ) => Promise<CheckoutResult>
   status: (repoPath: string) => Promise<StatusResult>
-  diff: (repoPath: string, file: string, staged: boolean) => Promise<DiffResult>
+  diff: (
+    repoPath: string,
+    file: string,
+    staged: boolean,
+    untracked?: boolean
+  ) => Promise<DiffResult>
   showCommit: (repoPath: string, hash: string) => Promise<DiffResult>
   stage: (repoPath: string, file: string) => Promise<CheckoutResult>
   stageAll: (repoPath: string) => Promise<CheckoutResult>

@@ -930,7 +930,8 @@ function parseStatus(raw: string): FileChange[] {
 export async function diff(
   dir: string,
   file: string,
-  staged: boolean
+  staged: boolean,
+  untracked = false
 ): Promise<DiffResult> {
   let root: string | null
   try {
@@ -941,6 +942,21 @@ export async function diff(
 
   if (!root) {
     return { ok: false, error: `Not a Git repository: ${dir}` }
+  }
+
+  // Untracked files have nothing to diff against, so `git diff` is empty.
+  // Compare against an empty file to render them as all-added.
+  if (untracked && !staged) {
+    const result = await runGit(['diff', '--no-index', '--', '/dev/null', file], root)
+    // --no-index exits 1 when the files differ (the normal case); only a code
+    // above 1 is an actual error.
+    if (result.code > 1) {
+      return {
+        ok: false,
+        error: result.stderr.trim() || `git exited with code ${result.code}`
+      }
+    }
+    return { ok: true, text: result.stdout }
   }
 
   const args = staged

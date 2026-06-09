@@ -1278,11 +1278,13 @@ function App() {
     if (!repoPath) {
       return
     }
-    const result = await window.api.diff(repoPath, file, staged)
+    const change = changes.find((entry) => entry.path === file)
+    const untracked = change ? change.worktree === '?' : false
+    const result = await window.api.diff(repoPath, file, staged, untracked)
     if (result.ok) {
       setDiffView({
         title: file,
-        subtitle: staged ? 'staged' : 'unstaged',
+        subtitle: staged ? 'staged' : untracked ? 'untracked (new file)' : 'unstaged',
         text: result.text,
         file,
         staged

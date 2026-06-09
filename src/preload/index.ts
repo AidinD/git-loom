@@ -100,8 +100,13 @@ const api = {
     ipcRenderer.invoke('git:resolveConflictFile', repoPath, file, content),
   status: (repoPath: string): Promise<StatusResult> =>
     ipcRenderer.invoke('git:status', repoPath),
-  diff: (repoPath: string, file: string, staged: boolean): Promise<DiffResult> =>
-    ipcRenderer.invoke('git:diff', repoPath, file, staged),
+  diff: (
+    repoPath: string,
+    file: string,
+    staged: boolean,
+    untracked?: boolean
+  ): Promise<DiffResult> =>
+    ipcRenderer.invoke('git:diff', repoPath, file, staged, untracked ?? false),
   showCommit: (repoPath: string, hash: string): Promise<DiffResult> =>
     ipcRenderer.invoke('git:showCommit', repoPath, hash),
   stage: (repoPath: string, file: string): Promise<CheckoutResult> =>

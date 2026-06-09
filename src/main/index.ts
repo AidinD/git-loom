@@ -296,8 +296,14 @@ app.whenReady().then(() => {
 
   ipcMain.handle(
     'git:diff',
-    async (_event, repoPath: string, file: string, staged: boolean) => {
-      return diff(repoPath, file, staged)
+    async (
+      _event,
+      repoPath: string,
+      file: string,
+      staged: boolean,
+      untracked: boolean
+    ) => {
+      return diff(repoPath, file, staged, untracked)
     }
   )
 
