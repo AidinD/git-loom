@@ -37,6 +37,51 @@ function parseRef(ref: string, remotes: string[]): ParsedRef {
   return { kind: 'branch', label: ref, name: ref, target: ref }
 }
 
+/**
+ * Formats a commit timestamp (unix seconds) as a compact relative label:
+ * "just now", "5m", "3h", "Yesterday", "4 days ago", then an absolute date
+ * ("Jun 3", or "Jun 3, 2025" for previous years).
+ */
+function formatRelativeTime(timestamp: number): string {
+  const then = timestamp * 1000
+  const now = Date.now()
+  const diffSec = Math.floor((now - then) / 1000)
+  if (diffSec < 60) {
+    return 'just now'
+  }
+  const diffMin = Math.floor(diffSec / 60)
+  if (diffMin < 60) {
+    return `${diffMin}m`
+  }
+  const diffHour = Math.floor(diffMin / 60)
+  if (diffHour < 24) {
+    return `${diffHour}h`
+  }
+  const startOfToday = new Date()
+  startOfToday.setHours(0, 0, 0, 0)
+  const startOfThen = new Date(then)
+  startOfThen.setHours(0, 0, 0, 0)
+  const dayDiff = Math.round((startOfToday.getTime() - startOfThen.getTime()) / 86400000)
+  if (dayDiff === 1) {
+    return 'Yesterday'
+  }
+  if (dayDiff < 7) {
+    return `${dayDiff} days ago`
+  }
+  const date = new Date(then)
+  const sameYear = date.getFullYear() === new Date(now).getFullYear()
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: sameYear ? undefined : 'numeric'
+  })
+}
+
+/** Full local timestamp for the date column's tooltip. */
+function formatFullTime(timestamp: number): string {
+  return new Date(timestamp * 1000).toLocaleString()
+}
+
 function avatarColor(name: string): string {
   let hash = 0
   for (let i = 0; i < name.length; i++) {
@@ -445,6 +490,9 @@ function GraphView() {
               {initialsFor(commit.authorName)}
             </span>
             <span className="author">{commit.authorName}</span>
+            <span className="commit-date" title={formatFullTime(commit.timestamp)}>
+              {formatRelativeTime(commit.timestamp)}
+            </span>
             </li>
           ))}
         </ul>

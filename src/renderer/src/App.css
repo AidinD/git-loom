@@ -1682,6 +1682,15 @@ body {
   font-size: 12px;
 }
 
+.commit-date {
+  flex: none;
+  width: 84px;
+  text-align: right;
+  color: var(--text-dim);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
 .modal-backdrop {
   position: fixed;
   inset: 0;
