@@ -38,12 +38,12 @@ function parseRef(ref: string, remotes: string[]): ParsedRef {
 }
 
 /**
- * Formats a commit timestamp (unix seconds) as a compact relative label:
+ * Formats a commit timestamp (unix milliseconds) as a compact relative label:
  * "just now", "5m", "3h", "Yesterday", "4 days ago", then an absolute date
  * ("Jun 3", or "Jun 3, 2025" for previous years).
  */
 function formatRelativeTime(timestamp: number): string {
-  const then = timestamp * 1000
+  const then = timestamp
   const now = Date.now()
   const diffSec = Math.floor((now - then) / 1000)
   if (diffSec < 60) {
@@ -79,7 +79,7 @@ function formatRelativeTime(timestamp: number): string {
 
 /** Full local timestamp for the date column's tooltip. */
 function formatFullTime(timestamp: number): string {
-  return new Date(timestamp * 1000).toLocaleString()
+  return new Date(timestamp).toLocaleString()
 }
 
 function avatarColor(name: string): string {
