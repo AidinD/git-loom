@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { RepoEntry } from '../../shared/types'
+import type { ContextMenuItem } from './ContextMenu'
 
 interface Props {
   repos: RepoEntry[]
@@ -13,6 +14,8 @@ interface Props {
   onRenameGroup?: (oldName: string) => void
   /** Called after a switch/add/clone — used by the dropdown to close itself. */
   onActivate?: () => void
+  /** Opens a context menu for a repo row (right-click). */
+  openContextMenu?: (x: number, y: number, items: ContextMenuItem[]) => void
 }
 
 const UNGROUPED = 'Ungrouped'
@@ -59,7 +62,8 @@ function RepoList({
   onSetGroup,
   onReorder,
   onRenameGroup,
-  onActivate
+  onActivate,
+  openContextMenu
 }: Props) {
   const [filter, setFilter] = useState('')
   const [collapsed, setCollapsed] = useState<Set<string>>(loadCollapsed)
@@ -276,6 +280,32 @@ function RepoList({
                       event.preventDefault()
                       event.stopPropagation()
                       dropOnRow(repo.path)
+                    }}
+                    onContextMenu={(event) => {
+                      if (!openContextMenu) {
+                        return
+                      }
+                      event.preventDefault()
+                      event.stopPropagation()
+                      openContextMenu(event.clientX, event.clientY, [
+                        {
+                          label: 'Open in file explorer',
+                          onClick: () => window.api.revealRepo(repo.path)
+                        },
+                        {
+                          label: 'Open in VS Code',
+                          onClick: () => window.api.openInEditor(repo.path)
+                        },
+                        {
+                          label: 'Set group…',
+                          onClick: () => onSetGroup(repo)
+                        },
+                        {
+                          label: 'Remove from list',
+                          danger: true,
+                          onClick: () => onRemove(repo.path)
+                        }
+                      ])
                     }}
                     title={repo.path}
                   >

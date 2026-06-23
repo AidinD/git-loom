@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { RepoEntry } from '../../shared/types'
+import type { ContextMenuItem } from './ContextMenu'
 import RepoList from './RepoList'
 
 interface Props {
@@ -12,6 +13,7 @@ interface Props {
   onSetGroup: (repo: RepoEntry) => void
   onRenameGroup: (oldName: string) => void
   onReorder: (items: { path: string; group: string }[]) => void
+  openContextMenu?: (x: number, y: number, items: ContextMenuItem[]) => void
 }
 
 function RepoSwitcher({
@@ -23,7 +25,8 @@ function RepoSwitcher({
   onRemove,
   onSetGroup,
   onRenameGroup,
-  onReorder
+  onReorder,
+  openContextMenu
 }: Props) {
   const [open, setOpen] = useState(false)
 
@@ -52,6 +55,7 @@ function RepoSwitcher({
               onRenameGroup={onRenameGroup}
               onReorder={onReorder}
               onActivate={() => setOpen(false)}
+              openContextMenu={openContextMenu}
             />
           </div>
         </>

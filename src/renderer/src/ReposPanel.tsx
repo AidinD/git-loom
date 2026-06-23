@@ -16,6 +16,7 @@ function ReposPanel() {
         onSetGroup={l.onSetRepoGroup}
         onRenameGroup={l.onRenameRepoGroup}
         onReorder={l.onReorderRepos}
+        openContextMenu={l.openContextMenu}
       />
     </div>
   )

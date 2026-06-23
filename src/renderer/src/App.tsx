@@ -1788,6 +1788,7 @@ function App() {
           onSetGroup={openGroupModal}
           onRenameGroup={openRenameGroup}
           onReorder={(items) => void handleReorderRepos(items)}
+          openContextMenu={(x, y, items) => setContextMenu({ x, y, items })}
         />
         {repoPath && (
           <>
