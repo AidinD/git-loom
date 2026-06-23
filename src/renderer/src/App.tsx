@@ -188,6 +188,9 @@ function App() {
   >(null)
   const [showConflict, setShowConflict] = useState(false)
   const [showCleanup, setShowCleanup] = useState(false)
+  const [divergePull, setDivergePull] = useState<{ ahead: number; behind: number } | null>(
+    null
+  )
   const [conflictCount, setConflictCount] = useState(0)
   const [rebaseBase, setRebaseBase] = useState<string | null>(null)
   const [rebaseRows, setRebaseRows] = useState<RebaseRow[]>([])
@@ -1034,8 +1037,71 @@ function App() {
     setLastFetched(new Date())
   }
 
-  function handlePull(): Promise<void> {
-    return runRemoteOp((path) => window.api.pull(path))
+  async function handlePull(): Promise<void> {
+    if (!repoPath) {
+      return
+    }
+    setError(null)
+    setInfo(null)
+    const result = await window.api.pull(repoPath)
+    await loadLog(repoPath)
+    if (result.ok) {
+      setInfo(result.message)
+      return
+    }
+    // A fast-forward pull fails when local history has diverged from the
+    // upstream. The fetch still ran, so ahead/behind is now accurate — if both
+    // sides have commits, offer to rebase or merge instead of a dead end.
+    const ab = await window.api.aheadBehind(repoPath)
+    if (ab.ahead > 0 && ab.behind > 0) {
+      setDivergePull(ab)
+      return
+    }
+    setError(result.error)
+  }
+
+  async function doPullRebase(): Promise<void> {
+    if (!repoPath) {
+      return
+    }
+    setDivergePull(null)
+    setError(null)
+    setInfo(null)
+    const before = await captureHead()
+    const result = await window.api.pullRebase(repoPath)
+    await loadLog(repoPath)
+    if (result.ok) {
+      setInfo(result.message)
+      setConflictKind(null)
+      pushUndo('pull --rebase', before)
+    } else {
+      setError(result.error)
+      if (result.conflict) {
+        await enterConflict('rebase')
+      }
+    }
+  }
+
+  async function doPullMerge(): Promise<void> {
+    if (!repoPath) {
+      return
+    }
+    setDivergePull(null)
+    setError(null)
+    setInfo(null)
+    const before = await captureHead()
+    const result = await window.api.pullMerge(repoPath)
+    await loadLog(repoPath)
+    if (result.ok) {
+      setInfo(result.message)
+      setConflictKind(null)
+      pushUndo('pull --merge', before)
+    } else {
+      setError(result.error)
+      if (result.conflict) {
+        await enterConflict('merge')
+      }
+    }
   }
 
   function handlePush(): Promise<void> {
@@ -2259,6 +2325,37 @@ function App() {
             void refreshConflictCount()
           }}
         />
+      )}
+
+      {divergePull && (
+        <div className="modal-backdrop" onClick={() => setDivergePull(null)}>
+          <div className="modal" onClick={(event) => event.stopPropagation()}>
+            <p className="modal-text">
+              Your branch and <code>origin/{currentBranch}</code> have diverged —
+              you have {divergePull.ahead} local commit
+              {divergePull.ahead === 1 ? '' : 's'} and the remote has{' '}
+              {divergePull.behind} you don&apos;t. How do you want to integrate them?
+            </p>
+            <div className="modal-actions">
+              <button
+                title="Replay your commits on top of the remote (recommended)"
+                onClick={() => void doPullRebase()}
+              >
+                Rebase
+              </button>
+              <button
+                className="secondary"
+                title="Merge the remote into your branch with a merge commit"
+                onClick={() => void doPullMerge()}
+              >
+                Merge
+              </button>
+              <button className="secondary" onClick={() => setDivergePull(null)}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {showCleanup && repoPath && (

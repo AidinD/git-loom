@@ -1345,6 +1345,69 @@ export async function pull(dir: string): Promise<CheckoutResult> {
   return runSimple(dir, ['pull', '--ff-only'], 'Pulled')
 }
 
+/**
+ * Pulls with rebase: replays local commits on top of the fetched upstream.
+ * Used when history has diverged and the user chooses to rebase. --autostash
+ * lets it run with a dirty working tree.
+ */
+export async function pullRebase(dir: string): Promise<MergeResult> {
+  let root: string | null
+  try {
+    root = await resolveRepoRoot(dir)
+  } catch (err) {
+    return {
+      ok: false,
+      conflict: false,
+      error: err instanceof Error ? err.message : String(err)
+    }
+  }
+  if (!root) {
+    return { ok: false, conflict: false, error: `Not a Git repository: ${dir}` }
+  }
+  const result = await runGit(['pull', '--rebase', '--autostash'], root)
+  if (result.code !== 0) {
+    const output = `${result.stdout}\n${result.stderr}`
+    const conflict = /CONFLICT|could not apply|Resolve all conflicts/i.test(output)
+    return {
+      ok: false,
+      conflict,
+      error: tidy(result.stdout) || tidy(result.stderr) || 'Pull (rebase) failed'
+    }
+  }
+  return { ok: true, message: 'Pulled (rebased)' }
+}
+
+/**
+ * Pulls with a merge commit: integrates the fetched upstream by merging it into
+ * the local branch. Used when history has diverged and the user chooses merge.
+ */
+export async function pullMerge(dir: string): Promise<MergeResult> {
+  let root: string | null
+  try {
+    root = await resolveRepoRoot(dir)
+  } catch (err) {
+    return {
+      ok: false,
+      conflict: false,
+      error: err instanceof Error ? err.message : String(err)
+    }
+  }
+  if (!root) {
+    return { ok: false, conflict: false, error: `Not a Git repository: ${dir}` }
+  }
+  const result = await runGit(['pull', '--no-rebase', '--autostash'], root)
+  if (result.code !== 0) {
+    const output = `${result.stdout}\n${result.stderr}`
+    const conflict = /CONFLICT|Automatic merge failed/i.test(output)
+    return {
+      ok: false,
+      conflict,
+      error: tidy(result.stdout) || tidy(result.stderr) || 'Pull (merge) failed'
+    }
+  }
+  return { ok: true, message: 'Pulled (merged)' }
+}
+
 /** Pushes the current branch to its upstream. */
 export async function push(dir: string): Promise<CheckoutResult> {
   return runSimple(dir, ['push'], 'Pushed')

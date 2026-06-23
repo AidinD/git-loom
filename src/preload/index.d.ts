@@ -124,6 +124,8 @@ export interface LoomApi {
   stashDrop: (repoPath: string, ref: string) => Promise<CheckoutResult>
   fetch: (repoPath: string) => Promise<CheckoutResult>
   pull: (repoPath: string) => Promise<CheckoutResult>
+  pullRebase: (repoPath: string) => Promise<MergeResult>
+  pullMerge: (repoPath: string) => Promise<MergeResult>
   push: (repoPath: string) => Promise<CheckoutResult>
   getCurrentRepo: () => Promise<string | null>
   setCurrentRepo: (repoPath: string) => Promise<void>

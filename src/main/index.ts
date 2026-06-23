@@ -38,6 +38,8 @@ import {
   stashDrop,
   fetch,
   pull,
+  pullRebase,
+  pullMerge,
   push,
   listBranches,
   aheadBehind,
@@ -443,6 +445,14 @@ app.whenReady().then(() => {
 
   ipcMain.handle('git:pull', async (_event, repoPath: string) => {
     return pull(repoPath)
+  })
+
+  ipcMain.handle('git:pullRebase', async (_event, repoPath: string) => {
+    return pullRebase(repoPath)
+  })
+
+  ipcMain.handle('git:pullMerge', async (_event, repoPath: string) => {
+    return pullMerge(repoPath)
   })
 
   ipcMain.handle('git:push', async (_event, repoPath: string) => {

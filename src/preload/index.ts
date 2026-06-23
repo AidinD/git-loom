@@ -185,6 +185,10 @@ const api = {
     ipcRenderer.invoke('git:fetch', repoPath),
   pull: (repoPath: string): Promise<CheckoutResult> =>
     ipcRenderer.invoke('git:pull', repoPath),
+  pullRebase: (repoPath: string): Promise<MergeResult> =>
+    ipcRenderer.invoke('git:pullRebase', repoPath),
+  pullMerge: (repoPath: string): Promise<MergeResult> =>
+    ipcRenderer.invoke('git:pullMerge', repoPath),
   push: (repoPath: string): Promise<CheckoutResult> =>
     ipcRenderer.invoke('git:push', repoPath),
   getCurrentRepo: (): Promise<string | null> =>
