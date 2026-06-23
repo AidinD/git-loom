@@ -488,9 +488,12 @@ function App() {
   }
 
   async function loadStatus(path: string): Promise<void> {
-    const result = await window.api.status(path)
+    // status and stashList are independent reads — run them concurrently.
+    const [result, stashResult] = await Promise.all([
+      window.api.status(path),
+      window.api.stashList(path)
+    ])
     setChanges(result.ok ? result.files : [])
-    const stashResult = await window.api.stashList(path)
     setStashes(stashResult.ok ? stashResult.stashes : [])
   }
 
@@ -504,8 +507,16 @@ function App() {
         setCommits(result.commits)
         setHasMoreCommits(result.hasMore)
         setRemotes(result.remotes)
-        await loadStatus(result.root)
-        const branchResult = await window.api.listBranches(result.root)
+        // These reads are independent of each other — run them concurrently so
+        // a refresh (e.g. after fetch/pull) isn't a chain of sequential git
+        // spawns.
+        const [, branchResult, ab, state, repos] = await Promise.all([
+          loadStatus(result.root),
+          window.api.listBranches(result.root),
+          window.api.aheadBehind(result.root),
+          window.api.conflictState(result.root),
+          window.api.addRepo(result.root)
+        ])
         if (branchResult.ok) {
           setBranches(branchResult.branches)
           setCurrentBranch(branchResult.current)
@@ -515,12 +526,10 @@ function App() {
           }
           setBranchInfo(map)
         }
-        const ab = await window.api.aheadBehind(result.root)
         setAhead(ab.ahead)
         setBehind(ab.behind)
         // Detect a repo left mid-merge/rebase/revert so the badge shows up
         // even when we didn't start the operation this session.
-        const state = await window.api.conflictState(result.root)
         setConflictKind(state)
         if (state) {
           const conflicts = await window.api.listConflicts(result.root)
@@ -529,7 +538,7 @@ function App() {
           setShowConflict(false)
           setConflictCount(0)
         }
-        setRepos(await window.api.addRepo(result.root))
+        setRepos(repos)
         window.api.setCurrentRepo(result.root)
       } else {
         setError(result.error)
