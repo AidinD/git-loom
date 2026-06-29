@@ -891,8 +891,11 @@ export async function status(dir: string): Promise<StatusResult> {
 
   // --untracked-files=all lists each untracked file individually instead of
   // collapsing a new directory into a single entry (still honours .gitignore).
+  // --no-renames keeps the staged view consistent with the unstaged one: a
+  // delete + new file shows as D + A on both sides instead of collapsing to a
+  // single R only once staged (the worktree can't detect the rename anyway).
   const result = await runGit(
-    ['status', '--porcelain=v1', '-z', '--untracked-files=all'],
+    ['status', '--porcelain=v1', '-z', '--untracked-files=all', '--no-renames'],
     root
   )
   if (result.code !== 0) {
