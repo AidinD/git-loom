@@ -5,6 +5,92 @@ Newest entries can go on top. Format: decision · alternatives · why.
 
 ---
 
+## 2026-06-23 — Pull that offers rebase or merge on divergence
+
+### Fall back from `--ff-only` instead of dead-ending
+- **Decision:** Pull still tries `git pull --ff-only` first. When that fails *and* the
+  fetch it implies shows both sides have commits (ahead > 0 and behind > 0), Loom shows a
+  dialog offering **Rebase** (recommended, `pull --rebase --autostash`) or **Merge**
+  (`pull --no-rebase --autostash`), instead of just surfacing git's error. Both routes
+  push an undo-stack entry and route conflicts into the existing merge/rebase resolver.
+- **Alternatives:** always rebase without asking; always merge without asking; leave the
+  ff-only error as-is and make the user resolve it manually (old behavior).
+- **Why:** ff-only is the safe default (never rewrites/merges history unasked), but a
+  silent dead-end on the common "local + remote both moved" case is bad UX. Asking rather
+  than picking one strategy respects that rebase vs merge is a personal-history-shape
+  preference, not something Loom should decide unilaterally. `--autostash` on both keeps
+  a dirty working tree from blocking the operation.
+
+### Parallelize repo-refresh reads
+- **Decision:** `loadLog`'s independent reads (status, stash list, branches,
+  ahead/behind, conflict state, repo list) now run via `Promise.all` instead of
+  sequentially; `loadStatus` likewise runs status + stash list concurrently.
+- **Why:** Each git spawn costs real process overhead on Windows (~320ms sequential vs
+  ~95ms concurrent for the full refresh). No correctness reason for the ordering — they
+  don't depend on each other.
+
+## 2026-06-15 — Relative commit-date column
+
+### Right-aligned relative time per row, not date section headers
+- **Decision:** Each commit row shows a compact relative label (just now / 5m / 3h /
+  Yesterday / N days ago / short date) right-aligned in its own column, full local
+  timestamp on hover.
+- **Alternatives:** grouping the history list under date section headers (GitHub
+  Desktop-style).
+- **Why:** the graph is a topologically-ordered DAG drawn 1:1 with canvas lanes; slicing
+  it into date-header groups would break that alignment. A per-row label preserves it.
+- **Bug note:** first shipped multiplying the already-millisecond timestamp by 1000
+  again, so every commit showed as "just now" (fixed same day, a59ef34).
+
+## 2026-06-29 — `git status` disables rename detection
+
+### `--no-renames` so staged and unstaged views agree
+- **Decision:** `status` passes `--no-renames` to `git status --porcelain`. A delete +
+  a similarly-named new file now shows as separate D and A entries on both the staged
+  and unstaged sides.
+- **Why:** without it, staging the pair collapsed them into a single R (rename) entry
+  once staged, while the unstaged view still showed them as two separate files — the two
+  Changes-panel sections disagreed about what had happened. The working tree can't
+  detect a rename anyway (it only exists once both sides are staged), so suppressing
+  detection entirely keeps both views consistent rather than having one lag the other.
+
+## 2026-06-09 — Working-tree status fixes (untracked files, discard, signing default)
+
+### List untracked files individually; diff them via `--no-index` against empty
+- **Decision:** `git status` now passes `--untracked-files=all` (previously a new
+  untracked directory collapsed to one entry, hiding its files from Changes). Clicking an
+  untracked file diffs it with `git diff --no-index -- /dev/null <file>` (tolerating its
+  exit code 1) so it renders as all-added instead of an empty diff.
+- **Why:** both were silent gaps — `git diff` has nothing to compare an untracked file
+  against, and the collapsed-directory status entry gave no per-file staging.
+
+### Batch discard-many into at most two git calls
+- **Decision:** Discarding N selected files no longer loops one git invocation per file;
+  untracked files are removed in one `git clean -f -- <files...>` and tracked files reset
+  in one `git restore --staged --worktree --source=HEAD -- <files...>`.
+- **Why:** bulk discard was one process spawn per file — slow for large selections with
+  no benefit, since both underlying commands already accept a pathspec list.
+
+### Commit signing defaults OFF
+- **Decision:** `commitSign` now initializes from `localStorage.getItem('loom.signCommits')
+  === 'true'` (opt-in), not `!== 'false'` (opt-out).
+- **Supersedes:** the 2026-06-08 commit-signing entry below didn't specify a default;
+  this sets it to off. Signing still requires the global SSH-signing git config to be set
+  up regardless of this toggle's state — the toggle only controls whether *Loom* passes
+  `-S` per commit.
+- **Why:** a first-run user without SSH signing configured would otherwise have every
+  commit fail (or need `--no-gpg-sign` silently threaded through) with no visible opt-in
+  step. Defaulting off matches "off until you deliberately turn it on."
+
+### View menu marks already-open panels
+- **Decision:** `ContextMenuItem` gained an optional `checked` field, rendered as a
+  checkmark column; the toolbar's panel-visibility menu now checks `dockApi.getPanel(id)`
+  per entry so open panels show a ✓.
+- **Why:** cheap correctness/discoverability fix — the menu previously gave no
+  indication an item was already open, so clicking it just refocused rather than opened.
+
+---
+
 ## 2026-06-08 — Bulk cleanup of local branches without a remote
 
 ### Preview + checkboxes + two delete buttons, not a blind confirm

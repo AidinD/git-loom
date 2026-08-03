@@ -73,7 +73,8 @@ A GitHub-Desktop-style repository switcher, but better:
 ## Phase 7 / polish — user feedback (2026-06-04)
 
 - [done] Replace the error/info bar with a less intrusive bottom status bar.
-- [done] Pull / fetch / push buttons in the toolbar.
+- [done] Pull / fetch / push buttons in the toolbar. [done] Pull that dead-ends on
+  `--ff-only` divergence now offers a Rebase/Merge dialog instead (2026-06-23).
 - [done] Accent color away from blue → amber (dark theme stays).
 - [done] On startup, auto-select the last-used repo.
 - [done] Declutter the repo list (shows containing folder, full path on hover).
