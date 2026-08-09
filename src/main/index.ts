@@ -52,6 +52,7 @@ import {
   renameBranch,
   discardFile,
   discardFiles,
+  addToGitignore,
   stageAll,
   unstageAll,
   stageFiles,
@@ -521,6 +522,13 @@ app.whenReady().then(() => {
     'git:discardFiles',
     async (_event, repoPath: string, tracked: string[], untracked: string[]) => {
       return discardFiles(repoPath, tracked, untracked)
+    }
+  )
+
+  ipcMain.handle(
+    'git:addToGitignore',
+    async (_event, repoPath: string, tracked: string[], untracked: string[]) => {
+      return addToGitignore(repoPath, tracked, untracked)
     }
   )
 

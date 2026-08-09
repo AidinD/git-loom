@@ -72,6 +72,7 @@ function ChangesDockPanel() {
       onStageMany={l.onStageMany}
       onUnstageMany={l.onUnstageMany}
       onDiscardMany={l.onDiscardMany}
+      onAddToGitignore={l.onAddToGitignore}
       onStashMany={l.onStashMany}
       onCommit={l.onCommit}
       onShowDiff={l.onShowDiff}
@@ -1314,6 +1315,33 @@ function App() {
     })
   }
 
+  function handleAddToGitignore(files: string[]): void {
+    if (!repoPath || files.length === 0) {
+      return
+    }
+    void (async () => {
+      const tracked: string[] = []
+      const untracked: string[] = []
+      for (const file of files) {
+        const change = changes.find((entry) => entry.path === file)
+        if (change && change.worktree === '?') {
+          untracked.push(file)
+        } else {
+          tracked.push(file)
+        }
+      }
+      setError(null)
+      setInfo(null)
+      const result = await window.api.addToGitignore(repoPath, tracked, untracked)
+      if (!result.ok) {
+        setError(result.error)
+      } else {
+        setInfo(result.message)
+      }
+      await loadStatus(repoPath)
+    })()
+  }
+
   async function handleCommit(): Promise<void> {
     const summary = commitSummary.trim()
     if (!repoPath || summary.length === 0) {
@@ -1759,6 +1787,7 @@ function App() {
     onStageMany: handleStageMany,
     onUnstageMany: handleUnstageMany,
     onDiscardMany: handleDiscardMany,
+    onAddToGitignore: handleAddToGitignore,
     onStashMany: handleStashMany,
     diffView,
     selectedDiffFile,

@@ -244,7 +244,13 @@ const api = {
     tracked: string[],
     untracked: string[]
   ): Promise<CheckoutResult> =>
-    ipcRenderer.invoke('git:discardFiles', repoPath, tracked, untracked)
+    ipcRenderer.invoke('git:discardFiles', repoPath, tracked, untracked),
+  addToGitignore: (
+    repoPath: string,
+    tracked: string[],
+    untracked: string[]
+  ): Promise<CheckoutResult> =>
+    ipcRenderer.invoke('git:addToGitignore', repoPath, tracked, untracked)
 }
 
 if (process.contextIsolated) {

@@ -21,6 +21,7 @@ interface Props {
   onStageMany: (files: string[]) => void
   onUnstageMany: (files: string[]) => void
   onDiscardMany: (files: string[]) => void
+  onAddToGitignore: (files: string[]) => void
   onStashMany: (files: string[]) => void
   onCommit: () => void
   commitSign: boolean
@@ -99,6 +100,7 @@ function ChangesPanel({
   onStageMany,
   onUnstageMany,
   onDiscardMany,
+  onAddToGitignore,
   onStashMany,
   onCommit,
   commitSign,
@@ -309,6 +311,10 @@ function ChangesPanel({
     items.push({
       label: count > 1 ? `Stash ${count} files` : 'Stash file',
       onClick: () => onStashMany(targets)
+    })
+    items.push({
+      label: count > 1 ? `Add ${count} files to .gitignore` : 'Add to .gitignore',
+      onClick: () => onAddToGitignore(targets)
     })
     items.push({
       label: count > 1 ? `Discard ${count} files` : 'Discard',

@@ -1656,6 +1656,73 @@ export async function discardFiles(
   return { ok: true, message: `Discarded changes in ${total} file${total === 1 ? '' : 's'}` }
 }
 
+/**
+ * Appends root-anchored patterns for the given files to `.gitignore` (skipping
+ * any already present) and untracks any of them that are currently tracked,
+ * leaving the files on disk.
+ */
+export async function addToGitignore(
+  dir: string,
+  tracked: string[],
+  untracked: string[]
+): Promise<CheckoutResult> {
+  let root: string | null
+  try {
+    root = await resolveRepoRoot(dir)
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) }
+  }
+  if (!root) {
+    return { ok: false, error: `Not a Git repository: ${dir}` }
+  }
+
+  const gitignorePath = join(root, '.gitignore')
+  let existingContent = ''
+  if (existsSync(gitignorePath)) {
+    existingContent = await readFile(gitignorePath, 'utf8')
+  }
+  const existingLines = new Set(
+    existingContent
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0)
+  )
+
+  const newLines: string[] = []
+  for (const file of [...tracked, ...untracked]) {
+    const pattern = `/${file}`
+    if (!existingLines.has(pattern)) {
+      existingLines.add(pattern)
+      newLines.push(pattern)
+    }
+  }
+
+  if (newLines.length > 0) {
+    let content = existingContent
+    if (content.length > 0 && !content.endsWith('\n')) {
+      content += '\n'
+    }
+    content += newLines.join('\n') + '\n'
+    await writeFile(gitignorePath, content, 'utf8')
+  }
+
+  if (tracked.length > 0) {
+    const result = await runGit(['rm', '--cached', '--force', '--', ...tracked], root)
+    if (result.code !== 0) {
+      return {
+        ok: false,
+        error: tidy(result.stderr) || tidy(result.stdout) || `git exited with code ${result.code}`
+      }
+    }
+  }
+
+  if (newLines.length === 0 && tracked.length === 0) {
+    return { ok: true, message: 'Already ignored' }
+  }
+  const total = tracked.length + untracked.length
+  return { ok: true, message: `Added ${total} file${total === 1 ? '' : 's'} to .gitignore` }
+}
+
 const STASH_FIELD = '\x1f'
 
 /** Lists the stash stack, newest first. */

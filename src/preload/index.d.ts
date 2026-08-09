@@ -168,6 +168,11 @@ export interface LoomApi {
     tracked: string[],
     untracked: string[]
   ) => Promise<CheckoutResult>
+  addToGitignore: (
+    repoPath: string,
+    tracked: string[],
+    untracked: string[]
+  ) => Promise<CheckoutResult>
 }
 
 declare global {
