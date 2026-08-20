@@ -1,9 +1,10 @@
 {
   "name": "loom",
-  "version": "1.1.16",
+  "version": "1.1.18",
   "description": "A visual Git client with a direct-manipulation commit graph",
   "main": "./out/main/index.js",
   "author": "Aidin",
+  "license": "MIT",
   "private": true,
   "scripts": {
     "dev": "electron-vite dev",

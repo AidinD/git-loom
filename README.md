@@ -1,5 +1,9 @@
 # Loom
 
+[![Release](https://img.shields.io/github/v/release/AidinD/git-loom)](https://github.com/AidinD/git-loom/releases)
+[![License](https://img.shields.io/github/license/AidinD/git-loom)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Windows-blue)](#install)
+
 A visual, direct-manipulation Git client — drag a branch onto another to merge or
 rebase, drag commits to reorder them, stage by the hunk or line, and resolve conflicts
 in-app. Built because GitKraken felt intuitive but the alternatives didn't.
