@@ -21,3 +21,8 @@ publish:
   provider: github
   owner: AidinD
   repo: git-loom
+  # Without this electron-builder defaults to a DRAFT release, which
+  # electron-updater never sees - so the app silently stops updating. It also
+  # raced with itself and created the draft twice, splitting the assets across
+  # them. Jot and Nib both set this; Loom was the one that did not.
+  releaseType: release
