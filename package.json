@@ -1,6 +1,6 @@
 {
   "name": "loom",
-  "version": "1.2.5",
+  "version": "1.2.6",
   "description": "A visual Git client with a direct-manipulation commit graph",
   "main": "./out/main/index.js",
   "author": "Aidin",
@@ -15,7 +15,8 @@
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json --composite false",
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json --composite false",
     "typecheck": "npm run typecheck:node && npm run typecheck:web",
-    "clean": "node -e \"const {rmSync}=require('node:fs');for(const d of ['dist','out'])rmSync(d,{recursive:true,force:true})\""
+    "clean": "node -e \"const {rmSync}=require('node:fs');for(const d of ['dist','out'])rmSync(d,{recursive:true,force:true})\"",
+    "prepare": "git config core.hooksPath .githooks"
   },
   "dependencies": {
     "dockview": "^6.6.1",

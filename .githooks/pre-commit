@@ -1,4 +1,9 @@
 #!/bin/sh
+
+# Shared guard, canonical copy in keel/hooks. Runs first so nothing else
+# in this hook has a side effect before a refusal.
+node .githooks/no-leaky-assets.mjs || exit 1
+
 # Auto-bump the patch version on every commit and stage package.json so the
 # bump is part of this commit. Loom is 100% AI-coded, so the version doubles
 # as a build counter. Skip with: git commit --no-verify.
