@@ -5,6 +5,38 @@ Newest entries can go on top. Format: decision · alternatives · why.
 
 ---
 
+## 2026-08-23 — Two release-plumbing facts, learned the hard way
+
+Recorded because both cost a broken release, and neither is discoverable from
+reading `package.json`.
+
+### The version bumps itself on every commit
+`core.hooksPath` is `.githooks`, and `.githooks/pre-commit` increments the patch
+version and stages it - deliberately, so the version doubles as a build counter.
+**So do not hand-bump before a release.** Just commit; the hook produces the next
+number. Setting a version by hand and then committing gives you that number plus
+one, which is exactly the confusion that produced 1.2.1 and 1.2.3. The commit
+message on 1.2.2 calls that bump unexplained; it was the hook, and this entry is
+the correction.
+
+A side effect worth knowing: HEAD normally sits one patch ahead of the last
+published release, because the release commit itself gets bumped. That is normal
+here, not a mistake.
+
+### `releaseType: release` is not the default
+electron-builder defaults to a **draft** release, and Loom's `publish:` block was
+the only one of the three apps that never set `releaseType`. A draft is invisible
+to electron-updater, so the app would have gone quietly stale while the release
+page looked fine. Worse, the draft path raced with itself and created the release
+*twice*, splitting the assets - one draft had only the blockmap, neither had
+`latest.yml`. Now pinned to `releaseType: release`, matching Jot and Nib.
+
+The lesson for both: verify the release after publishing (`gh release view`),
+don't trust the build log. The log said "creating GitHub release" and looked
+entirely successful in the broken case.
+
+---
+
 ## 2026-08-23 — Loom joins the family: its own mark, and the toolbar becomes the title bar
 
 Jot, Nib and Helm share a drawing language, written down in Nib's icon
