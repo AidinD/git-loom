@@ -1,6 +1,6 @@
 {
   "name": "loom",
-  "version": "1.1.18",
+  "version": "1.1.19",
   "description": "A visual Git client with a direct-manipulation commit graph",
   "main": "./out/main/index.js",
   "author": "Aidin",
@@ -10,11 +10,12 @@
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "start": "electron-vite preview",
-    "dist": "electron-vite build && electron-builder --publish never",
-    "release": "electron-vite build && electron-builder --publish always",
+    "dist": "npm run clean && electron-vite build && electron-builder --publish never",
+    "release": "npm run clean && electron-vite build && electron-builder --publish always",
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json --composite false",
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json --composite false",
-    "typecheck": "npm run typecheck:node && npm run typecheck:web"
+    "typecheck": "npm run typecheck:node && npm run typecheck:web",
+    "clean": "node -e \"const {rmSync}=require('node:fs');for(const d of ['dist','out'])rmSync(d,{recursive:true,force:true})\""
   },
   "dependencies": {
     "dockview": "^6.6.1",

@@ -23,6 +23,9 @@ import type {
 
 export interface LoomApi {
   getVersion: () => Promise<string>
+  minimizeWindow: () => void
+  toggleMaximizeWindow: () => void
+  closeWindow: () => void
   onUpdateReady: (callback: (version: string) => void) => () => void
   installUpdate: () => Promise<void>
   openRepo: () => Promise<string | null>

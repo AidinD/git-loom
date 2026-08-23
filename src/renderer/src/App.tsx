@@ -25,6 +25,7 @@ import type { RebaseRow } from './RebaseModal'
 import ContextMenu from './ContextMenu'
 import type { ContextMenuItem } from './ContextMenu'
 import LogPanel from './LogPanel'
+import { LoomMark } from './LoomMark'
 import { LoomContext, useLoom } from './loom-context'
 import type { LoomContextValue, DiffView, ActivityEntry } from './loom-context'
 
@@ -1807,6 +1808,14 @@ function App() {
   return (
     <div className="app">
       <header className="toolbar">
+        {/* Frameless window: this row is the title bar, so it introduces the app
+            the way Jot and Nib do - mark, wordmark, version - and carries the
+            window buttons at the far end. */}
+        <div className="brand">
+          <LoomMark />
+          <span className="wordmark">Loom</span>
+          {appVersion && <span className="version">v{appVersion}</span>}
+        </div>
         <RepoSwitcher
           repos={repos}
           currentPath={repoPath}
@@ -1987,7 +1996,26 @@ function App() {
         >
           ⋯
         </button>
-        {appVersion && <span className="app-version">v{appVersion}</span>}
+        <div className="window-controls">
+          <button type="button" onClick={() => window.api.minimizeWindow()} title="Minimise">
+            –
+          </button>
+          <button
+            type="button"
+            onClick={() => window.api.toggleMaximizeWindow()}
+            title="Maximise"
+          >
+            □
+          </button>
+          <button
+            type="button"
+            className="danger"
+            onClick={() => window.api.closeWindow()}
+            title="Close"
+          >
+            ×
+          </button>
+        </div>
       </header>
 
       <LoomContext.Provider value={loomValue}>

@@ -1,0 +1,12 @@
+# LF in the repository, whatever the working tree looks like.
+#
+# Loom's files are all LF today, so this pins a state rather than fixing one -
+# which is the cheap moment to do it. Nib had to normalise 28 files after a tool
+# rewrote them with the other convention and cost a whole-file diff; Jot still
+# has two files in CRLF for the same reason. Sibling projects have no business
+# disagreeing about this.
+* text=auto eol=lf
+
+# Left alone byte for byte. A text filter here would corrupt them.
+*.png binary
+*.ico binary

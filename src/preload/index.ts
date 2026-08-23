@@ -24,6 +24,10 @@ import type {
 
 const api = {
   getVersion: (): Promise<string> => ipcRenderer.invoke('app:getVersion'),
+  // Window buttons for the frameless window - the toolbar row draws them.
+  minimizeWindow: (): void => ipcRenderer.send('window:minimize'),
+  toggleMaximizeWindow: (): void => ipcRenderer.send('window:toggleMaximize'),
+  closeWindow: (): void => ipcRenderer.send('window:close'),
   onUpdateReady: (callback: (version: string) => void): (() => void) => {
     const handler = (_event: unknown, version: string): void => callback(version)
     ipcRenderer.on('update:ready', handler)

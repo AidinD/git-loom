@@ -5,6 +5,64 @@ Newest entries can go on top. Format: decision · alternatives · why.
 
 ---
 
+## 2026-08-23 — Loom joins the family: its own mark, and the toolbar becomes the title bar
+
+Jot, Nib and Helm share a drawing language, written down in Nib's icon
+generator: one object, transparent background, thick strokes with round caps, a
+warm colour, no container and no square. Loom was left out of that pass. Its
+icon was a dark rounded-square containing a teal/blue/red node graph - the
+opposite of every one of those rules - and every frame in its `.ico` was a
+resample of that one detailed drawing, so 16px was a smear.
+
+### The mark: the weft's path through the warp
+- **Decision:** A warp thread top to bottom, with the weft looped around it -
+  once right, once left. Madder red, its own point on the family's warm
+  spectrum. Lives in `scripts/generate-icon.mjs` and, with the same geometry, in
+  `src/renderer/src/LoomMark.tsx`.
+- **Why this shape:** a whole loom is a frame, and a frame at 16px is a grey
+  rectangle. So it draws the *interlacement* instead - which is simultaneously
+  the thing the app is named after and the picture Loom already draws in its own
+  commit graph: a branch leaving the trunk and merging back. Two readings, both
+  true.
+- **Alternatives, all rejected at 16px before anything else:** a plain weave of
+  three warps and two wefts turned to stripes; two strands crossing read as a
+  bare X, which on a git client says "close"; a shuttle read as an eye; a single
+  branch-and-merge read as the letter thorn. Pulling the two loops apart so the
+  warp shows between them is what stops the final one reading as a dollar sign.
+- **On the colour:** deliberately *not* Loom's UI accent (`--accent`, a warm
+  tan) - that sits too close to Nib's brass. Jot does the same thing, a coral
+  mark over a blue UI: the mark's colour is a family decision, the accent is a
+  UI one.
+
+### The toolbar is now the title bar
+- **Decision:** `frame: false`, and the toolbar row carries the drag region, the
+  brand (mark, wordmark, version) and its own minimise/maximise/close buttons -
+  the same introduction Jot and Nib give.
+- The version moved out of the far right of the toolbar and into the brand
+  cluster, so `.app-version` is gone.
+- `.toolbar .window-controls button` is scoped under `.toolbar` on purpose:
+  `.toolbar button` gives every toolbar button an amber fill at the same
+  specificity and wins on source order, so the window buttons have to *outrank*
+  it, not merely precede it.
+
+### One icon.ico, generated, with a second drawing for the small sizes
+- 16/20/24/32/48/64/128/256, all drawn rather than resampled. 20 and 24 are in
+  there because the taskbar asks for them at 125% and 150% display scaling.
+- The changeover to the heavier small drawing is at 32, the same threshold Jot
+  uses; below it the true stroke thins under a pixel and the loops close up
+  against the warp.
+
+### A bug worth remembering: zero-width bounding boxes eat SVG gradients
+The warp is a vertical line, so its bounding box has zero width - and an
+`objectBoundingBox` gradient (the default) on a zero-width shape renders
+*nothing at all*. The first version of `LoomMark` was therefore just the weft, a
+red squiggle with no thread through it, and it looked plausible enough to miss.
+`gradientUnits="userSpaceOnUse"` fixes it and also makes one ramp span the whole
+mark instead of restarting inside every path. Nib's `NibMark` has the same
+latent bug in its slit (`M50 52 V86`) - verified, its slit does not render.
+
+---
+
 ## 2026-06-23 — Pull that offers rebase or merge on divergence
 
 ### Fall back from `--ff-only` instead of dead-ending

@@ -103,6 +103,12 @@ function createWindow(): void {
     show: false,
     autoHideMenuBar: true,
     title: 'Loom',
+    // Frameless, like Jot and Nib: the toolbar row is the title bar, carrying
+    // the drag region and its own window buttons, so the three apps introduce
+    // themselves the same way. backgroundColor avoids a white flash before the
+    // renderer paints.
+    frame: false,
+    backgroundColor: '#1e1e22',
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false,
@@ -150,6 +156,27 @@ function setupAutoUpdate(): void {
 app.whenReady().then(() => {
   ipcMain.handle('app:getVersion', async () => {
     return app.getVersion()
+  })
+
+  // The window is frameless, so the toolbar row owns the window buttons.
+  // Resolved from the sender rather than `mainWindow` so any future frameless
+  // window gets the same three commands for free.
+  ipcMain.on('window:minimize', (event) => {
+    BrowserWindow.fromWebContents(event.sender)?.minimize()
+  })
+  ipcMain.on('window:toggleMaximize', (event) => {
+    const window = BrowserWindow.fromWebContents(event.sender)
+    if (window === null) {
+      return
+    }
+    if (window.isMaximized()) {
+      window.unmaximize()
+    } else {
+      window.maximize()
+    }
+  })
+  ipcMain.on('window:close', (event) => {
+    BrowserWindow.fromWebContents(event.sender)?.close()
   })
 
   ipcMain.handle('repo:open', async () => {
