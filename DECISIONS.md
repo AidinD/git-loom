@@ -23,17 +23,32 @@ A side effect worth knowing: HEAD normally sits one patch ahead of the last
 published release, because the release commit itself gets bumped. That is normal
 here, not a mistake.
 
-### `releaseType: release` is not the default
-electron-builder defaults to a **draft** release, and Loom's `publish:` block was
-the only one of the three apps that never set `releaseType`. A draft is invisible
-to electron-updater, so the app would have gone quietly stale while the release
-page looked fine. Worse, the draft path raced with itself and created the release
-*twice*, splitting the assets - one draft had only the blockmap, neither had
-`latest.yml`. Now pinned to `releaseType: release`, matching Jot and Nib.
+### A release is a pushed tag, and publishing locally breaks it
+`.github/workflows/release.yml` builds the installer and publishes it with `gh
+release create` when a `v*` tag is pushed. Its header says why it was written
+that way: to avoid electron-builder's duplicate-draft race.
 
-The lesson for both: verify the release after publishing (`gh release view`),
-don't trust the build log. The log said "creating GitHub release" and looked
-entirely successful in the broken case.
+`npm run release` used to be `electron-builder --publish always`, which fights
+that workflow instead of using it. electron-builder creates the release *and* the
+tag, the tag push starts CI, and CI dies on "a release with the same tag name
+already exists". It has happened twice - v1.1.16 on 2026-08-09 and v1.2.3 today -
+and both times the cause was that nothing said which of the two paths was real.
+Publishing locally is also what hits the duplicate-draft race: the v1.2.3 attempt
+produced two draft releases with the assets split across them and `latest.yml` in
+neither, which electron-updater cannot see at all.
+
+- `npm run release` now tags and pushes, and nothing else (`scripts/release.mjs`,
+  which also refuses on a dirty tree, a side branch, or an existing tag).
+- `npm run dist` is the local build with no publish - the same command CI runs.
+- `releaseType: release` stays in `electron-builder.yml` purely as a guard for
+  anyone who runs the publish by hand anyway; the `publish:` block's real job is
+  telling electron-updater where to look.
+- The flow is now written down in `CLAUDE.md`, which is where its absence caused
+  both failures.
+
+The general lesson: verify a release with `gh release view` after publishing, and
+check CI. The build log said "creating GitHub release" and looked entirely
+successful while producing two invisible drafts.
 
 ---
 

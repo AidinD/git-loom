@@ -1,6 +1,6 @@
 {
   "name": "loom",
-  "version": "1.2.4",
+  "version": "1.2.5",
   "description": "A visual Git client with a direct-manipulation commit graph",
   "main": "./out/main/index.js",
   "author": "Aidin",
@@ -11,7 +11,7 @@
     "build": "electron-vite build",
     "start": "electron-vite preview",
     "dist": "npm run clean && electron-vite build && electron-builder --publish never",
-    "release": "npm run clean && electron-vite build && electron-builder --publish always",
+    "release": "node scripts/release.mjs",
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json --composite false",
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json --composite false",
     "typecheck": "npm run typecheck:node && npm run typecheck:web",

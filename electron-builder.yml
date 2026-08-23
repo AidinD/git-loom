@@ -21,8 +21,11 @@ publish:
   provider: github
   owner: AidinD
   repo: git-loom
-  # Without this electron-builder defaults to a DRAFT release, which
-  # electron-updater never sees - so the app silently stops updating. It also
-  # raced with itself and created the draft twice, splitting the assets across
-  # them. Jot and Nib both set this; Loom was the one that did not.
+  # This block's real job is telling electron-updater where the installed app
+  # should look for updates; the release itself is published by CI with
+  # `gh release create`, not by electron-builder (see scripts/release.mjs).
+  #
+  # releaseType is here only as a guard: if anyone ever does run
+  # `electron-builder --publish always` by hand, it stops them producing a DRAFT
+  # release, which electron-updater cannot see at all.
   releaseType: release
