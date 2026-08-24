@@ -1,8 +1,18 @@
 #!/bin/sh
+# Canonical pre-commit for the suite, copied into each sibling's .githooks/
+# rather than loaded from node_modules, because a hook has to work in a clone
+# where nothing is installed yet.
+#
+# Activated by `npm install`, via the "prepare" script setting core.hooksPath.
+# Skip a single commit with: git commit --no-verify
 
-# Shared guard, canonical copy in keel/hooks. Runs first so nothing else
-# in this hook has a side effect before a refusal.
+# Shared guard, canonical copy in keel/hooks. Runs FIRST so nothing else in this
+# hook has a side effect before a refusal.
 node .githooks/no-leaky-assets.mjs || exit 1
+
+# Loom-only addition below. keel's drift test allows pre-commit to differ per
+# repo, but pins no-leaky-assets.mjs exactly and requires the guard line above
+# to come first.
 
 # Auto-bump the patch version on every commit and stage package.json so the
 # bump is part of this commit. Loom is 100% AI-coded, so the version doubles
