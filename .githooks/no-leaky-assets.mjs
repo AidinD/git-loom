@@ -4,7 +4,7 @@
  *
  * Why this exists: on 2026-08-23 an audit found seven screenshots of Helm's own
  * dashboard committed to a PUBLIC repo. They showed the actual session sidebar -
- * a group labelled with Aidin's name, and entries naming real prospects
+ * a group labelled with the employer's name, and entries naming real prospects
  * and a client pitch. They had been there since 2026-07-04, were forked by
  * someone on 2026-08-09, and removing them meant rewriting 734 commits of
  * history and force-pushing 84 tags.
