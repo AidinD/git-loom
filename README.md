@@ -90,12 +90,32 @@ warning — click **More info → Run anyway**.
 
 ## Development
 
+Loom depends on [**keel**](https://github.com/AidinD/keel), the shared layer under
+the suite, linked from the filesystem — so it has to be checked out **next to**
+this repo before `npm install` will work:
+
+```
+Tools/
+├── loom/
+└── keel/
+```
+
+```bash
+git clone https://github.com/AidinD/keel ../keel
+```
+
+Without the sibling checkout `npm install` still **exits 0** — npm links
+`file:../keel` to a dangling symlink and says nothing. What fails is the first
+import: `npm run icon` dies with `ERR_MODULE_NOT_FOUND`. keel is a devDependency,
+used only by that script — nothing from it ships inside the app.
+
 ```bash
 npm install      # install dependencies
 npm run dev      # launch with hot reload
 npm run build    # production build
 npm run typecheck
 npm run dist     # build the installer locally (no publish)
+npm run icon     # regenerate build/icon.png and icon.ico
 ```
 
 ## Releasing
