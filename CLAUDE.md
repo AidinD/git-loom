@@ -24,7 +24,7 @@ output is committed, and regenerating it is supposed to leave `build/` with an
 empty diff.
 
 Loom is the one app in the suite that releases from **CI**, where keel is not
-checked out and cannot be (it is a private repo). That is fine, and worth knowing
+checked out. That is fine, and worth knowing
 why: `npm ci` exits 0 with a *dangling* symlink for a missing `file:` dependency —
 measured, not assumed — and `npm run dist` never imports keel, because the icon
 output is committed. So CI is green today and would break the moment anything in
