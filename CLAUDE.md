@@ -10,7 +10,8 @@ fresh session inherits the reasoning instead of re-deriving it.
 
 **keel** (github.com/AidinD/keel) is the suite's shared layer, linked as
 `file:../keel` — so it must be checked out at `D:\Repo\Tools\keel`. It is a
-devDependency used only by `npm run icon`; nothing from it ships in the app.
+devDependency, used by `npm run icon` and `npm run release`; nothing from it
+ships in the app.
 
 `npm install` does **not** fail when it is missing — npm 11 links a missing
 `file:` dependency to a dangling symlink and exits 0. The failure arrives later
@@ -27,8 +28,10 @@ checked out and cannot be (it is a private repo). That is fine, and worth knowin
 why: `npm ci` exits 0 with a *dangling* symlink for a missing `file:` dependency —
 measured, not assumed — and `npm run dist` never imports keel, because the icon
 output is committed. So CI is green today and would break the moment anything in
-`.github/workflows/` ran `npm run icon`. Regenerate icons locally, commit the
-result, and leave CI alone.
+`.github/workflows/` ran `npm run icon` — or `npm run release`, which now takes
+its guards from `keel/release`. Both of those are local commands by design: the
+release script only tags and pushes, and CI does the building. Regenerate icons
+locally, commit the result, and leave CI alone.
 
 ## Releasing
 
