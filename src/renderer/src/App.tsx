@@ -6,6 +6,7 @@ import type {
   Commit,
   FileChange,
   RepoEntry,
+  RepoChangeKind,
   StashEntry,
   GithubRepo,
   BlameLine
@@ -410,6 +411,38 @@ function App() {
     return () => clearInterval(id)
   }, [repoPath])
 
+  // The main process watches the repo on disk and tells us what moved, so an
+  // edit or a commit made outside Loom shows up on its own. 'refs' (HEAD, a
+  // branch, an in-progress rebase) needs the full log refresh; anything else is
+  // just the working tree or the index, where status alone is enough.
+  useEffect(() => {
+    if (!repoPath) {
+      return
+    }
+    return window.api.onRepoChanged((change) => {
+      if (change.repoPath !== repoPath) {
+        return
+      }
+      void refreshFromDisk(change.kind)
+    })
+  }, [repoPath])
+
+  // Belt and braces: fs.watch can miss events (network shares, buffer
+  // overflows during a huge checkout), and coming back to the window is exactly
+  // when a stale list is most visible. Status only — cheap enough to be free.
+  useEffect(() => {
+    if (!repoPath) {
+      return
+    }
+    function onFocus(): void {
+      void refreshFromDisk('status')
+    }
+    window.addEventListener('focus', onFocus)
+    return () => {
+      window.removeEventListener('focus', onFocus)
+    }
+  }, [repoPath])
+
   const dockApi = useRef<DockviewApi | null>(null)
 
   const handleReady = useCallback((event: DockviewReadyEvent) => {
@@ -489,14 +522,82 @@ function App() {
     persistLayouts(next)
   }
 
-  async function loadStatus(path: string): Promise<void> {
+  async function loadStatus(path: string): Promise<FileChange[]> {
     // status and stashList are independent reads — run them concurrently.
     const [result, stashResult] = await Promise.all([
       window.api.status(path),
       window.api.stashList(path)
     ])
-    setChanges(result.ok ? result.files : [])
+    const files = result.ok ? result.files : []
+    setChanges(files)
     setStashes(stashResult.ok ? stashResult.stashes : [])
+    return files
+  }
+
+  /**
+   * The diff on screen, mirrored into a ref so an automatic refresh can re-read
+   * it without the watcher subscription having to resubscribe on every render.
+   */
+  const diffViewRef = useRef<DiffView | null>(null)
+  useEffect(() => {
+    diffViewRef.current = diffView
+  }, [diffView])
+
+  /**
+   * Re-reads the working-tree diff already on screen. Unlike `handleShowDiff`
+   * this doesn't activate the panel, reset the selection, or raise an error
+   * toast — it runs unprompted, and the file may well have just been deleted.
+   */
+  async function reloadShownDiff(): Promise<void> {
+    const view = diffViewRef.current
+    if (!repoPath || !view || view.file === undefined) {
+      return
+    }
+    const result = await window.api.diff(
+      repoPath,
+      view.file,
+      view.staged === true,
+      view.untracked === true
+    )
+    if (!result.ok) {
+      return
+    }
+    setDiffView((current) =>
+      current && current.file === view.file ? { ...current, text: result.text } : current
+    )
+  }
+
+  // One refresh at a time: a burst of disk changes must not fan out into
+  // overlapping git spawns, so a change arriving mid-refresh is remembered and
+  // replayed once (coalesced, 'refs' winning) instead of queueing up.
+  const refreshBusy = useRef(false)
+  const refreshQueued = useRef<RepoChangeKind | null>(null)
+
+  /** Reloads whatever a disk change invalidated. */
+  async function refreshFromDisk(kind: RepoChangeKind): Promise<void> {
+    if (!repoPath) {
+      return
+    }
+    if (refreshBusy.current) {
+      refreshQueued.current = refreshQueued.current === 'refs' ? 'refs' : kind
+      return
+    }
+    refreshBusy.current = true
+    try {
+      if (kind === 'refs') {
+        await loadLog(repoPath)
+      } else {
+        await loadStatus(repoPath)
+      }
+      await reloadShownDiff()
+    } finally {
+      refreshBusy.current = false
+    }
+    const queued = refreshQueued.current
+    refreshQueued.current = null
+    if (queued !== null) {
+      await refreshFromDisk(queued)
+    }
   }
 
   async function loadLog(path: string): Promise<void> {
@@ -1391,7 +1492,8 @@ function App() {
         subtitle: staged ? 'staged' : untracked ? 'untracked (new file)' : 'unstaged',
         text: result.text,
         file,
-        staged
+        staged,
+        untracked
       })
       setSelectedDiffFile(null)
       showPanel('diff', 'Diff')

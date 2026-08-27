@@ -210,3 +210,13 @@ Captured from GitHub Desktop screenshots — not yet scoped, just ideas.
   rebase conflicts in throwaway repos.
 - Follow-ups: inline 3-way conflict editor (show ours/theirs hunks in the diff
   panel and edit in place); conflict count badge in the toolbar.
+
+## Live refresh (done 2026-08-27)
+
+- The main process watches the current repo (`src/main/watch.ts`) and the renderer
+  reloads what actually changed, so an edit or a commit made outside Loom appears
+  without touching Fetch. See DECISIONS.md for the classification/coalescing rules.
+- Follow-ups: only the **current** repo is watched, so the repo switcher's per-repo
+  indicators (the item above) would still need their own periodic read; and the
+  `refs` refresh runs the full `loadLog`, which resets commit pagination — a
+  cheaper "prepend new commits" path would keep a deep scroll position.

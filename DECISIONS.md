@@ -5,6 +5,44 @@ Newest entries can go on top. Format: decision · alternatives · why.
 
 ---
 
+## 2026-08-27 — The view refreshes itself (repo watcher)
+
+### One recursive `fs.watch` in main, classified and coalesced there
+- **Decision:** `src/main/watch.ts` keeps a single recursive `fs.watch` on the current
+  repo (plus a second one on the real git dir when `.git` is a file - linked worktrees,
+  submodules). It classifies each path into `status` (working tree or `.git/index`) or
+  `refs` (HEAD, `refs/**`, `packed-refs`, an in-progress merge/rebase/cherry-pick), drops
+  the noise (`.git/objects`, reflogs, `*.lock`, `node_modules`), coalesces a burst into
+  one event (250ms trailing debounce, 2s hard ceiling so continuous churn can't starve
+  it) and sends `repo:changed`. The renderer maps `status` to `loadStatus` and `refs` to
+  the full `loadLog`, plus a quiet re-read of the diff already on screen. It also
+  refreshes status on window focus.
+- **Alternatives:** chokidar (a runtime dependency, and its own watcher zoo on top of the
+  same syscalls); polling `git status` on a timer (constant process spawns for nothing,
+  and Windows spawns are the expensive thing here); classifying in the renderer (would
+  push every raw event across IPC); refreshing everything on any event (a keystroke-rate
+  `git log` of 150 commits).
+- **Why:** there was no watcher at all. Nothing outside Loom's own commands refreshed the
+  view, and the 3-minute auto-fetch only updated the ahead/behind badge - so an edit made
+  in an editor showed up only when something happened to call `loadLog` (fetch, pull,
+  checkout, commit). That reads as "the view doesn't update, or it's very slow".
+  Recursive `fs.watch` is one kernel subscription on Windows (ReadDirectoryChangesW) and
+  macOS (FSEvents), so the cost doesn't scale with the size of the tree.
+- **Why focus-refresh too:** `fs.watch` is best-effort - it can miss events on network
+  shares or overflow its buffer during a huge checkout, and it fails outright on some
+  paths (errors are swallowed on purpose, so a bad path can't take the app down).
+  Returning to the window is exactly when a stale list is most visible, and status is one
+  cheap read.
+- **`--no-optional-locks` on the status and diff reads:** `git status` may write the
+  refreshed stat cache back into `.git/index`, which the watcher sees as a change - a
+  status→index→refresh→status ping-pong. Measured: it does *not* rewrite the index in a
+  small clean repo (so this was latent, not constant), but it does when the stat cache is
+  stale, and the flag costs nothing.
+- **Note:** `FETCH_HEAD` is deliberately *not* a `refs` trigger. Every fetch writes it,
+  including the periodic no-op ones, and a full `loadLog` resets commit pagination - so
+  the 3-minute auto-fetch would have yanked the history list every 3 minutes. A fetch
+  that actually brings something new touches `refs/remotes/**` and refreshes anyway.
+
 ## 2026-08-23 — Two release-plumbing facts, learned the hard way
 
 Recorded because both cost a broken release, and neither is discoverable from

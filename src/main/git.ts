@@ -894,8 +894,18 @@ export async function status(dir: string): Promise<StatusResult> {
   // --no-renames keeps the staged view consistent with the unstaged one: a
   // delete + new file shows as D + A on both sides instead of collapsing to a
   // single R only once staged (the worktree can't detect the rename anyway).
+  // --no-optional-locks stops git from writing the refreshed stat cache back
+  // into .git/index. That write is invisible normally, but the repo watcher sees
+  // it and would ping-pong: status -> index written -> "repo changed" -> status.
   const result = await runGit(
-    ['status', '--porcelain=v1', '-z', '--untracked-files=all', '--no-renames'],
+    [
+      '--no-optional-locks',
+      'status',
+      '--porcelain=v1',
+      '-z',
+      '--untracked-files=all',
+      '--no-renames'
+    ],
     root
   )
   if (result.code !== 0) {
@@ -962,9 +972,11 @@ export async function diff(
     return { ok: true, text: result.stdout }
   }
 
+  // --no-optional-locks: as in status(), don't let a read rewrite .git/index
+  // and wake the watcher.
   const args = staged
-    ? ['diff', '--cached', '--', file]
-    : ['diff', '--', file]
+    ? ['--no-optional-locks', 'diff', '--cached', '--', file]
+    : ['--no-optional-locks', 'diff', '--', file]
   const result = await runGit(args, root)
   if (result.code !== 0) {
     return {

@@ -154,3 +154,16 @@ export interface PullRequest {
 export type PullRequestsResult =
   | { ok: true; prs: PullRequest[] }
   | { ok: false; error: string }
+
+/**
+ * What a filesystem event under the watched repo turned out to affect.
+ * `status` is a working-tree or index change (cheap: reload status only);
+ * `refs` means HEAD, a ref or an in-progress merge/rebase moved, which needs
+ * the full log/branch refresh.
+ */
+export type RepoChangeKind = 'status' | 'refs'
+
+export interface RepoChange {
+  repoPath: string
+  kind: RepoChangeKind
+}

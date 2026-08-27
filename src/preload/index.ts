@@ -19,7 +19,8 @@ import type {
   ConflictFileResult,
   FileHistoryResult,
   BlameResult,
-  ImageDiffResult
+  ImageDiffResult,
+  RepoChange
 } from '../shared/types'
 
 const api = {
@@ -34,6 +35,12 @@ const api = {
     return () => ipcRenderer.removeListener('update:ready', handler)
   },
   installUpdate: (): Promise<void> => ipcRenderer.invoke('update:install'),
+  /** Fires when the main process sees the watched repo change on disk. */
+  onRepoChanged: (callback: (change: RepoChange) => void): (() => void) => {
+    const handler = (_event: unknown, change: RepoChange): void => callback(change)
+    ipcRenderer.on('repo:changed', handler)
+    return () => ipcRenderer.removeListener('repo:changed', handler)
+  },
   openRepo: (): Promise<string | null> => ipcRenderer.invoke('repo:open'),
   getLog: (repoPath: string, limit?: number, skip?: number): Promise<LogResult> =>
     ipcRenderer.invoke('git:log', repoPath, limit, skip),

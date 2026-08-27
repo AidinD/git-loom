@@ -78,6 +78,7 @@ import {
   setCurrentRepo
 } from './repos'
 import { listGithubRepos, listPullRequests, checkoutPullRequest } from './github'
+import { watchRepo, unwatchRepo } from './watch'
 
 const { autoUpdater } = electronUpdater
 
@@ -122,6 +123,7 @@ function createWindow(): void {
 
   mainWindow.on('closed', () => {
     mainWindow = null
+    unwatchRepo()
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
@@ -567,8 +569,16 @@ app.whenReady().then(() => {
     return getCurrentRepo()
   })
 
-  ipcMain.handle('repos:setCurrent', async (_event, repoPath: string) => {
+  ipcMain.handle('repos:setCurrent', async (event, repoPath: string) => {
     setCurrentRepo(repoPath)
+    // The renderer calls this on every repo refresh, so it doubles as the
+    // "this is the repo on screen" signal the watcher needs. watchRepo is
+    // idempotent for the same path.
+    watchRepo(repoPath, (change) => {
+      if (!event.sender.isDestroyed()) {
+        event.sender.send('repo:changed', change)
+      }
+    })
   })
 
   ipcMain.handle('repos:add', async (_event, repoPath: string) => {

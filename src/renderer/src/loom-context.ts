@@ -16,6 +16,8 @@ export interface DiffView {
   /** Set for working-tree diffs that support hunk staging. */
   file?: string
   staged?: boolean
+  /** Remembered so the view can be re-read from disk without the status list. */
+  untracked?: boolean
 }
 
 /**

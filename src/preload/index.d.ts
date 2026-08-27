@@ -18,7 +18,8 @@ import type {
   ConflictFileResult,
   FileHistoryResult,
   BlameResult,
-  ImageDiffResult
+  ImageDiffResult,
+  RepoChange
 } from '../shared/types'
 
 export interface LoomApi {
@@ -28,6 +29,7 @@ export interface LoomApi {
   closeWindow: () => void
   onUpdateReady: (callback: (version: string) => void) => () => void
   installUpdate: () => Promise<void>
+  onRepoChanged: (callback: (change: RepoChange) => void) => () => void
   openRepo: () => Promise<string | null>
   getLog: (repoPath: string, limit?: number, skip?: number) => Promise<LogResult>
   checkout: (repoPath: string, target: string) => Promise<CheckoutResult>
